@@ -91,6 +91,31 @@
       white-space: nowrap;
     }
 
+    .view-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .view-tab {
+      min-height: 28px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      padding: 4px 6px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .view-tab.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .view-tab span { font-weight: 780; }
+
     button {
       min-height: 34px;
       border: 1px solid var(--line);
@@ -327,8 +352,8 @@
 
     .editor-tools {
       display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 5px;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 4px;
       margin-top: 7px;
     }
 
@@ -338,7 +363,46 @@
       color: var(--accent);
     }
 
+    .archive-task { color: #6b5600; }
     .delete-task { color: var(--danger); }
+
+    .archive-card { padding: 10px; }
+
+    .archive-date {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .archive-actions-static {
+      display: grid;
+      gap: 3px;
+      margin-top: 8px;
+    }
+
+    .archive-action-static {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 6px;
+      color: #4f5863;
+      font-size: 14px;
+    }
+
+    .archive-action-static.done { color: var(--done); }
+    .archive-action-static.done span:last-child { text-decoration: line-through; }
+
+    .archive-tools {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .restore-task {
+      background: var(--accent-soft);
+      border-color: #d9e3fa;
+      color: var(--accent);
+    }
 
     .empty {
       border: 1px dashed #cdd1d5;
@@ -393,7 +457,10 @@
     <header class="topbar">
       <div class="brand">
         <h1>Five</h1>
-        <span class="count" id="taskCount">0 / 5</span>
+        <nav class="view-tabs" aria-label="Task views">
+          <button type="button" class="view-tab active" id="activeTab">Active <span id="taskCount">0/5</span></button>
+          <button type="button" class="view-tab" id="archiveTab">Archive <span id="archiveCount">0</span></button>
+        </nav>
       </div>
       <button type="button" class="add-task" id="addTask">+ Task</button>
     </header>
@@ -416,6 +483,9 @@
       const MAX_TASKS = 5;
       const tasksHost = document.getElementById('tasks');
       const countElement = document.getElementById('taskCount');
+      const archiveCountElement = document.getElementById('archiveCount');
+      const activeTab = document.getElementById('activeTab');
+      const archiveTab = document.getElementById('archiveTab');
       const addTaskButton = document.getElementById('addTask');
       const exportButton = document.getElementById('exportData');
       const importButton = document.getElementById('importData');
@@ -424,6 +494,7 @@
 
       let statusTimer;
       let editingId = null;
+      let currentView = 'active';
       let dragState = null;
       let tasks = loadTasks();
 
@@ -438,6 +509,8 @@
           requestor: String(task.requestor ?? '').slice(0, 200),
           title: String(task.title ?? '').slice(0, 300),
           description: String(task.description ?? '').slice(0, 5000),
+          archived: Boolean(task.archived),
+          archivedAt: task.archivedAt ? String(task.archivedAt) : null,
           actions: Array.isArray(task.actions)
             ? task.actions.slice(0, 500).map(action => ({
                 id: typeof action?.id === 'string' && action.id ? action.id : createId(),
@@ -454,6 +527,8 @@
           requestor: '',
           title: '',
           description: '',
+          archived: false,
+          archivedAt: null,
           actions: []
         };
       }
@@ -461,7 +536,7 @@
       function loadTasks() {
         try {
           const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-          return Array.isArray(raw) ? raw.slice(0, MAX_TASKS).map(normaliseTask) : [];
+          return Array.isArray(raw) ? raw.map(normaliseTask) : [];
         } catch {
           return [];
         }
@@ -483,10 +558,28 @@
         statusTimer = setTimeout(() => { statusElement.textContent = ''; }, 2500);
       }
 
+      function activeTasks() {
+        return tasks.filter(task => !task.archived);
+      }
+
+      function archivedTasks() {
+        return tasks
+          .filter(task => task.archived)
+          .sort((a, b) => String(b.archivedAt || '').localeCompare(String(a.archivedAt || '')));
+      }
+
       function updateHeader() {
-        countElement.textContent = `${tasks.length} / ${MAX_TASKS}`;
-        addTaskButton.disabled = tasks.length >= MAX_TASKS;
-        addTaskButton.textContent = tasks.length >= MAX_TASKS ? 'Limit reached' : '+ Task';
+        const activeCount = activeTasks().length;
+        const archiveCount = archivedTasks().length;
+        countElement.textContent = `${activeCount}/${MAX_TASKS}`;
+        archiveCountElement.textContent = archiveCount;
+        activeTab.classList.toggle('active', currentView === 'active');
+        archiveTab.classList.toggle('active', currentView === 'archive');
+        activeTab.setAttribute('aria-current', currentView === 'active' ? 'page' : 'false');
+        archiveTab.setAttribute('aria-current', currentView === 'archive' ? 'page' : 'false');
+        addTaskButton.hidden = currentView === 'archive';
+        addTaskButton.disabled = activeCount >= MAX_TASKS;
+        addTaskButton.textContent = activeCount >= MAX_TASKS ? 'Limit reached' : '+ Task';
         exportButton.disabled = tasks.length === 0;
       }
 
@@ -511,21 +604,28 @@
 
       function render() {
         tasksHost.replaceChildren();
+        const visibleTasks = currentView === 'active' ? activeTasks() : archivedTasks();
 
-        if (!tasks.length) {
+        if (!visibleTasks.length) {
           const empty = document.createElement('div');
           empty.className = 'empty';
-          empty.innerHTML = '<strong>No tasks</strong>Add up to five tasks.';
+          empty.innerHTML = currentView === 'active'
+            ? '<strong>No active tasks</strong>Add up to five tasks.'
+            : '<strong>Archive is empty</strong>Archived tasks will appear here.';
           tasksHost.appendChild(empty);
           updateHeader();
           return;
         }
 
-        tasks.forEach((task, index) => {
+        visibleTasks.forEach((task, index) => {
           const card = document.createElement('article');
           card.className = `task${editingId === task.id ? ' editing' : ''}`;
           card.dataset.taskId = task.id;
-          card.append(createView(task, index), createEditor(task));
+          if (currentView === 'active') {
+            card.append(createView(task, index), createEditor(task));
+          } else {
+            card.append(createArchiveView(task));
+          }
           tasksHost.appendChild(card);
         });
 
@@ -616,7 +716,8 @@
 
       function startReorder(event, taskId) {
         if (event.button !== undefined && event.button !== 0) return;
-        const sourceIndex = tasks.findIndex(task => task.id === taskId);
+        const active = activeTasks();
+        const sourceIndex = active.findIndex(task => task.id === taskId);
         const sourceCard = tasksHost.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
         if (sourceIndex < 0 || !sourceCard) return;
 
@@ -651,7 +752,7 @@
           if (event.clientY >= rect.top && event.clientY <= rect.bottom) {
             target = card;
             const targetId = card.dataset.taskId;
-            dragState.targetIndex = tasks.findIndex(task => task.id === targetId);
+            dragState.targetIndex = activeTasks().findIndex(task => task.id === targetId);
             dragState.insertAfter = event.clientY > rect.top + rect.height / 2;
             card.classList.add(dragState.insertAfter ? 'drag-over-after' : 'drag-over-before');
             break;
@@ -669,14 +770,15 @@
         cleanupReorder();
 
         if (targetIndex === sourceIndex) return;
-        const reordered = tasks.slice();
-        const [moved] = reordered.splice(sourceIndex, 1);
+        const active = activeTasks();
+        const archived = tasks.filter(task => task.archived);
+        const [moved] = active.splice(sourceIndex, 1);
         let destination = targetIndex;
         if (sourceIndex < targetIndex) destination -= 1;
         if (insertAfter) destination += 1;
-        destination = Math.max(0, Math.min(destination, reordered.length));
-        reordered.splice(destination, 0, moved);
-        tasks = reordered;
+        destination = Math.max(0, Math.min(destination, active.length));
+        active.splice(destination, 0, moved);
+        tasks = [...active, ...archived];
         save('Order saved');
         render();
       }
@@ -702,6 +804,86 @@
         document.removeEventListener('pointerup', finishReorder);
         document.removeEventListener('pointercancel', cancelReorder);
         dragState = null;
+      }
+
+      function createArchiveView(task) {
+        const view = document.createElement('div');
+        view.className = 'archive-card';
+
+        const requestor = document.createElement('div');
+        requestor.className = 'requestor';
+        requestor.textContent = task.requestor.trim() || 'ARCHIVED TASK';
+
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = task.title.trim() || 'Untitled task';
+        view.append(requestor, title);
+
+        if (task.description.trim()) {
+          const description = document.createElement('p');
+          description.className = 'description';
+          description.textContent = task.description;
+          view.appendChild(description);
+        }
+
+        if (task.actions.length) {
+          const actions = document.createElement('div');
+          actions.className = 'archive-actions-static';
+          task.actions.forEach(action => {
+            const row = document.createElement('div');
+            row.className = `archive-action-static${action.done ? ' done' : ''}`;
+            const mark = document.createElement('span');
+            mark.textContent = action.done ? '✓' : '○';
+            const text = document.createElement('span');
+            text.textContent = action.text.trim() || 'Untitled action';
+            row.append(mark, text);
+            actions.appendChild(row);
+          });
+          view.appendChild(actions);
+        }
+
+        const archivedDate = document.createElement('div');
+        archivedDate.className = 'archive-date';
+        const date = task.archivedAt ? new Date(task.archivedAt) : null;
+        archivedDate.textContent = date && !Number.isNaN(date.getTime())
+          ? `Archived ${date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+          : 'Archived';
+
+        const tools = document.createElement('div');
+        tools.className = 'archive-tools';
+        const restore = makeButton('Restore', 'restore-task', () => restoreTask(task.id));
+        const remove = makeButton('Delete', 'delete-task', () => {
+          if (!confirm(`Permanently delete "${task.title.trim() || 'Untitled task'}"?`)) return;
+          tasks = tasks.filter(item => item.id !== task.id);
+          save('Archived task deleted');
+          render();
+        });
+        tools.append(restore, remove);
+        view.append(archivedDate, tools);
+        return view;
+      }
+
+      function archiveTask(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.archived = true;
+        task.archivedAt = new Date().toISOString();
+        editingId = null;
+        save('Task archived');
+        render();
+      }
+
+      function restoreTask(taskId) {
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.archived = false;
+        task.archivedAt = null;
+        save('Task restored');
+        render();
       }
 
       function createEditor(task) {
@@ -767,6 +949,10 @@
           save('Saved');
           render();
         });
+        const archiveButton = makeButton('Archive', 'archive-task', () => {
+          if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
+          archiveTask(task.id);
+        });
         const deleteButton = makeButton('Delete', 'delete-task', () => {
           if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
           tasks = tasks.filter(item => item.id !== task.id);
@@ -774,7 +960,7 @@
           save('Task deleted');
           render();
         });
-        tools.append(addActionButton, doneButton, deleteButton);
+        tools.append(addActionButton, doneButton, archiveButton, deleteButton);
 
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
@@ -794,8 +980,20 @@
         });
       }
 
+      activeTab.addEventListener('click', () => {
+        currentView = 'active';
+        editingId = null;
+        render();
+      });
+
+      archiveTab.addEventListener('click', () => {
+        currentView = 'archive';
+        editingId = null;
+        render();
+      });
+
       addTaskButton.addEventListener('click', () => {
-        if (tasks.length >= MAX_TASKS) return;
+        if (activeTasks().length >= MAX_TASKS) return;
         const task = newTask();
         tasks.push(task);
         editingId = task.id;
@@ -811,7 +1009,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.1,
+          version: 2.3,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -838,8 +1036,19 @@
           const incoming = Array.isArray(parsed) ? parsed : parsed.tasks;
           if (!Array.isArray(incoming)) throw new Error('Invalid backup');
           if (!confirm('Replace current tasks with this backup?')) return;
-          tasks = incoming.slice(0, MAX_TASKS).map(normaliseTask);
+          let activeSeen = 0;
+          tasks = incoming.map(normaliseTask).map(task => {
+            if (!task.archived) {
+              activeSeen += 1;
+              if (activeSeen > MAX_TASKS) {
+                task.archived = true;
+                task.archivedAt = task.archivedAt || new Date().toISOString();
+              }
+            }
+            return task;
+          });
           editingId = null;
+          currentView = 'active';
           save('Backup imported');
           render();
         } catch {
