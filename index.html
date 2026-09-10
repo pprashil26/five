@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6f8">
+  <title>Five Tasks</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --text: #17202a;
+      --muted: #68717d;
+      --line: #dfe3e8;
+      --accent: #2457d6;
+      --danger: #b42318;
+      --done: #7a828d;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-width: 280px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { touch-action: manipulation; }
+
+    .app {
+      width: 100%;
+      max-width: 600px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 0 9px;
+      background: color-mix(in srgb, var(--bg) 94%, transparent);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+    }
+
+    .counter {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 9px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--card);
+      color: var(--text);
+      padding: 7px 10px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    button:active { transform: translateY(1px); }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+      outline-offset: 1px;
+    }
+
+    .primary {
+      flex: 1;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+      transform: none;
+    }
+
+    .icon-btn {
+      min-width: 36px;
+      padding: 6px 9px;
+    }
+
+    .tasks {
+      display: grid;
+      gap: 8px;
+    }
+
+    .task-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    .task-summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 0;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    .summary-main { min-width: 0; }
+
+    .requestor {
+      overflow: hidden;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 750;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .task-title {
+      overflow: hidden;
+      margin-top: 2px;
+      font-size: 15px;
+      font-weight: 750;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .summary-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .chevron {
+      display: inline-block;
+      font-size: 16px;
+      transition: transform 150ms ease;
+    }
+
+    .task-card.expanded .chevron { transform: rotate(180deg); }
+
+    .task-body {
+      display: none;
+      border-top: 1px solid var(--line);
+      padding: 9px;
+    }
+
+    .task-card.expanded .task-body { display: block; }
+
+    .field { margin-bottom: 8px; }
+
+    label, .section-label {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    input[type="text"], textarea {
+      display: block;
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      padding: 8px 9px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 65px;
+      resize: vertical;
+    }
+
+    .actions-list {
+      display: grid;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 34px;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .action-check {
+      width: 19px;
+      height: 19px;
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .action-row.done input[type="text"] {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+
+    .remove-action {
+      min-width: 34px;
+      min-height: 38px;
+      border: 0;
+      color: var(--muted);
+      padding: 4px;
+      font-size: 19px;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .add-action { flex: 1; }
+    .delete-task { color: var(--danger); }
+
+    .empty {
+      border: 1px dashed #cbd1d8;
+      border-radius: var(--radius);
+      color: var(--muted);
+      padding: 28px 16px;
+      text-align: center;
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--text);
+    }
+
+    .status {
+      min-height: 18px;
+      padding: 7px 2px 0;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (min-width: 601px) {
+      .app::before {
+        content: "Designed for mobile";
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 11px;
+        text-align: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>Five Tasks</h1>
+      <span class="counter" id="counter">0 of 5</span>
+    </header>
+
+    <div class="toolbar">
+      <button type="button" class="primary" id="addTaskBtn">+ Add Task</button>
+      <button type="button" class="icon-btn" id="exportBtn" aria-label="Export backup" title="Export backup">Export</button>
+      <button type="button" class="icon-btn" id="importBtn" aria-label="Import backup" title="Import backup">Import</button>
+      <input type="file" id="importFile" class="hidden" accept="application/json,.json">
+    </div>
+
+    <section class="tasks" id="tasks" aria-live="polite"></section>
+    <div class="status" id="status" role="status"></div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'fiveTasks.v1';
+      const MAX_TASKS = 5;
+      const tasksElement = document.getElementById('tasks');
+      const counterElement = document.getElementById('counter');
+      const addTaskButton = document.getElementById('addTaskBtn');
+      const exportButton = document.getElementById('exportBtn');
+      const importButton = document.getElementById('importBtn');
+      const importFile = document.getElementById('importFile');
+      const statusElement = document.getElementById('status');
+      let statusTimer;
+      let tasks = loadTasks();
+
+      function createId() {
+        return self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function blankTask() {
+        return {
+          id: createId(),
+          requestor: '',
+          title: '',
+          description: '',
+          expanded: true,
+          actions: []
+        };
+      }
+
+      function normaliseTask(task) {
+        const source = task && typeof task === 'object' ? task : {};
+        return {
+          id: typeof source.id === 'string' && source.id ? source.id : createId(),
+          requestor: String(source.requestor ?? '').slice(0, 200),
+          title: String(source.title ?? '').slice(0, 300),
+          description: String(source.description ?? '').slice(0, 5000),
+          expanded: Boolean(source.expanded),
+          actions: Array.isArray(source.actions)
+            ? source.actions.slice(0, 500).map(action => ({
+                id: typeof action?.id === 'string' && action.id ? action.id : createId(),
+                text: String(action?.text ?? '').slice(0, 1000),
+                done: Boolean(action?.done)
+              }))
+            : []
+        };
+      }
+
+      function loadTasks() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          return Array.isArray(saved) ? saved.slice(0, MAX_TASKS).map(normaliseTask) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveTasks(message = '') {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+          if (message) showStatus(message);
+        } catch {
+          showStatus('Could not save. Browser storage may be unavailable.');
+        }
+        updateHeader();
+      }
+
+      function showStatus(message) {
+        clearTimeout(statusTimer);
+        statusElement.textContent = message;
+        statusTimer = setTimeout(() => { statusElement.textContent = ''; }, 2500);
+      }
+
+      function updateHeader() {
+        counterElement.textContent = `${tasks.length} of ${MAX_TASKS}`;
+        addTaskButton.disabled = tasks.length >= MAX_TASKS;
+        addTaskButton.textContent = tasks.length >= MAX_TASKS ? '5 Task Limit Reached' : '+ Add Task';
+        exportButton.disabled = tasks.length === 0;
+      }
+
+      function completedCount(task) {
+        return task.actions.filter(action => action.done).length;
+      }
+
+      function render() {
+        tasksElement.replaceChildren();
+
+        if (!tasks.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.innerHTML = '<strong>No tasks yet</strong>Add your first task. Maximum five.';
+          tasksElement.appendChild(empty);
+          updateHeader();
+          return;
+        }
+
+        tasks.forEach((task, taskIndex) => {
+          const card = document.createElement('article');
+          card.className = `task-card${task.expanded ? ' expanded' : ''}`;
+          card.dataset.taskId = task.id;
+
+          const summary = document.createElement('button');
+          summary.type = 'button';
+          summary.className = 'task-summary';
+          summary.setAttribute('aria-expanded', String(task.expanded));
+
+          const summaryMain = document.createElement('span');
+          summaryMain.className = 'summary-main';
+
+          const requestor = document.createElement('span');
+          requestor.className = 'requestor';
+          requestor.textContent = task.requestor.trim() || `TASK ${taskIndex + 1}`;
+
+          const title = document.createElement('span');
+          title.className = 'task-title';
+          title.textContent = task.title.trim() || 'Untitled task';
+
+          const meta = document.createElement('span');
+          meta.className = 'summary-meta';
+          const actionTotal = task.actions.length;
+          meta.innerHTML = `<span>${completedCount(task)}/${actionTotal} actions</span><span class="chevron" aria-hidden="true">⌄</span>`;
+
+          summaryMain.append(requestor, title);
+          summary.append(summaryMain, meta);
+          summary.addEventListener('click', () => {
+            task.expanded = !task.expanded;
+            saveTasks();
+            render();
+          });
+
+          const body = document.createElement('div');
+          body.className = 'task-body';
+
+          body.appendChild(makeField('Requestor / Project', task.requestor, value => {
+            task.requestor = value;
+            saveTasks();
+            requestor.textContent = value.trim() || `TASK ${taskIndex + 1}`;
+          }, 'e.g. Audit Team'));
+
+          body.appendChild(makeField('Task Title', task.title, value => {
+            task.title = value;
+            saveTasks();
+            title.textContent = value.trim() || 'Untitled task';
+          }, 'What needs to be done?'));
+
+          body.appendChild(makeField('Description', task.description, value => {
+            task.description = value;
+            saveTasks();
+          }, 'Optional details', true));
+
+          const sectionLabel = document.createElement('div');
+          sectionLabel.className = 'section-label';
+          sectionLabel.textContent = 'Next Actions';
+          body.appendChild(sectionLabel);
+
+          const actionsList = document.createElement('div');
+          actionsList.className = 'actions-list';
+
+          task.actions.forEach(action => {
+            const row = document.createElement('div');
+            row.className = `action-row${action.done ? ' done' : ''}`;
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'action-check';
+            checkbox.checked = action.done;
+            checkbox.setAttribute('aria-label', 'Mark action complete');
+            checkbox.addEventListener('change', () => {
+              action.done = checkbox.checked;
+              row.classList.toggle('done', action.done);
+              saveTasks();
+              meta.querySelector('span').textContent = `${completedCount(task)}/${task.actions.length} actions`;
+            });
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = action.text;
+            input.placeholder = 'Next action';
+            input.maxLength = 1000;
+            input.setAttribute('aria-label', 'Next action');
+            input.addEventListener('input', () => {
+              action.text = input.value;
+              saveTasks();
+            });
+            input.addEventListener('keydown', event => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                addAction(task.id);
+              }
+            });
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'remove-action';
+            remove.textContent = '×';
+            remove.setAttribute('aria-label', 'Delete action');
+            remove.addEventListener('click', () => {
+              task.actions = task.actions.filter(item => item.id !== action.id);
+              saveTasks();
+              render();
+            });
+
+            row.append(checkbox, input, remove);
+            actionsList.appendChild(row);
+          });
+
+          body.appendChild(actionsList);
+
+          const cardActions = document.createElement('div');
+          cardActions.className = 'card-actions';
+
+          const addActionButton = document.createElement('button');
+          addActionButton.type = 'button';
+          addActionButton.className = 'add-action';
+          addActionButton.textContent = '+ Add Action';
+          addActionButton.addEventListener('click', () => addAction(task.id));
+
+          const deleteTaskButton = document.createElement('button');
+          deleteTaskButton.type = 'button';
+          deleteTaskButton.className = 'delete-task';
+          deleteTaskButton.textContent = 'Delete';
+          deleteTaskButton.addEventListener('click', () => {
+            if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
+            tasks = tasks.filter(item => item.id !== task.id);
+            saveTasks('Task deleted');
+            render();
+          });
+
+          cardActions.append(addActionButton, deleteTaskButton);
+          body.appendChild(cardActions);
+          card.append(summary, body);
+          tasksElement.appendChild(card);
+        });
+
+        updateHeader();
+      }
+
+      function makeField(labelText, value, onInput, placeholder, multiline = false) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'field';
+        const label = document.createElement('label');
+        label.textContent = labelText;
+        const input = multiline ? document.createElement('textarea') : document.createElement('input');
+        if (!multiline) input.type = 'text';
+        input.value = value;
+        input.placeholder = placeholder;
+        input.maxLength = multiline ? 5000 : (labelText === 'Task Title' ? 300 : 200);
+        input.addEventListener('input', () => onInput(input.value));
+        wrapper.append(label, input);
+        return wrapper;
+      }
+
+      function addAction(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.actions.push({ id: createId(), text: '', done: false });
+        task.expanded = true;
+        saveTasks();
+        render();
+        requestAnimationFrame(() => {
+          const card = tasksElement.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
+          const inputs = card?.querySelectorAll('.action-row input[type="text"]');
+          inputs?.[inputs.length - 1]?.focus();
+        });
+      }
+
+      addTaskButton.addEventListener('click', () => {
+        if (tasks.length >= MAX_TASKS) return;
+        tasks.forEach(task => { task.expanded = false; });
+        const task = blankTask();
+        tasks.push(task);
+        saveTasks();
+        render();
+        requestAnimationFrame(() => {
+          const card = tasksElement.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
+          card?.querySelector('input[type="text"]')?.focus();
+          card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      });
+
+      exportButton.addEventListener('click', () => {
+        const payload = {
+          app: 'Five Tasks',
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          tasks
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `five-tasks-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        showStatus('Backup exported');
+      });
+
+      importButton.addEventListener('click', () => importFile.click());
+
+      importFile.addEventListener('change', async () => {
+        const file = importFile.files?.[0];
+        importFile.value = '';
+        if (!file) return;
+        try {
+          const parsed = JSON.parse(await file.text());
+          const imported = Array.isArray(parsed) ? parsed : parsed.tasks;
+          if (!Array.isArray(imported)) throw new Error('Invalid backup');
+          if (!confirm('Replace current tasks with this backup?')) return;
+          tasks = imported.slice(0, MAX_TASKS).map(normaliseTask);
+          saveTasks('Backup imported');
+          render();
+        } catch {
+          showStatus('Could not import this backup');
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
