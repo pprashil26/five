@@ -356,7 +356,7 @@
 
     .editor-tools {
       display: grid;
-      grid-template-columns: 1fr auto auto auto;
+      grid-template-columns: 1fr auto auto;
       gap: 4px;
       margin-top: 7px;
     }
@@ -378,7 +378,55 @@
       line-height: 1.35;
     }
 
+    .waiting-task { color: #765b00; }
     .archive-task { color: #6b5600; }
+
+    .waiting-card { padding: 10px; }
+    .waiting-meta {
+      display: grid;
+      gap: 2px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .follow-up-due {
+      margin: 7px -4px 0;
+      padding: 5px 6px;
+      border-radius: 6px;
+      background: #fff4c2;
+      color: #654f00;
+      font-weight: 720;
+    }
+    .waiting-tools {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .waiting-followup {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .waiting-followup input[type="date"] {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 5px 7px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .move-active {
+      background: var(--accent-soft);
+      border-color: #d9e3fa;
+      color: var(--accent);
+    }
     .delete-task { color: var(--danger); }
 
     .archive-card { padding: 10px; }
@@ -474,6 +522,7 @@
         <h1>Five</h1>
         <nav class="view-tabs" aria-label="Task views">
           <button type="button" class="view-tab active" id="activeTab">Active <span id="taskCount">0/5</span></button>
+          <button type="button" class="view-tab" id="waitingTab">Waiting <span id="waitingCount">0</span></button>
           <button type="button" class="view-tab" id="archiveTab">Archive <span id="archiveCount">0</span></button>
         </nav>
       </div>
@@ -500,8 +549,10 @@
       const MAX_TASKS = 5;
       const tasksHost = document.getElementById('tasks');
       const countElement = document.getElementById('taskCount');
+      const waitingCountElement = document.getElementById('waitingCount');
       const archiveCountElement = document.getElementById('archiveCount');
       const activeTab = document.getElementById('activeTab');
+      const waitingTab = document.getElementById('waitingTab');
       const archiveTab = document.getElementById('archiveTab');
       const addTaskButton = document.getElementById('addTask');
       const exportButton = document.getElementById('exportData');
@@ -526,6 +577,9 @@
           requestor: String(task.requestor ?? '').slice(0, 200),
           title: String(task.title ?? '').slice(0, 300),
           description: String(task.description ?? '').slice(0, 5000),
+          waiting: Boolean(task.waiting) && !Boolean(task.archived),
+          waitingSince: task.waitingSince ? String(task.waitingSince) : null,
+          followUpDate: /^\d{4}-\d{2}-\d{2}$/.test(String(task.followUpDate || '')) ? String(task.followUpDate) : '',
           archived: Boolean(task.archived),
           archivedAt: task.archivedAt ? String(task.archivedAt) : null,
           actions: Array.isArray(task.actions)
@@ -544,6 +598,9 @@
           requestor: '',
           title: '',
           description: '',
+          waiting: false,
+          waitingSince: null,
+          followUpDate: '',
           archived: false,
           archivedAt: null,
           actions: [{ id: createId(), text: '', done: false }]
@@ -576,7 +633,18 @@
       }
 
       function activeTasks() {
-        return tasks.filter(task => !task.archived);
+        return tasks.filter(task => !task.archived && !task.waiting);
+      }
+
+      function waitingTasks() {
+        return tasks
+          .filter(task => task.waiting && !task.archived)
+          .sort((a, b) => {
+            if (a.followUpDate && b.followUpDate) return a.followUpDate.localeCompare(b.followUpDate);
+            if (a.followUpDate) return -1;
+            if (b.followUpDate) return 1;
+            return String(b.waitingSince || '').localeCompare(String(a.waitingSince || ''));
+          });
       }
 
       function archivedTasks() {
@@ -587,14 +655,18 @@
 
       function updateHeader() {
         const activeCount = activeTasks().length;
+        const waitingCount = waitingTasks().length;
         const archiveCount = archivedTasks().length;
         countElement.textContent = `${activeCount}/${MAX_TASKS}`;
+        waitingCountElement.textContent = waitingCount;
         archiveCountElement.textContent = archiveCount;
         activeTab.classList.toggle('active', currentView === 'active');
+        waitingTab.classList.toggle('active', currentView === 'waiting');
         archiveTab.classList.toggle('active', currentView === 'archive');
         activeTab.setAttribute('aria-current', currentView === 'active' ? 'page' : 'false');
+        waitingTab.setAttribute('aria-current', currentView === 'waiting' ? 'page' : 'false');
         archiveTab.setAttribute('aria-current', currentView === 'archive' ? 'page' : 'false');
-        addTaskButton.hidden = currentView === 'archive';
+        addTaskButton.hidden = currentView !== 'active';
         addTaskButton.disabled = activeCount >= MAX_TASKS;
         addTaskButton.textContent = activeCount >= MAX_TASKS ? 'Limit reached' : '+ Task';
         exportButton.disabled = tasks.length === 0;
@@ -621,14 +693,16 @@
 
       function render() {
         tasksHost.replaceChildren();
-        const visibleTasks = currentView === 'active' ? activeTasks() : archivedTasks();
+        const visibleTasks = currentView === 'active' ? activeTasks() : currentView === 'waiting' ? waitingTasks() : archivedTasks();
 
         if (!visibleTasks.length) {
           const empty = document.createElement('div');
           empty.className = 'empty';
           empty.innerHTML = currentView === 'active'
             ? '<strong>No active tasks</strong>Add up to five tasks.'
-            : '<strong>Archive is empty</strong>Archived tasks will appear here.';
+            : currentView === 'waiting'
+              ? '<strong>Waiting is empty</strong>Tasks waiting on others will appear here.'
+              : '<strong>Archive is empty</strong>Archived tasks will appear here.';
           tasksHost.appendChild(empty);
           updateHeader();
           return;
@@ -641,6 +715,8 @@
           card.dataset.taskId = task.id;
           if (currentView === 'active') {
             card.append(createView(task, index), createEditor(task));
+          } else if (currentView === 'waiting') {
+            card.append(createWaitingView(task));
           } else {
             card.append(createArchiveView(task));
           }
@@ -824,6 +900,132 @@
         dragState = null;
       }
 
+      function localDateLabel(value) {
+        if (!value) return '';
+        const date = new Date(`${value}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+
+      function todayLocal() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function createWaitingView(task) {
+        const view = document.createElement('div');
+        view.className = 'waiting-card';
+        const requestor = document.createElement('div');
+        requestor.className = 'requestor';
+        requestor.textContent = task.requestor.trim() || 'WAITING TASK';
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = task.title.trim() || 'Untitled task';
+        view.append(requestor, title);
+
+        if (task.description.trim()) {
+          const description = document.createElement('p');
+          description.className = 'description';
+          description.textContent = task.description;
+          view.appendChild(description);
+        }
+        if (task.actions.length) {
+          const actions = document.createElement('div');
+          actions.className = 'archive-actions-static';
+          task.actions.forEach(action => {
+            const row = document.createElement('div');
+            row.className = `archive-action-static${action.done ? ' done' : ''}`;
+            const mark = document.createElement('span');
+            mark.textContent = action.done ? '✓' : '○';
+            const text = document.createElement('span');
+            text.textContent = action.text.trim() || 'Untitled action';
+            row.append(mark, text);
+            actions.appendChild(row);
+          });
+          view.appendChild(actions);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'waiting-meta';
+        const since = task.waitingSince ? new Date(task.waitingSince) : null;
+        const sinceText = document.createElement('div');
+        sinceText.textContent = since && !Number.isNaN(since.getTime())
+          ? `Waiting since ${since.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+          : 'Waiting';
+        meta.appendChild(sinceText);
+        if (task.followUpDate) {
+          const follow = document.createElement('div');
+          const due = task.followUpDate <= todayLocal();
+          follow.textContent = `Follow up ${localDateLabel(task.followUpDate)}`;
+          if (due) follow.className = 'follow-up-due';
+          meta.appendChild(follow);
+        }
+
+        const tools = document.createElement('div');
+        tools.className = 'waiting-tools';
+        const dateWrap = document.createElement('label');
+        dateWrap.className = 'waiting-followup';
+        dateWrap.append(document.createTextNode('Next follow-up'));
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.value = task.followUpDate || '';
+        dateInput.addEventListener('change', () => {
+          task.followUpDate = dateInput.value;
+          save('Follow-up saved');
+          render();
+        });
+        dateWrap.appendChild(dateInput);
+
+        const active = makeButton('Active', 'move-active', () => moveToActive(task.id));
+        const archive = makeButton('Archive', 'archive-task', () => {
+          if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
+          archiveTask(task.id);
+        });
+        const remove = makeButton('Delete', 'delete-task', () => {
+          if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
+          tasks = tasks.filter(item => item.id !== task.id);
+          save('Waiting task deleted');
+          render();
+        });
+        tools.append(dateWrap, active, archive, remove);
+        view.append(meta, tools);
+        return view;
+      }
+
+      function moveToWaiting(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        const followUp = prompt('Next follow-up date (optional, YYYY-MM-DD)', task.followUpDate || '');
+        if (followUp === null) return;
+        const cleanDate = followUp.trim();
+        if (cleanDate && !/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+          showStatus('Use follow-up date format YYYY-MM-DD');
+          return;
+        }
+        task.waiting = true;
+        task.waitingSince = new Date().toISOString();
+        task.followUpDate = cleanDate;
+        editingId = null;
+        save('Moved to Waiting');
+        render();
+      }
+
+      function moveToActive(taskId) {
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.waiting = false;
+        task.waitingSince = null;
+        task.followUpDate = '';
+        save('Moved to Active');
+        render();
+      }
+
       function createArchiveView(task) {
         const view = document.createElement('div');
         view.className = 'archive-card';
@@ -884,6 +1086,9 @@
       function archiveTask(taskId) {
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.waiting = false;
+        task.waitingSince = null;
+        task.followUpDate = '';
         task.archived = true;
         task.archivedAt = new Date().toISOString();
         editingId = null;
@@ -898,6 +1103,9 @@
         }
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.waiting = false;
+        task.waitingSince = null;
+        task.followUpDate = '';
         task.archived = false;
         task.archivedAt = null;
         save('Task restored');
@@ -977,6 +1185,15 @@
           save('Saved');
           render();
         });
+        const waitingButton = makeButton('Waiting', 'waiting-task', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            editor.querySelector('.action-edit-row input')?.focus();
+            return;
+          }
+          moveToWaiting(task.id);
+        });
         const archiveButton = makeButton('Archive', 'archive-task', () => {
           const hasAction = task.actions.some(action => action.text.trim().length > 0);
           if (!hasAction) {
@@ -994,7 +1211,7 @@
           save('Task deleted');
           render();
         });
-        tools.append(addActionButton, doneButton, archiveButton, deleteButton);
+        tools.append(addActionButton, doneButton, waitingButton, archiveButton, deleteButton);
 
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
@@ -1016,6 +1233,12 @@
 
       activeTab.addEventListener('click', () => {
         currentView = 'active';
+        editingId = null;
+        render();
+      });
+
+      waitingTab.addEventListener('click', () => {
+        currentView = 'waiting';
         editingId = null;
         render();
       });
@@ -1043,7 +1266,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.6,
+          version: 2.7,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1072,7 +1295,7 @@
           if (!confirm('Replace current tasks with this backup?')) return;
           let activeSeen = 0;
           tasks = incoming.map(normaliseTask).map(task => {
-            if (!task.archived) {
+            if (!task.archived && !task.waiting) {
               activeSeen += 1;
               if (activeSeen > MAX_TASKS) {
                 task.archived = true;
