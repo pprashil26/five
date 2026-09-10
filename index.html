@@ -542,7 +542,7 @@
           description: '',
           archived: false,
           archivedAt: null,
-          actions: []
+          actions: [{ id: createId(), text: '', done: false }]
         };
       }
 
@@ -945,6 +945,10 @@
             }
           });
           const remove = makeButton('×', 'remove-action', () => {
+            if (task.actions.length === 1) {
+              showStatus('A task must have at least one next action');
+              return;
+            }
             task.actions = task.actions.filter(item => item.id !== action.id);
             save();
             render();
@@ -958,11 +962,25 @@
         tools.className = 'editor-tools';
         const addActionButton = makeButton('+ Action', 'add-action', () => addAction(task.id));
         const doneButton = makeButton('Done', '', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            const firstActionInput = editor.querySelector('.action-edit-row input');
+            firstActionInput?.focus();
+            return;
+          }
           editingId = null;
           save('Saved');
           render();
         });
         const archiveButton = makeButton('Archive', 'archive-task', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            const firstActionInput = editor.querySelector('.action-edit-row input');
+            firstActionInput?.focus();
+            return;
+          }
           if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
           archiveTask(task.id);
         });
@@ -1022,7 +1040,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.3,
+          version: 2.5,
           exportedAt: new Date().toISOString(),
           tasks
         };
