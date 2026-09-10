@@ -3,28 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f6f8">
-  <title>Five Tasks</title>
+  <meta name="theme-color" content="#f7f7f5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Five</title>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f5f6f8;
-      --card: #ffffff;
-      --text: #17202a;
-      --muted: #68717d;
-      --line: #dfe3e8;
-      --accent: #2457d6;
+      --bg: #f7f7f5;
+      --surface: #ffffff;
+      --text: #1d232a;
+      --muted: #69717c;
+      --line: #e2e4e7;
+      --accent: #2858c7;
+      --accent-soft: #eef3ff;
       --danger: #b42318;
-      --done: #7a828d;
-      --radius: 12px;
+      --done: #858b93;
+      --radius: 10px;
     }
 
     * { box-sizing: border-box; }
 
     html {
+      background: var(--bg);
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
-      background: var(--bg);
     }
 
     body {
@@ -34,7 +37,7 @@
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 15px;
-      line-height: 1.35;
+      line-height: 1.4;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -46,62 +49,66 @@
       max-width: 600px;
       min-height: 100dvh;
       margin: 0 auto;
-      padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+      padding:
+        max(8px, env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        max(14px, env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
     }
 
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 5;
-      display: flex;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 4px 0 9px;
-      background: color-mix(in srgb, var(--bg) 94%, transparent);
+      gap: 10px;
+      padding: 4px 0 8px;
+      background: rgba(247, 247, 245, 0.95);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      min-width: 0;
     }
 
     h1 {
       margin: 0;
-      font-size: 20px;
-      letter-spacing: -0.3px;
+      font-size: 21px;
+      line-height: 1.2;
+      letter-spacing: -0.45px;
     }
 
-    .counter {
+    .count {
       color: var(--muted);
-      font-size: 12px;
-      font-weight: 650;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 9px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     button {
-      min-height: 36px;
+      min-height: 34px;
       border: 1px solid var(--line);
-      border-radius: 9px;
-      background: var(--card);
+      border-radius: 8px;
+      background: var(--surface);
       color: var(--text);
-      padding: 7px 10px;
-      font-weight: 650;
+      padding: 6px 10px;
+      font-weight: 680;
       cursor: pointer;
     }
 
     button:active { transform: translateY(1px); }
-    button:focus-visible, input:focus-visible, textarea:focus-visible {
-      outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
-      outline-offset: 1px;
-    }
 
-    .primary {
-      flex: 1;
-      border-color: var(--accent);
-      background: var(--accent);
-      color: #fff;
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid rgba(40, 88, 199, 0.4);
+      outline-offset: 1px;
     }
 
     button:disabled {
@@ -110,9 +117,11 @@
       transform: none;
     }
 
-    .icon-btn {
-      min-width: 36px;
-      padding: 6px 9px;
+    .add-task {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      white-space: nowrap;
     }
 
     .tasks {
@@ -120,161 +129,209 @@
       gap: 8px;
     }
 
-    .task-card {
-      overflow: hidden;
+    .task {
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: var(--card);
-      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+      background: var(--surface);
     }
 
-    .task-summary {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      min-height: 52px;
-      border: 0;
-      border-radius: 0;
-      padding: 8px 10px;
-      text-align: left;
-    }
-
-    .summary-main { min-width: 0; }
+    .task-view { padding: 10px; }
 
     .requestor {
-      overflow: hidden;
+      overflow-wrap: anywhere;
       color: var(--accent);
-      font-size: 11px;
-      font-weight: 750;
-      line-height: 1.2;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.3;
+    }
+
+    .title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 8px;
+      margin-top: 2px;
     }
 
     .task-title {
-      overflow: hidden;
-      margin-top: 2px;
-      font-size: 15px;
-      font-weight: 750;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-size: 17px;
+      font-weight: 760;
+      line-height: 1.3;
+      letter-spacing: -0.15px;
     }
 
-    .summary-meta {
-      display: flex;
-      align-items: center;
-      gap: 7px;
+    .edit-button {
+      min-height: 28px;
+      border: 0;
+      background: transparent;
       color: var(--muted);
-      font-size: 11px;
-      white-space: nowrap;
+      padding: 2px 4px;
+      font-size: 12px;
     }
 
-    .chevron {
-      display: inline-block;
-      font-size: 16px;
-      transition: transform 150ms ease;
+    .description {
+      margin: 6px 0 0;
+      overflow-wrap: anywhere;
+      color: #4f5863;
+      font-size: 14px;
+      white-space: pre-wrap;
     }
 
-    .task-card.expanded .chevron { transform: rotate(180deg); }
-
-    .task-body {
-      display: none;
-      border-top: 1px solid var(--line);
-      padding: 9px;
-    }
-
-    .task-card.expanded .task-body { display: block; }
-
-    .field { margin-bottom: 8px; }
-
-    label, .section-label {
-      display: block;
-      margin-bottom: 3px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 750;
-    }
-
-    input[type="text"], textarea {
-      display: block;
-      width: 100%;
-      min-height: 38px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--text);
-      padding: 8px 9px;
-      font-size: 16px;
-    }
-
-    textarea {
-      min-height: 65px;
-      resize: vertical;
-    }
-
-    .actions-list {
+    .actions {
       display: grid;
-      gap: 5px;
-      margin-bottom: 6px;
+      gap: 2px;
+      margin-top: 8px;
     }
 
-    .action-row {
+    .action-view {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) 34px;
-      align-items: center;
+      grid-template-columns: 24px minmax(0, 1fr);
+      align-items: start;
       gap: 4px;
+      min-height: 30px;
+      border-radius: 7px;
+      padding: 3px 2px;
     }
 
-    .action-check {
-      width: 19px;
-      height: 19px;
-      margin: 0;
+    .action-view:hover { background: #fafafa; }
+
+    .action-view input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 2px 0 0;
       accent-color: var(--accent);
     }
 
-    .action-row.done input[type="text"] {
+    .action-text {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      padding-top: 1px;
+      font-size: 15px;
+    }
+
+    .action-view.done .action-text {
       color: var(--done);
       text-decoration: line-through;
     }
 
+    .no-actions {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .task-editor {
+      display: none;
+      padding: 9px;
+    }
+
+    .task.editing .task-view { display: none; }
+    .task.editing .task-editor { display: block; }
+
+    .field { margin-bottom: 6px; }
+
+    input[type="text"], textarea {
+      display: block;
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text);
+      padding: 7px 8px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 58px;
+      resize: vertical;
+    }
+
+    input::placeholder, textarea::placeholder { color: #8a919a; }
+
+    .editor-heading {
+      margin: 7px 0 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
+    }
+
+    .action-edit-list {
+      display: grid;
+      gap: 4px;
+    }
+
+    .action-edit-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 34px;
+      gap: 4px;
+    }
+
     .remove-action {
       min-width: 34px;
-      min-height: 38px;
+      min-height: 36px;
       border: 0;
       color: var(--muted);
-      padding: 4px;
+      padding: 2px;
       font-size: 19px;
+      font-weight: 450;
     }
 
-    .card-actions {
-      display: flex;
-      justify-content: space-between;
-      gap: 7px;
-      margin-top: 9px;
+    .editor-tools {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 5px;
+      margin-top: 7px;
     }
 
-    .add-action { flex: 1; }
+    .add-action {
+      background: var(--accent-soft);
+      border-color: #d9e3fa;
+      color: var(--accent);
+    }
+
     .delete-task { color: var(--danger); }
 
     .empty {
-      border: 1px dashed #cbd1d8;
+      border: 1px dashed #cdd1d5;
       border-radius: var(--radius);
+      padding: 28px 14px;
       color: var(--muted);
-      padding: 28px 16px;
       text-align: center;
     }
 
     .empty strong {
       display: block;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
       color: var(--text);
+      font-size: 15px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .footer button {
+      min-height: 30px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 4px 8px;
+      font-size: 11px;
     }
 
     .status {
-      min-height: 18px;
-      padding: 7px 2px 0;
+      min-height: 17px;
+      padding-top: 4px;
       color: var(--muted);
       font-size: 11px;
       text-align: center;
@@ -282,37 +339,28 @@
 
     .hidden { display: none !important; }
 
-    @media (min-width: 601px) {
-      .app::before {
-        content: "Designed for mobile";
-        display: block;
-        margin-bottom: 6px;
-        color: var(--muted);
-        font-size: 11px;
-        text-align: center;
-      }
-    }
-
     @media (prefers-reduced-motion: reduce) {
-      * { scroll-behavior: auto !important; transition: none !important; }
+      * { scroll-behavior: auto !important; }
     }
   </style>
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <h1>Five Tasks</h1>
-      <span class="counter" id="counter">0 of 5</span>
+      <div class="brand">
+        <h1>Five</h1>
+        <span class="count" id="taskCount">0 / 5</span>
+      </div>
+      <button type="button" class="add-task" id="addTask">+ Task</button>
     </header>
 
-    <div class="toolbar">
-      <button type="button" class="primary" id="addTaskBtn">+ Add Task</button>
-      <button type="button" class="icon-btn" id="exportBtn" aria-label="Export backup" title="Export backup">Export</button>
-      <button type="button" class="icon-btn" id="importBtn" aria-label="Import backup" title="Import backup">Import</button>
-      <input type="file" id="importFile" class="hidden" accept="application/json,.json">
-    </div>
-
     <section class="tasks" id="tasks" aria-live="polite"></section>
+
+    <footer class="footer">
+      <button type="button" id="exportData">Export backup</button>
+      <button type="button" id="importData">Import backup</button>
+      <input class="hidden" type="file" id="importFile" accept="application/json,.json">
+    </footer>
     <div class="status" id="status" role="status"></div>
   </main>
 
@@ -322,41 +370,31 @@
 
       const STORAGE_KEY = 'fiveTasks.v1';
       const MAX_TASKS = 5;
-      const tasksElement = document.getElementById('tasks');
-      const counterElement = document.getElementById('counter');
-      const addTaskButton = document.getElementById('addTaskBtn');
-      const exportButton = document.getElementById('exportBtn');
-      const importButton = document.getElementById('importBtn');
+      const tasksHost = document.getElementById('tasks');
+      const countElement = document.getElementById('taskCount');
+      const addTaskButton = document.getElementById('addTask');
+      const exportButton = document.getElementById('exportData');
+      const importButton = document.getElementById('importData');
       const importFile = document.getElementById('importFile');
       const statusElement = document.getElementById('status');
+
       let statusTimer;
+      let editingId = null;
       let tasks = loadTasks();
 
       function createId() {
         return self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       }
 
-      function blankTask() {
+      function normaliseTask(source) {
+        const task = source && typeof source === 'object' ? source : {};
         return {
-          id: createId(),
-          requestor: '',
-          title: '',
-          description: '',
-          expanded: true,
-          actions: []
-        };
-      }
-
-      function normaliseTask(task) {
-        const source = task && typeof task === 'object' ? task : {};
-        return {
-          id: typeof source.id === 'string' && source.id ? source.id : createId(),
-          requestor: String(source.requestor ?? '').slice(0, 200),
-          title: String(source.title ?? '').slice(0, 300),
-          description: String(source.description ?? '').slice(0, 5000),
-          expanded: Boolean(source.expanded),
-          actions: Array.isArray(source.actions)
-            ? source.actions.slice(0, 500).map(action => ({
+          id: typeof task.id === 'string' && task.id ? task.id : createId(),
+          requestor: String(task.requestor ?? '').slice(0, 200),
+          title: String(task.title ?? '').slice(0, 300),
+          description: String(task.description ?? '').slice(0, 5000),
+          actions: Array.isArray(task.actions)
+            ? task.actions.slice(0, 500).map(action => ({
                 id: typeof action?.id === 'string' && action.id ? action.id : createId(),
                 text: String(action?.text ?? '').slice(0, 1000),
                 done: Boolean(action?.done)
@@ -365,21 +403,31 @@
         };
       }
 
+      function newTask() {
+        return {
+          id: createId(),
+          requestor: '',
+          title: '',
+          description: '',
+          actions: []
+        };
+      }
+
       function loadTasks() {
         try {
-          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-          return Array.isArray(saved) ? saved.slice(0, MAX_TASKS).map(normaliseTask) : [];
+          const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          return Array.isArray(raw) ? raw.slice(0, MAX_TASKS).map(normaliseTask) : [];
         } catch {
           return [];
         }
       }
 
-      function saveTasks(message = '') {
+      function save(message = '') {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
           if (message) showStatus(message);
         } catch {
-          showStatus('Could not save. Browser storage may be unavailable.');
+          showStatus('Unable to save in browser storage');
         }
         updateHeader();
       }
@@ -391,224 +439,240 @@
       }
 
       function updateHeader() {
-        counterElement.textContent = `${tasks.length} of ${MAX_TASKS}`;
+        countElement.textContent = `${tasks.length} / ${MAX_TASKS}`;
         addTaskButton.disabled = tasks.length >= MAX_TASKS;
-        addTaskButton.textContent = tasks.length >= MAX_TASKS ? '5 Task Limit Reached' : '+ Add Task';
+        addTaskButton.textContent = tasks.length >= MAX_TASKS ? 'Limit reached' : '+ Task';
         exportButton.disabled = tasks.length === 0;
       }
 
-      function completedCount(task) {
-        return task.actions.filter(action => action.done).length;
+      function makeButton(text, className, handler) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = className;
+        button.textContent = text;
+        button.addEventListener('click', handler);
+        return button;
+      }
+
+      function makeInput(value, placeholder, maxLength, handler, textarea = false) {
+        const input = textarea ? document.createElement('textarea') : document.createElement('input');
+        if (!textarea) input.type = 'text';
+        input.value = value;
+        input.placeholder = placeholder;
+        input.maxLength = maxLength;
+        input.addEventListener('input', () => handler(input.value));
+        return input;
       }
 
       function render() {
-        tasksElement.replaceChildren();
+        tasksHost.replaceChildren();
 
         if (!tasks.length) {
           const empty = document.createElement('div');
           empty.className = 'empty';
-          empty.innerHTML = '<strong>No tasks yet</strong>Add your first task. Maximum five.';
-          tasksElement.appendChild(empty);
+          empty.innerHTML = '<strong>No tasks</strong>Add up to five tasks.';
+          tasksHost.appendChild(empty);
           updateHeader();
           return;
         }
 
-        tasks.forEach((task, taskIndex) => {
+        tasks.forEach((task, index) => {
           const card = document.createElement('article');
-          card.className = `task-card${task.expanded ? ' expanded' : ''}`;
+          card.className = `task${editingId === task.id ? ' editing' : ''}`;
           card.dataset.taskId = task.id;
-
-          const summary = document.createElement('button');
-          summary.type = 'button';
-          summary.className = 'task-summary';
-          summary.setAttribute('aria-expanded', String(task.expanded));
-
-          const summaryMain = document.createElement('span');
-          summaryMain.className = 'summary-main';
-
-          const requestor = document.createElement('span');
-          requestor.className = 'requestor';
-          requestor.textContent = task.requestor.trim() || `TASK ${taskIndex + 1}`;
-
-          const title = document.createElement('span');
-          title.className = 'task-title';
-          title.textContent = task.title.trim() || 'Untitled task';
-
-          const meta = document.createElement('span');
-          meta.className = 'summary-meta';
-          const actionTotal = task.actions.length;
-          meta.innerHTML = `<span>${completedCount(task)}/${actionTotal} actions</span><span class="chevron" aria-hidden="true">⌄</span>`;
-
-          summaryMain.append(requestor, title);
-          summary.append(summaryMain, meta);
-          summary.addEventListener('click', () => {
-            task.expanded = !task.expanded;
-            saveTasks();
-            render();
-          });
-
-          const body = document.createElement('div');
-          body.className = 'task-body';
-
-          body.appendChild(makeField('Requestor / Project', task.requestor, value => {
-            task.requestor = value;
-            saveTasks();
-            requestor.textContent = value.trim() || `TASK ${taskIndex + 1}`;
-          }, 'e.g. Audit Team'));
-
-          body.appendChild(makeField('Task Title', task.title, value => {
-            task.title = value;
-            saveTasks();
-            title.textContent = value.trim() || 'Untitled task';
-          }, 'What needs to be done?'));
-
-          body.appendChild(makeField('Description', task.description, value => {
-            task.description = value;
-            saveTasks();
-          }, 'Optional details', true));
-
-          const sectionLabel = document.createElement('div');
-          sectionLabel.className = 'section-label';
-          sectionLabel.textContent = 'Next Actions';
-          body.appendChild(sectionLabel);
-
-          const actionsList = document.createElement('div');
-          actionsList.className = 'actions-list';
-
-          task.actions.forEach(action => {
-            const row = document.createElement('div');
-            row.className = `action-row${action.done ? ' done' : ''}`;
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'action-check';
-            checkbox.checked = action.done;
-            checkbox.setAttribute('aria-label', 'Mark action complete');
-            checkbox.addEventListener('change', () => {
-              action.done = checkbox.checked;
-              row.classList.toggle('done', action.done);
-              saveTasks();
-              meta.querySelector('span').textContent = `${completedCount(task)}/${task.actions.length} actions`;
-            });
-
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = action.text;
-            input.placeholder = 'Next action';
-            input.maxLength = 1000;
-            input.setAttribute('aria-label', 'Next action');
-            input.addEventListener('input', () => {
-              action.text = input.value;
-              saveTasks();
-            });
-            input.addEventListener('keydown', event => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                addAction(task.id);
-              }
-            });
-
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.className = 'remove-action';
-            remove.textContent = '×';
-            remove.setAttribute('aria-label', 'Delete action');
-            remove.addEventListener('click', () => {
-              task.actions = task.actions.filter(item => item.id !== action.id);
-              saveTasks();
-              render();
-            });
-
-            row.append(checkbox, input, remove);
-            actionsList.appendChild(row);
-          });
-
-          body.appendChild(actionsList);
-
-          const cardActions = document.createElement('div');
-          cardActions.className = 'card-actions';
-
-          const addActionButton = document.createElement('button');
-          addActionButton.type = 'button';
-          addActionButton.className = 'add-action';
-          addActionButton.textContent = '+ Add Action';
-          addActionButton.addEventListener('click', () => addAction(task.id));
-
-          const deleteTaskButton = document.createElement('button');
-          deleteTaskButton.type = 'button';
-          deleteTaskButton.className = 'delete-task';
-          deleteTaskButton.textContent = 'Delete';
-          deleteTaskButton.addEventListener('click', () => {
-            if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
-            tasks = tasks.filter(item => item.id !== task.id);
-            saveTasks('Task deleted');
-            render();
-          });
-
-          cardActions.append(addActionButton, deleteTaskButton);
-          body.appendChild(cardActions);
-          card.append(summary, body);
-          tasksElement.appendChild(card);
+          card.append(createView(task, index), createEditor(task));
+          tasksHost.appendChild(card);
         });
 
         updateHeader();
       }
 
-      function makeField(labelText, value, onInput, placeholder, multiline = false) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'field';
-        const label = document.createElement('label');
-        label.textContent = labelText;
-        const input = multiline ? document.createElement('textarea') : document.createElement('input');
-        if (!multiline) input.type = 'text';
-        input.value = value;
-        input.placeholder = placeholder;
-        input.maxLength = multiline ? 5000 : (labelText === 'Task Title' ? 300 : 200);
-        input.addEventListener('input', () => onInput(input.value));
-        wrapper.append(label, input);
-        return wrapper;
+      function createView(task, index) {
+        const view = document.createElement('div');
+        view.className = 'task-view';
+
+        const requestor = document.createElement('div');
+        requestor.className = 'requestor';
+        requestor.textContent = task.requestor.trim() || `TASK ${index + 1}`;
+
+        const titleRow = document.createElement('div');
+        titleRow.className = 'title-row';
+
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = task.title.trim() || 'Untitled task';
+
+        const edit = makeButton('Edit', 'edit-button', () => {
+          editingId = task.id;
+          render();
+          requestAnimationFrame(() => {
+            const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
+            card?.querySelector('input')?.focus();
+          });
+        });
+
+        titleRow.append(title, edit);
+        view.append(requestor, titleRow);
+
+        if (task.description.trim()) {
+          const description = document.createElement('p');
+          description.className = 'description';
+          description.textContent = task.description;
+          view.appendChild(description);
+        }
+
+        if (task.actions.length) {
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+
+          task.actions.forEach(action => {
+            const row = document.createElement('label');
+            row.className = `action-view${action.done ? ' done' : ''}`;
+
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.checked = action.done;
+            check.setAttribute('aria-label', `Mark ${action.text || 'action'} complete`);
+            check.addEventListener('change', () => {
+              action.done = check.checked;
+              save();
+              render();
+            });
+
+            const text = document.createElement('span');
+            text.className = 'action-text';
+            text.textContent = action.text.trim() || 'Untitled action';
+            row.append(check, text);
+            actions.appendChild(row);
+          });
+
+          view.appendChild(actions);
+        } else {
+          const noActions = document.createElement('div');
+          noActions.className = 'no-actions';
+          noActions.textContent = 'No next actions';
+          view.appendChild(noActions);
+        }
+
+        return view;
+      }
+
+      function createEditor(task) {
+        const editor = document.createElement('div');
+        editor.className = 'task-editor';
+
+        const requestorField = document.createElement('div');
+        requestorField.className = 'field';
+        requestorField.appendChild(makeInput(task.requestor, 'Requestor / Project', 200, value => {
+          task.requestor = value;
+          save();
+        }));
+
+        const titleField = document.createElement('div');
+        titleField.className = 'field';
+        titleField.appendChild(makeInput(task.title, 'Task title', 300, value => {
+          task.title = value;
+          save();
+        }));
+
+        const descriptionField = document.createElement('div');
+        descriptionField.className = 'field';
+        descriptionField.appendChild(makeInput(task.description, 'Description', 5000, value => {
+          task.description = value;
+          save();
+        }, true));
+
+        const heading = document.createElement('div');
+        heading.className = 'editor-heading';
+        heading.textContent = 'Next actions';
+
+        const actionList = document.createElement('div');
+        actionList.className = 'action-edit-list';
+
+        task.actions.forEach(action => {
+          const row = document.createElement('div');
+          row.className = 'action-edit-row';
+          const input = makeInput(action.text, 'Next action', 1000, value => {
+            action.text = value;
+            save();
+          });
+          input.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              addAction(task.id);
+            }
+          });
+          const remove = makeButton('×', 'remove-action', () => {
+            task.actions = task.actions.filter(item => item.id !== action.id);
+            save();
+            render();
+          });
+          remove.setAttribute('aria-label', 'Delete action');
+          row.append(input, remove);
+          actionList.appendChild(row);
+        });
+
+        const tools = document.createElement('div');
+        tools.className = 'editor-tools';
+        const addActionButton = makeButton('+ Action', 'add-action', () => addAction(task.id));
+        const doneButton = makeButton('Done', '', () => {
+          editingId = null;
+          save('Saved');
+          render();
+        });
+        const deleteButton = makeButton('Delete', 'delete-task', () => {
+          if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
+          tasks = tasks.filter(item => item.id !== task.id);
+          editingId = null;
+          save('Task deleted');
+          render();
+        });
+        tools.append(addActionButton, doneButton, deleteButton);
+
+        editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
+        return editor;
       }
 
       function addAction(taskId) {
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
         task.actions.push({ id: createId(), text: '', done: false });
-        task.expanded = true;
-        saveTasks();
+        editingId = taskId;
+        save();
         render();
         requestAnimationFrame(() => {
-          const card = tasksElement.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
-          const inputs = card?.querySelectorAll('.action-row input[type="text"]');
-          inputs?.[inputs.length - 1]?.focus();
+          const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
+          const actionInputs = card?.querySelectorAll('.action-edit-row input');
+          actionInputs?.[actionInputs.length - 1]?.focus();
         });
       }
 
       addTaskButton.addEventListener('click', () => {
         if (tasks.length >= MAX_TASKS) return;
-        tasks.forEach(task => { task.expanded = false; });
-        const task = blankTask();
+        const task = newTask();
         tasks.push(task);
-        saveTasks();
+        editingId = task.id;
+        save();
         render();
         requestAnimationFrame(() => {
-          const card = tasksElement.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
-          card?.querySelector('input[type="text"]')?.focus();
+          const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
+          card?.querySelector('input')?.focus();
           card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
       });
 
       exportButton.addEventListener('click', () => {
-        const payload = {
-          app: 'Five Tasks',
-          version: 1,
+        const data = {
+          app: 'Five',
+          version: 2,
           exportedAt: new Date().toISOString(),
           tasks
         };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `five-tasks-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        link.download = `five-backup-${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -624,11 +688,12 @@
         if (!file) return;
         try {
           const parsed = JSON.parse(await file.text());
-          const imported = Array.isArray(parsed) ? parsed : parsed.tasks;
-          if (!Array.isArray(imported)) throw new Error('Invalid backup');
+          const incoming = Array.isArray(parsed) ? parsed : parsed.tasks;
+          if (!Array.isArray(incoming)) throw new Error('Invalid backup');
           if (!confirm('Replace current tasks with this backup?')) return;
-          tasks = imported.slice(0, MAX_TASKS).map(normaliseTask);
-          saveTasks('Backup imported');
+          tasks = incoming.slice(0, MAX_TASKS).map(normaliseTask);
+          editingId = null;
+          save('Backup imported');
           render();
         } catch {
           showStatus('Could not import this backup');
