@@ -298,6 +298,8 @@
     .task-editor {
       display: none;
       padding: 9px;
+      background: var(--surface);
+      border-radius: var(--radius);
     }
 
     .task.editing .task-view { display: none; }
@@ -318,9 +320,12 @@
     }
 
     textarea {
-      min-height: 58px;
+      min-height: 38px;
+      max-height: 120px;
       resize: vertical;
     }
+
+    .title-field input { font-weight: 720; }
 
     input::placeholder, textarea::placeholder { color: #8a919a; }
 
@@ -356,9 +361,80 @@
 
     .editor-tools {
       display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 4px;
-      margin-top: 7px;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .save-task {
+      width: 100%;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .move-tools {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      align-items: center;
+      gap: 5px;
+      padding-top: 2px;
+    }
+
+    .move-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .delete-link {
+      justify-self: start;
+      min-height: 26px;
+      border: 0;
+      background: transparent;
+      color: var(--danger);
+      padding: 2px 0;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .waiting-picker {
+      display: none;
+      margin-top: 2px;
+      padding: 8px;
+      border: 1px solid #eadfab;
+      border-radius: 8px;
+      background: #fffbed;
+    }
+
+    .waiting-picker.open { display: grid; gap: 6px; }
+
+    .waiting-picker label {
+      color: #65551b;
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .waiting-picker input[type="date"] {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #dfd39c;
+      border-radius: 7px;
+      background: #fff;
+      padding: 6px 8px;
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .waiting-picker-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 5px;
+    }
+
+    .confirm-waiting {
+      border-color: #d8c873;
+      background: #fff3b0;
+      color: #5f4d00;
     }
 
     .add-action {
@@ -994,19 +1070,12 @@
         return view;
       }
 
-      function moveToWaiting(taskId) {
+      function moveToWaiting(taskId, followUpDate = '') {
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
-        const followUp = prompt('Next follow-up date (optional, YYYY-MM-DD)', task.followUpDate || '');
-        if (followUp === null) return;
-        const cleanDate = followUp.trim();
-        if (cleanDate && !/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
-          showStatus('Use follow-up date format YYYY-MM-DD');
-          return;
-        }
         task.waiting = true;
         task.waitingSince = new Date().toISOString();
-        task.followUpDate = cleanDate;
+        task.followUpDate = followUpDate;
         editingId = null;
         save('Moved to Waiting');
         render();
@@ -1124,7 +1193,7 @@
         }));
 
         const titleField = document.createElement('div');
-        titleField.className = 'field';
+        titleField.className = 'field title-field';
         titleField.appendChild(makeInput(task.title, 'Task title', 300, value => {
           task.title = value.toUpperCase();
           save();
@@ -1147,7 +1216,7 @@
         task.actions.forEach(action => {
           const row = document.createElement('div');
           row.className = 'action-edit-row';
-          const input = makeInput(action.text, 'Next action', 1000, value => {
+          const input = makeInput(action.text, task.actions.indexOf(action) === 0 ? 'Next action, required' : 'Next action', 1000, value => {
             action.text = value;
             save();
           });
@@ -1173,8 +1242,11 @@
 
         const tools = document.createElement('div');
         tools.className = 'editor-tools';
-        const addActionButton = makeButton('+ Action', 'add-action', () => addAction(task.id));
-        const doneButton = makeButton('Save', '', () => {
+
+        const addActionButton = makeButton('+ Add action', 'add-action', () => addAction(task.id));
+        actionList.appendChild(addActionButton);
+
+        const saveButton = makeButton('Save', 'save-task', () => {
           const hasAction = task.actions.some(action => action.text.trim().length > 0);
           if (!hasAction) {
             showStatus('Add at least one next action');
@@ -1185,14 +1257,42 @@
           save('Saved');
           render();
         });
-        const waitingButton = makeButton('Waiting', 'waiting-task', () => {
+
+        const moveTools = document.createElement('div');
+        moveTools.className = 'move-tools';
+        const moveLabel = document.createElement('span');
+        moveLabel.className = 'move-label';
+        moveLabel.textContent = 'Move to';
+
+        const waitingPicker = document.createElement('div');
+        waitingPicker.className = 'waiting-picker';
+        const followLabel = document.createElement('label');
+        followLabel.textContent = 'Next follow-up, optional';
+        const followInput = document.createElement('input');
+        followInput.type = 'date';
+        followInput.value = task.followUpDate || '';
+        followLabel.appendChild(followInput);
+
+        const pickerActions = document.createElement('div');
+        pickerActions.className = 'waiting-picker-actions';
+        const confirmWaiting = makeButton('Move to Waiting', 'confirm-waiting', () => {
           const hasAction = task.actions.some(action => action.text.trim().length > 0);
           if (!hasAction) {
             showStatus('Add at least one next action');
             editor.querySelector('.action-edit-row input')?.focus();
             return;
           }
-          moveToWaiting(task.id);
+          moveToWaiting(task.id, followInput.value);
+        });
+        const cancelWaiting = makeButton('Cancel', '', () => {
+          waitingPicker.classList.remove('open');
+        });
+        pickerActions.append(confirmWaiting, cancelWaiting);
+        waitingPicker.append(followLabel, pickerActions);
+
+        const waitingButton = makeButton('Waiting', 'waiting-task', () => {
+          waitingPicker.classList.toggle('open');
+          if (waitingPicker.classList.contains('open')) requestAnimationFrame(() => followInput.showPicker?.());
         });
         const archiveButton = makeButton('Archive', 'archive-task', () => {
           const hasAction = task.actions.some(action => action.text.trim().length > 0);
@@ -1204,14 +1304,16 @@
           if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
           archiveTask(task.id);
         });
-        const deleteButton = makeButton('Delete', 'delete-task', () => {
+        moveTools.append(moveLabel, waitingButton, archiveButton);
+
+        const deleteButton = makeButton('Delete task', 'delete-link', () => {
           if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
           tasks = tasks.filter(item => item.id !== task.id);
           editingId = null;
           save('Task deleted');
           render();
         });
-        tools.append(addActionButton, doneButton, waitingButton, archiveButton, deleteButton);
+        tools.append(saveButton, moveTools, waitingPicker, deleteButton);
 
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
@@ -1266,7 +1368,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.7,
+          version: 2.8,
           exportedAt: new Date().toISOString(),
           tasks
         };
