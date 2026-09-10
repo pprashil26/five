@@ -135,7 +135,51 @@
       background: var(--surface);
     }
 
-    .task-view { padding: 10px; }
+    .task-view {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 6px;
+      padding: 10px 10px 10px 6px;
+    }
+
+    .task-content { min-width: 0; }
+
+    .drag-handle {
+      align-self: stretch;
+      min-width: 24px;
+      min-height: 42px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #9aa0a8;
+      padding: 0;
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .drag-handle:active { cursor: grabbing; }
+
+    .task.dragging {
+      position: relative;
+      z-index: 20;
+      opacity: 0.96;
+      border-color: #9bb2e8;
+      box-shadow: 0 5px 16px rgba(29, 35, 42, 0.14);
+    }
+
+    .task.drag-over-before { box-shadow: inset 0 3px 0 var(--accent); }
+    .task.drag-over-after { box-shadow: inset 0 -3px 0 var(--accent); }
+
+    body.reordering {
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
     .requestor {
       overflow-wrap: anywhere;
@@ -380,6 +424,7 @@
 
       let statusTimer;
       let editingId = null;
+      let dragState = null;
       let tasks = loadTasks();
 
       function createId() {
@@ -491,6 +536,17 @@
         const view = document.createElement('div');
         view.className = 'task-view';
 
+        const handle = document.createElement('button');
+        handle.type = 'button';
+        handle.className = 'drag-handle';
+        handle.textContent = '⋮⋮';
+        handle.setAttribute('aria-label', `Reorder ${task.title.trim() || `task ${index + 1}`}`);
+        handle.title = 'Hold and drag to reorder';
+        handle.addEventListener('pointerdown', event => startReorder(event, task.id));
+
+        const content = document.createElement('div');
+        content.className = 'task-content';
+
         const requestor = document.createElement('div');
         requestor.className = 'requestor';
         requestor.textContent = task.requestor.trim() || `TASK ${index + 1}`;
@@ -512,13 +568,13 @@
         });
 
         titleRow.append(title, edit);
-        view.append(requestor, titleRow);
+        content.append(requestor, titleRow);
 
         if (task.description.trim()) {
           const description = document.createElement('p');
           description.className = 'description';
           description.textContent = task.description;
-          view.appendChild(description);
+          content.appendChild(description);
         }
 
         if (task.actions.length) {
@@ -546,15 +602,106 @@
             actions.appendChild(row);
           });
 
-          view.appendChild(actions);
+          content.appendChild(actions);
         } else {
           const noActions = document.createElement('div');
           noActions.className = 'no-actions';
           noActions.textContent = 'No next actions';
-          view.appendChild(noActions);
+          content.appendChild(noActions);
         }
 
+        view.append(handle, content);
         return view;
+      }
+
+      function startReorder(event, taskId) {
+        if (event.button !== undefined && event.button !== 0) return;
+        const sourceIndex = tasks.findIndex(task => task.id === taskId);
+        const sourceCard = tasksHost.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
+        if (sourceIndex < 0 || !sourceCard) return;
+
+        event.preventDefault();
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+        dragState = {
+          pointerId: event.pointerId,
+          taskId,
+          sourceIndex,
+          targetIndex: sourceIndex,
+          insertAfter: false,
+          handle: event.currentTarget,
+          sourceCard
+        };
+        sourceCard.classList.add('dragging');
+        document.body.classList.add('reordering');
+        document.addEventListener('pointermove', moveReorder, { passive: false });
+        document.addEventListener('pointerup', finishReorder);
+        document.addEventListener('pointercancel', cancelReorder);
+      }
+
+      function moveReorder(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        event.preventDefault();
+        clearDropMarkers();
+
+        const cards = [...tasksHost.querySelectorAll('.task')];
+        let target = null;
+        for (const card of cards) {
+          if (card === dragState.sourceCard) continue;
+          const rect = card.getBoundingClientRect();
+          if (event.clientY >= rect.top && event.clientY <= rect.bottom) {
+            target = card;
+            const targetId = card.dataset.taskId;
+            dragState.targetIndex = tasks.findIndex(task => task.id === targetId);
+            dragState.insertAfter = event.clientY > rect.top + rect.height / 2;
+            card.classList.add(dragState.insertAfter ? 'drag-over-after' : 'drag-over-before');
+            break;
+          }
+        }
+
+        const edge = 70;
+        if (event.clientY < edge) window.scrollBy(0, -8);
+        else if (event.clientY > window.innerHeight - edge) window.scrollBy(0, 8);
+      }
+
+      function finishReorder(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        const { sourceIndex, targetIndex, insertAfter } = dragState;
+        cleanupReorder();
+
+        if (targetIndex === sourceIndex) return;
+        const reordered = tasks.slice();
+        const [moved] = reordered.splice(sourceIndex, 1);
+        let destination = targetIndex;
+        if (sourceIndex < targetIndex) destination -= 1;
+        if (insertAfter) destination += 1;
+        destination = Math.max(0, Math.min(destination, reordered.length));
+        reordered.splice(destination, 0, moved);
+        tasks = reordered;
+        save('Order saved');
+        render();
+      }
+
+      function cancelReorder(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        cleanupReorder();
+      }
+
+      function clearDropMarkers() {
+        tasksHost.querySelectorAll('.drag-over-before, .drag-over-after').forEach(card => {
+          card.classList.remove('drag-over-before', 'drag-over-after');
+        });
+      }
+
+      function cleanupReorder() {
+        if (!dragState) return;
+        dragState.sourceCard.classList.remove('dragging');
+        dragState.handle.releasePointerCapture?.(dragState.pointerId);
+        clearDropMarkers();
+        document.body.classList.remove('reordering');
+        document.removeEventListener('pointermove', moveReorder);
+        document.removeEventListener('pointerup', finishReorder);
+        document.removeEventListener('pointercancel', cancelReorder);
+        dragState = null;
       }
 
       function createEditor(task) {
@@ -664,7 +811,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2,
+          version: 2.1,
           exportedAt: new Date().toISOString(),
           tasks
         };
