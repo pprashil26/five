@@ -711,14 +711,14 @@
         const requestorField = document.createElement('div');
         requestorField.className = 'field';
         requestorField.appendChild(makeInput(task.requestor, 'Requestor / Project', 200, value => {
-          task.requestor = value;
+          task.requestor = value.toUpperCase();
           save();
         }));
 
         const titleField = document.createElement('div');
         titleField.className = 'field';
         titleField.appendChild(makeInput(task.title, 'Task title', 300, value => {
-          task.title = value;
+          task.title = value.toUpperCase();
           save();
         }));
 
