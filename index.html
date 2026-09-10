@@ -159,7 +159,10 @@
       border-radius: var(--radius);
       background: var(--surface);
     }
-    .top-focus{background:#fff9db;}
+    .task.top-focus {
+      background: #fff9db;
+      border-color: #eee3a7;
+    }
 
     .task-view {
       display: grid;
@@ -543,7 +546,7 @@
           description: '',
           archived: false,
           archivedAt: null,
-          actions: []
+          actions: [{ id: createId(), text: '', done: false }]
         };
       }
 
@@ -947,6 +950,10 @@
             }
           });
           const remove = makeButton('×', 'remove-action', () => {
+            if (task.actions.length === 1) {
+              showStatus('A task must have at least one next action');
+              return;
+            }
             task.actions = task.actions.filter(item => item.id !== action.id);
             save();
             render();
@@ -960,11 +967,23 @@
         tools.className = 'editor-tools';
         const addActionButton = makeButton('+ Action', 'add-action', () => addAction(task.id));
         const doneButton = makeButton('Save', '', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            editor.querySelector('.action-edit-row input')?.focus();
+            return;
+          }
           editingId = null;
           save('Saved');
           render();
         });
         const archiveButton = makeButton('Archive', 'archive-task', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            editor.querySelector('.action-edit-row input')?.focus();
+            return;
+          }
           if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
           archiveTask(task.id);
         });
@@ -1024,7 +1043,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.3,
+          version: 2.6,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1071,14 +1090,16 @@
         }
       });
 
-
       document.addEventListener('keydown', event => {
-        const tag = document.activeElement?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
-        if (event.key.toLowerCase() === 't' && currentView === 'active' && activeTasks().length < MAX_TASKS) {
-          event.preventDefault();
-          addTaskButton.click();
-        }
+        const target = event.target;
+        const isTyping = target instanceof HTMLElement && (
+          target.matches('input, textarea, select') || target.isContentEditable
+        );
+        if (isTyping || event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.key.toLowerCase() !== 't') return;
+        if (currentView !== 'active' || editingId || activeTasks().length >= MAX_TASKS) return;
+        event.preventDefault();
+        addTaskButton.click();
       });
       render();
     })();
