@@ -64,10 +64,10 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      display: grid;
-      grid-template-columns: 1fr auto;
+      display: flex;
       align-items: center;
-      gap: 4px 10px;
+      gap: 6px;
+      min-width: 0;
       padding: 4px 0 6px;
       background: rgba(247, 247, 245, 0.95);
       backdrop-filter: blur(10px);
@@ -80,11 +80,15 @@
       min-width: 0;
     }
     .view-tabs-row {
-      grid-column: 1 / -1;
-      display: grid;
-      gap: 3px;
+      display: flex;
+      align-items: center;
+      flex: 1 1 auto;
+      gap: 4px;
       min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+    .view-tabs-row::-webkit-scrollbar { display: none; }
 
     h1 {
       margin: 0;
@@ -103,16 +107,16 @@
     .view-tabs {
       display: flex;
       align-items: center;
+      flex: 0 0 auto;
       gap: 2px;
-      min-width: 0;
-      overflow-x: auto;
-      scrollbar-width: none;
+      min-width: max-content;
     }
     .view-tabs::-webkit-scrollbar { display: none; }
 
     .actions-filter-row {
       display: flex;
-      justify-content: center;
+      align-items: center;
+      flex: 0 0 auto;
       min-height: 24px;
     }
     .actions-filter {
@@ -673,16 +677,10 @@
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
-      .topbar {
-        grid-template-columns: 1fr auto;
-      }
-      .brand {
-        display: flex;
-        align-items: center;
-      }
-      h1 { font-size: 19px; }
+      .topbar { gap: 4px; }
       .view-tab { padding-inline: 4px; font-size: 10px; }
-      .add-task { padding-inline: 8px; }
+      .actions-filter { padding-inline: 5px; font-size: 9.5px; }
+      .add-task { flex: 0 0 auto; padding-inline: 8px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -693,8 +691,6 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <div class="brand"><h1>Five</h1></div>
-      <button type="button" class="add-task" id="addTask">+ Task</button>
       <div class="view-tabs-row">
         <nav class="view-tabs" aria-label="Task views">
           <button type="button" class="view-tab active" id="allTab">All <span id="allCount">0</span></button>
@@ -706,6 +702,7 @@
           <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
         </div>
       </div>
+      <button type="button" class="add-task" id="addTask">+ Task</button>
     </header>
 
     <section class="tasks" id="tasks" aria-live="polite"></section>
@@ -1618,7 +1615,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.21,
+          version: 2.22,
           exportedAt: new Date().toISOString(),
           tasks
         };
