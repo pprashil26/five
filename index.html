@@ -386,6 +386,8 @@
       font-weight: 700;
     }
 
+    .draft-label { margin-bottom:6px; color:var(--muted); font-size:10px; font-weight:780; letter-spacing:.45px; }
+    .cancel-draft { width:100%; background:transparent; color:var(--muted); }
     .delete-link {
       justify-self: start;
       min-height: 26px;
@@ -614,7 +616,7 @@
       <button type="button" id="importData">Import backup</button><button type="button" id="shortcutHelp">Keyboard shortcuts</button>
       <input class="hidden" type="file" id="importFile" accept="application/json,.json">
     </footer>
-    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Save<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel empty draft / Save<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
   </main>
 
   <script>
@@ -642,6 +644,7 @@
       let editingId = null;
       let currentView = 'active';
       let dragState = null;
+      const draftIds = new Set();
       let tasks = loadTasks();
 
       function createId() {
@@ -708,6 +711,16 @@
         clearTimeout(statusTimer);
         statusElement.textContent = message;
         statusTimer = setTimeout(() => { statusElement.textContent = ''; }, 2500);
+      }
+      function isEmptyDraft(task) {
+        return !task.requestor.trim() && !task.title.trim() && !task.description.trim() && !task.actions.some(action => action.text.trim());
+      }
+      function discardDraft(taskId) {
+        tasks = tasks.filter(item => item.id !== taskId);
+        draftIds.delete(taskId);
+        editingId = null;
+        save('Draft cancelled');
+        render();
       }
 
       function formatDate() {
@@ -1273,6 +1286,7 @@
             editor.querySelector('.action-edit-row input')?.focus();
             return;
           }
+          draftIds.delete(task.id);
           editingId = null;
           save('Saved');
           render();
@@ -1333,7 +1347,12 @@
           save('Task deleted');
           render();
         });
-        tools.append(saveButton, moveTools, waitingPicker, deleteButton);
+        if (isDraft) {
+          const cancelButton = makeButton('Cancel', 'cancel-draft', () => discardDraft(task.id));
+          tools.append(saveButton, cancelButton);
+        } else {
+          tools.append(saveButton, moveTools, waitingPicker, deleteButton);
+        }
 
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
@@ -1375,6 +1394,7 @@
         if (activeTasks().length >= MAX_TASKS) return;
         const task = newTask();
         tasks.push(task);
+        draftIds.add(task.id);
         editingId = task.id;
         save();
         render();
@@ -1388,7 +1408,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.12,
+          version: 2.13,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1478,6 +1498,12 @@
         }
 
         if (event.key === 'Escape') {
+          const task = tasks.find(item => item.id === editingId);
+          if (task && draftIds.has(task.id) && isEmptyDraft(task)) {
+            event.preventDefault();
+            discardDraft(task.id);
+            return;
+          }
           const saveButton = document.querySelector('.task.editing .save-task');
           if (saveButton) { event.preventDefault(); saveButton.click(); return; }
         }
