@@ -877,7 +877,10 @@
 
       function render() {
         tasksHost.replaceChildren();
-        const visibleTasks = currentView === 'active' ? activeTasks() : currentView === 'waiting' ? waitingTasks() : archivedTasks();
+        const allVisibleTasks = currentView === 'active' ? activeTasks() : currentView === 'waiting' ? waitingTasks() : archivedTasks();
+        const visibleTasks = editingId
+          ? allVisibleTasks.filter(task => task.id === editingId)
+          : allVisibleTasks;
 
         if (!visibleTasks.length) {
           const empty = document.createElement('div');
@@ -1477,7 +1480,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.17,
+          version: 2.18,
           exportedAt: new Date().toISOString(),
           tasks
         };
