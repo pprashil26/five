@@ -67,8 +67,8 @@
       display: grid;
       grid-template-columns: 1fr auto;
       align-items: center;
-      gap: 10px;
-      padding: 4px 0 8px;
+      gap: 4px 10px;
+      padding: 4px 0 6px;
       background: rgba(247, 247, 245, 0.95);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -76,8 +76,13 @@
 
     .brand {
       display: flex;
-      align-items: baseline;
-      gap: 7px;
+      align-items: center;
+      min-width: 0;
+    }
+    .view-tabs-row {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 3px;
       min-width: 0;
     }
 
@@ -100,16 +105,38 @@
       align-items: center;
       gap: 2px;
       min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+    .view-tabs::-webkit-scrollbar { display: none; }
 
+    .actions-filter-row {
+      display: flex;
+      justify-content: center;
+      min-height: 24px;
+    }
+    .actions-filter {
+      min-height: 24px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .actions-filter.active {
+      background: #f0f2f5;
+      color: var(--accent);
+    }
     .view-tab {
       min-height: 28px;
       border: 0;
       border-radius: 7px;
       background: transparent;
       color: var(--muted);
-      padding: 4px 6px;
-      font-size: 11px;
+      padding: 4px 5px;
+      font-size: 10.5px;
       white-space: nowrap;
     }
 
@@ -119,7 +146,6 @@
     }
 
     .view-tab span { font-weight: 780; }
-    .actions-filter-row{margin-top:4px;display:flex;justify-content:center;}
 
     button {
       min-height: 34px;
@@ -393,9 +419,19 @@
       color: #fff;
     }
 
+    .all-task-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+    }
+    .activate-task {
+      border-color: #cbd8f4;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
     .move-tools {
       display: grid;
-      grid-template-columns: auto 1fr 1fr;
+      grid-template-columns: auto repeat(3, minmax(0, 1fr));
       align-items: center;
       gap: 5px;
       padding-top: 2px;
@@ -636,6 +672,19 @@
 
     .hidden { display: none !important; }
 
+    @media (max-width: 470px) {
+      .topbar {
+        grid-template-columns: 1fr auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+      }
+      h1 { font-size: 19px; }
+      .view-tab { padding-inline: 4px; font-size: 10px; }
+      .add-task { padding-inline: 8px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       * { scroll-behavior: auto !important; }
     }
@@ -644,15 +693,19 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <div class="brand">
-        <h1>Five</h1>
+      <div class="brand"><h1>Five</h1></div>
+      <button type="button" class="add-task" id="addTask">+ Task</button>
+      <div class="view-tabs-row">
         <nav class="view-tabs" aria-label="Task views">
-          <button type="button" class="view-tab active" id="activeTab">Active <span id="taskCount">0/5</span></button>
+          <button type="button" class="view-tab active" id="allTab">All <span id="allCount">0</span></button>
+          <button type="button" class="view-tab" id="activeTab">Active <span id="taskCount">0/5</span></button>
           <button type="button" class="view-tab" id="waitingTab">Waiting <span id="waitingCount">0</span></button>
           <button type="button" class="view-tab" id="archiveTab">Archive <span id="archiveCount">0</span></button>
-        </nav><div class="actions-filter-row"><button type="button" id="toggleActions" class="view-tab">Actions ✓</button></div>
+        </nav>
+        <div class="actions-filter-row">
+          <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
+        </div>
       </div>
-      <button type="button" class="add-task" id="addTask">+ Task</button>
     </header>
 
     <section class="tasks" id="tasks" aria-live="polite"></section>
@@ -679,12 +732,15 @@
       const STORAGE_KEY = 'fiveTasks.v1';
       const MAX_TASKS = 5;
       const tasksHost = document.getElementById('tasks');
+      const allCountElement = document.getElementById('allCount');
       const countElement = document.getElementById('taskCount');
       const waitingCountElement = document.getElementById('waitingCount');
       const archiveCountElement = document.getElementById('archiveCount');
+      const allTab = document.getElementById('allTab');
       const activeTab = document.getElementById('activeTab');
       const waitingTab = document.getElementById('waitingTab');
-      const archiveTab = document.getElementById('archiveTab'); const toggleActionsBtn=document.getElementById('toggleActions');
+      const archiveTab = document.getElementById('archiveTab');
+      const toggleActionsButton = document.getElementById('toggleActions');
       const addTaskButton = document.getElementById('addTask');
       const exportButton = document.getElementById('exportData');
       const importButton = document.getElementById('importData');
@@ -695,11 +751,12 @@
 
       let statusTimer;
       let editingId = null;
-      let currentView = 'active';
+      let currentView = 'all';
       let dragState = null;
       let editSnapshot = null;
       let newDraftId = null;
-      let tasks = loadTasks(); let showActions=localStorage.getItem("fiveShowActions")!=="0";
+      let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
+      let tasks = loadTasks();
 
       function createId() {
         return self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -712,6 +769,7 @@
           requestor: String(task.requestor ?? '').slice(0, 200),
           title: String(task.title ?? '').slice(0, 300),
           description: String(task.description ?? '').slice(0, 5000),
+          list: task.list === 'all' ? 'all' : 'active',
           waiting: Boolean(task.waiting) && !Boolean(task.archived),
           waitingSince: task.waitingSince ? String(task.waitingSince) : null,
           followUpDate: /^\d{4}-\d{2}-\d{2}$/.test(String(task.followUpDate || '')) ? String(task.followUpDate) : '',
@@ -733,6 +791,7 @@
           requestor: '',
           title: '',
           description: '',
+          list: 'all',
           waiting: false,
           waitingSince: null,
           followUpDate: '',
@@ -817,8 +876,11 @@
         el.setSelectionRange?.(pos, pos);
       }
 
+      function allTasks() {
+        return tasks.filter(task => !task.archived && !task.waiting && task.list === 'all');
+      }
       function activeTasks() {
-        return tasks.filter(task => !task.archived && !task.waiting);
+        return tasks.filter(task => !task.archived && !task.waiting && task.list === 'active');
       }
 
       function waitingTasks() {
@@ -839,22 +901,29 @@
       }
 
       function updateHeader() {
+        const allCount = allTasks().length;
         const activeCount = activeTasks().length;
         const waitingCount = waitingTasks().length;
         const archiveCount = archivedTasks().length;
+        allCountElement.textContent = allCount;
         countElement.textContent = `${activeCount}/${MAX_TASKS}`;
         waitingCountElement.textContent = waitingCount;
         archiveCountElement.textContent = archiveCount;
+        allTab.classList.toggle('active', currentView === 'all');
         activeTab.classList.toggle('active', currentView === 'active');
         waitingTab.classList.toggle('active', currentView === 'waiting');
         archiveTab.classList.toggle('active', currentView === 'archive');
+        allTab.setAttribute('aria-current', currentView === 'all' ? 'page' : 'false');
         activeTab.setAttribute('aria-current', currentView === 'active' ? 'page' : 'false');
         waitingTab.setAttribute('aria-current', currentView === 'waiting' ? 'page' : 'false');
         archiveTab.setAttribute('aria-current', currentView === 'archive' ? 'page' : 'false');
-        addTaskButton.hidden = currentView !== 'active';
-        addTaskButton.disabled = activeCount >= MAX_TASKS;
-        addTaskButton.textContent = activeCount >= MAX_TASKS ? 'Limit reached' : '+ Task';
-        toggleActionsBtn.textContent=showActions?"Actions ✓":"Actions ✕"; exportButton.disabled = tasks.length === 0;
+        addTaskButton.hidden = Boolean(editingId);
+        addTaskButton.disabled = false;
+        addTaskButton.textContent = '+ Task';
+        toggleActionsButton.textContent = showTaskDetails ? 'Actions visible' : 'Compact view';
+        toggleActionsButton.classList.toggle('active', !showTaskDetails);
+        toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
+        exportButton.disabled = tasks.length === 0;
       }
 
       function makeButton(text, className, handler) {
@@ -878,7 +947,13 @@
 
       function render() {
         tasksHost.replaceChildren();
-        const allVisibleTasks = currentView === 'active' ? activeTasks() : currentView === 'waiting' ? waitingTasks() : archivedTasks();
+        const allVisibleTasks = currentView === 'all'
+          ? allTasks()
+          : currentView === 'active'
+            ? activeTasks()
+            : currentView === 'waiting'
+              ? waitingTasks()
+              : archivedTasks();
         const visibleTasks = editingId
           ? allVisibleTasks.filter(task => task.id === editingId)
           : allVisibleTasks;
@@ -886,9 +961,11 @@
         if (!visibleTasks.length) {
           const empty = document.createElement('div');
           empty.className = 'empty';
-          empty.innerHTML = currentView === 'active'
-            ? '<strong>No active tasks</strong>Add up to five tasks.'
-            : currentView === 'waiting'
+          empty.innerHTML = currentView === 'all'
+            ? '<strong>No tasks</strong>Add an unlimited number of tasks here.'
+            : currentView === 'active'
+              ? '<strong>No active tasks</strong>Move up to five tasks here from All.'
+              : currentView === 'waiting'
               ? '<strong>Waiting is empty</strong>Tasks waiting on others will appear here.'
               : '<strong>Archive is empty</strong>Archived tasks will appear here.';
           tasksHost.appendChild(empty);
@@ -901,7 +978,7 @@
           card.className = `task${editingId === task.id ? ' editing' : ''}`;
           if (currentView === 'active' && index === 0) card.classList.add('top-focus');
           card.dataset.taskId = task.id;
-          if (currentView === 'active') {
+          if (currentView === 'all' || currentView === 'active') {
             card.append(createView(task, index), createEditor(task));
           } else if (currentView === 'waiting') {
             card.append(createWaitingView(task));
@@ -950,14 +1027,14 @@
         titleRow.append(title, edit);
         content.append(requestor, titleRow);
 
-        if (showActions && task.description.trim()) {
+        if (showTaskDetails && task.description.trim()) {
           const description = document.createElement('p');
           description.className = 'description';
           description.textContent = task.description;
           content.appendChild(description);
         }
 
-        if (showActions && task.actions.length) {
+        if (showTaskDetails && task.actions.length) {
           const actions = document.createElement('div');
           actions.className = 'actions';
 
@@ -983,7 +1060,7 @@
           });
 
           content.appendChild(actions);
-        } else if (showActions) {
+        } else if (showTaskDetails) {
           const noActions = document.createElement('div');
           noActions.className = 'no-actions';
           noActions.textContent = 'No next actions';
@@ -996,8 +1073,9 @@
 
       function startReorder(event, taskId) {
         if (event.button !== undefined && event.button !== 0) return;
-        const active = activeTasks();
-        const sourceIndex = active.findIndex(task => task.id === taskId);
+        if (currentView !== 'all' && currentView !== 'active') return;
+        const reorderTasks = currentView === 'all' ? allTasks() : activeTasks();
+        const sourceIndex = reorderTasks.findIndex(task => task.id === taskId);
         const sourceCard = tasksHost.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
         if (sourceIndex < 0 || !sourceCard) return;
 
@@ -1032,7 +1110,8 @@
           if (event.clientY >= rect.top && event.clientY <= rect.bottom) {
             target = card;
             const targetId = card.dataset.taskId;
-            dragState.targetIndex = activeTasks().findIndex(task => task.id === targetId);
+            const reorderTasks = currentView === 'all' ? allTasks() : activeTasks();
+            dragState.targetIndex = reorderTasks.findIndex(task => task.id === targetId);
             dragState.insertAfter = event.clientY > rect.top + rect.height / 2;
             card.classList.add(dragState.insertAfter ? 'drag-over-after' : 'drag-over-before');
             break;
@@ -1050,15 +1129,16 @@
         cleanupReorder();
 
         if (targetIndex === sourceIndex) return;
-        const active = activeTasks();
-        const archived = tasks.filter(task => task.archived);
-        const [moved] = active.splice(sourceIndex, 1);
+        const subset = currentView === 'all' ? allTasks() : activeTasks();
+        const [moved] = subset.splice(sourceIndex, 1);
         let destination = targetIndex;
         if (sourceIndex < targetIndex) destination -= 1;
         if (insertAfter) destination += 1;
-        destination = Math.max(0, Math.min(destination, active.length));
-        active.splice(destination, 0, moved);
-        tasks = [...active, ...archived];
+        destination = Math.max(0, Math.min(destination, subset.length));
+        subset.splice(destination, 0, moved);
+        const subsetIds = new Set(subset.map(task => task.id));
+        let replacementIndex = 0;
+        tasks = tasks.map(task => subsetIds.has(task.id) ? subset[replacementIndex++] : task);
         save('Order saved');
         render();
       }
@@ -1111,13 +1191,13 @@
         title.textContent = task.title.trim() || 'Untitled task';
         view.append(requestor, title);
 
-        if (task.description.trim()) {
+        if (showTaskDetails && task.description.trim()) {
           const description = document.createElement('p');
           description.className = 'description';
           description.textContent = task.description;
           view.appendChild(description);
         }
-        if (task.actions.length) {
+        if (showTaskDetails && task.actions.length) {
           const actions = document.createElement('div');
           actions.className = 'archive-actions-static';
           task.actions.forEach(action => {
@@ -1132,6 +1212,8 @@
           });
           view.appendChild(actions);
         }
+
+        if (!showTaskDetails) return view;
 
         const meta = document.createElement('div');
         meta.className = 'waiting-meta';
@@ -1183,6 +1265,7 @@
       function moveToWaiting(taskId, followUpDate = '') {
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.list = 'active';
         task.waiting = true;
         task.waitingSince = new Date().toISOString();
         task.followUpDate = followUpDate;
@@ -1198,9 +1281,34 @@
         }
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.list = 'active';
         task.waiting = false;
         task.waitingSince = null;
         task.followUpDate = '';
+        save('Moved to Active');
+        render();
+      }
+
+      function moveActiveTaskToAll(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task || task.list !== 'active' || task.waiting || task.archived) return;
+        task.list = 'all';
+        finishEditing();
+        currentView = 'all';
+        save('Moved to All');
+        render();
+      }
+
+      function moveAllTaskToActive(taskId) {
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = tasks.find(item => item.id === taskId);
+        if (!task || task.list !== 'all') return;
+        task.list = 'active';
+        finishEditing();
+        currentView = 'active';
         save('Moved to Active');
         render();
       }
@@ -1218,14 +1326,14 @@
         title.textContent = task.title.trim() || 'Untitled task';
         view.append(requestor, title);
 
-        if (task.description.trim()) {
+        if (showTaskDetails && task.description.trim()) {
           const description = document.createElement('p');
           description.className = 'description';
           description.textContent = task.description;
           view.appendChild(description);
         }
 
-        if (task.actions.length) {
+        if (showTaskDetails && task.actions.length) {
           const actions = document.createElement('div');
           actions.className = 'archive-actions-static';
           task.actions.forEach(action => {
@@ -1240,6 +1348,8 @@
           });
           view.appendChild(actions);
         }
+
+        if (!showTaskDetails) return view;
 
         const archivedDate = document.createElement('div');
         archivedDate.className = 'archive-date';
@@ -1282,6 +1392,7 @@
         }
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.list = 'active';
         task.waiting = false;
         task.waitingSince = null;
         task.followUpDate = '';
@@ -1405,6 +1516,9 @@
         pickerActions.append(confirmWaiting, cancelWaiting);
         waitingPicker.append(followLabel, pickerActions);
 
+        const allButton = makeButton('All', 'activate-task', () => {
+          moveActiveTaskToAll(task.id);
+        });
         const waitingButton = makeButton('Waiting', 'waiting-task', () => {
           waitingPicker.classList.toggle('open');
           if (waitingPicker.classList.contains('open')) requestAnimationFrame(() => followInput.showPicker?.());
@@ -1419,7 +1533,7 @@
           if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
           archiveTask(task.id);
         });
-        moveTools.append(moveLabel, waitingButton, archiveButton);
+        moveTools.append(moveLabel, allButton, waitingButton, archiveButton);
 
         const deleteButton = makeButton('Delete task', 'delete-link', () => {
           if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
@@ -1428,7 +1542,23 @@
           save('Task deleted');
           render();
         });
-        tools.append(saveCancelRow, moveTools, waitingPicker, deleteButton);
+        if (task.list === 'all') {
+          const allTaskTools = document.createElement('div');
+          allTaskTools.className = 'all-task-tools';
+          const activateButton = makeButton('Move to Active', 'activate-task', () => {
+            const hasAction = task.actions.some(action => action.text.trim().length > 0);
+            if (!hasAction) {
+              showStatus('Add at least one next action');
+              editor.querySelector('.action-edit-row input')?.focus();
+              return;
+            }
+            moveAllTaskToActive(task.id);
+          });
+          allTaskTools.append(activateButton, deleteButton);
+          tools.append(saveCancelRow, allTaskTools);
+        } else {
+          tools.append(saveCancelRow, moveTools, waitingPicker, deleteButton);
+        }
 
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
@@ -1447,6 +1577,12 @@
           actionInputs?.[actionInputs.length - 1]?.focus();
         });
       }
+
+      allTab.addEventListener('click', () => {
+        if (editingId) cancelEditing();
+        currentView = 'all';
+        render();
+      });
 
       activeTab.addEventListener('click', () => {
         currentView = 'active';
@@ -1467,7 +1603,8 @@
       });
 
       addTaskButton.addEventListener('click', () => {
-        if (activeTasks().length >= MAX_TASKS) return;
+        if (editingId) return;
+        currentView = 'all';
         const task = newTask();
         tasks.push(task);
         save();
@@ -1481,7 +1618,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.18,
+          version: 2.21,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1510,17 +1647,14 @@
           if (!confirm('Replace current tasks with this backup?')) return;
           let activeSeen = 0;
           tasks = incoming.map(normaliseTask).map(task => {
-            if (!task.archived && !task.waiting) {
+            if (!task.archived && !task.waiting && task.list === 'active') {
               activeSeen += 1;
-              if (activeSeen > MAX_TASKS) {
-                task.archived = true;
-                task.archivedAt = task.archivedAt || new Date().toISOString();
-              }
+              if (activeSeen > MAX_TASKS) task.list = 'all';
             }
             return task;
           });
           editingId = null;
-          currentView = 'active';
+          currentView = 'all';
           save('Backup imported');
           render();
         } catch {
@@ -1581,11 +1715,15 @@
         );
         if (isTyping || event.altKey || event.ctrlKey || event.metaKey) return;
         if (event.key.toLowerCase() !== 't') return;
-        if (currentView !== 'active' || editingId || activeTasks().length >= MAX_TASKS) return;
+        if (editingId) return;
         event.preventDefault();
         addTaskButton.click();
       });
-      toggleActionsBtn?.addEventListener('click',()=>{showActions=!showActions;localStorage.setItem('fiveShowActions',showActions?'1':'0');render();});
+      toggleActionsButton.addEventListener('click', () => {
+        showTaskDetails = !showTaskDetails;
+        localStorage.setItem('five.showTaskDetails', String(showTaskDetails));
+        render();
+      });
       shortcutHelp?.addEventListener('click',()=>shortcutDialog.showModal());
       document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
       render();
