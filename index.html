@@ -611,10 +611,10 @@
 
     <footer class="footer">
       <button type="button" id="exportData">Export backup</button>
-      <button type="button" id="importData">Import backup</button>
+      <button type="button" id="importData">Import backup</button><button type="button" id="shortcutHelp">Keyboard shortcuts</button>
       <input class="hidden" type="file" id="importFile" accept="application/json,.json">
     </footer>
-    <div class="status" id="status" role="status"></div>
+    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Save<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
   </main>
 
   <script>
@@ -635,6 +635,8 @@
       const importButton = document.getElementById('importData');
       const importFile = document.getElementById('importFile');
       const statusElement = document.getElementById('status');
+      const shortcutHelp = document.getElementById('shortcutHelp');
+      const shortcutDialog = document.getElementById('shortcutDialog');
 
       let statusTimer;
       let editingId = null;
@@ -708,23 +710,22 @@
         statusTimer = setTimeout(() => { statusElement.textContent = ''; }, 2500);
       }
 
-      function cleanTaskActions(task) {
-        const nonEmptyActions = task.actions.filter(action => action.text.trim().length > 0);
-        if (!nonEmptyActions.length) return false;
-        task.actions = nonEmptyActions;
-        return true;
+      function formatDate() {
+        return new Date().toLocaleDateString();
       }
-
-      function canArchiveTask(task) {
-        if (!cleanTaskActions(task)) {
-          showStatus('Add at least one next action');
-          return false;
-        }
-        if (task.actions.some(action => !action.done)) {
-          showStatus('Complete all next actions before archiving');
-          return false;
-        }
-        return true;
+      function formatTime() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      function formatTimestamp() {
+        return `${formatDate()} ${formatTime()}`;
+      }
+      function insertAtCursor(el, text) {
+        const start = el.selectionStart ?? el.value.length;
+        const end = el.selectionEnd ?? el.value.length;
+        el.value = el.value.slice(0, start) + text + el.value.slice(end);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        const pos = start + text.length;
+        el.setSelectionRange?.(pos, pos);
       }
 
       function activeTasks() {
@@ -1075,7 +1076,6 @@
 
         const active = makeButton('Active', 'move-active', () => moveToActive(task.id));
         const archive = makeButton('Archive', 'archive-task', () => {
-          if (!canArchiveTask(task)) return;
           if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
           archiveTask(task.id);
         });
@@ -1174,7 +1174,7 @@
 
       function archiveTask(taskId) {
         const task = tasks.find(item => item.id === taskId);
-        if (!task || task.actions.some(action => !action.text.trim() || !action.done)) return;
+        if (!task) return;
         task.waiting = false;
         task.waitingSince = null;
         task.followUpDate = '';
@@ -1267,7 +1267,8 @@
         actionList.appendChild(addActionButton);
 
         const saveButton = makeButton('Save', 'save-task', () => {
-          if (!cleanTaskActions(task)) {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
             showStatus('Add at least one next action');
             editor.querySelector('.action-edit-row input')?.focus();
             return;
@@ -1295,7 +1296,8 @@
         const pickerActions = document.createElement('div');
         pickerActions.className = 'waiting-picker-actions';
         const confirmWaiting = makeButton('Move to Waiting', 'confirm-waiting', () => {
-          if (!cleanTaskActions(task)) {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
             showStatus('Add at least one next action');
             editor.querySelector('.action-edit-row input')?.focus();
             return;
@@ -1313,10 +1315,10 @@
           if (waitingPicker.classList.contains('open')) requestAnimationFrame(() => followInput.showPicker?.());
         });
         const archiveButton = makeButton('Archive', 'archive-task', () => {
-          if (!canArchiveTask(task)) {
-            if (!task.actions.some(action => action.text.trim().length > 0)) {
-              editor.querySelector('.action-edit-row input')?.focus();
-            }
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            editor.querySelector('.action-edit-row input')?.focus();
             return;
           }
           if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
@@ -1386,7 +1388,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.10,
+          version: 2.12,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1435,6 +1437,51 @@
 
       document.addEventListener('keydown', event => {
         const target = event.target;
+        const isField = target instanceof HTMLElement && (
+          target.matches('input[type="text"], textarea')
+        );
+
+        if (event.altKey && isField) {
+          let value = null;
+          if (event.shiftKey && event.key.toLowerCase() === 'd') value = formatTimestamp();
+          else if (event.key.toLowerCase() === 'd') value = formatDate();
+          else if (event.key.toLowerCase() === 't') value = formatTime();
+          if (value !== null) {
+            event.preventDefault();
+            insertAtCursor(target, value);
+            return;
+          }
+        }
+
+        if (event.ctrlKey && event.key === 'Enter') {
+          const saveButton = document.querySelector('.task.editing .save-task');
+          if (saveButton) {
+            event.preventDefault();
+            saveButton.click();
+            return;
+          }
+        }
+
+        if (event.altKey && event.key.toLowerCase() === 'n') {
+          const addBtn = document.querySelector('.task.editing .add-action');
+          if (addBtn) { event.preventDefault(); addBtn.click(); return; }
+        }
+
+        if (event.altKey && event.key.toLowerCase() === 'w') {
+          const waitBtn = document.querySelector('.task.editing .waiting-task');
+          if (waitBtn) { event.preventDefault(); waitBtn.click(); return; }
+        }
+
+        if (event.altKey && event.key.toLowerCase() === 'a') {
+          const archBtn = document.querySelector('.task.editing .archive-task');
+          if (archBtn) { event.preventDefault(); archBtn.click(); return; }
+        }
+
+        if (event.key === 'Escape') {
+          const saveButton = document.querySelector('.task.editing .save-task');
+          if (saveButton) { event.preventDefault(); saveButton.click(); return; }
+        }
+
         const isTyping = target instanceof HTMLElement && (
           target.matches('input, textarea, select') || target.isContentEditable
         );
@@ -1444,6 +1491,8 @@
         event.preventDefault();
         addTaskButton.click();
       });
+      shortcutHelp?.addEventListener('click',()=>shortcutDialog.showModal());
+      document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
       render();
     })();
   </script>
