@@ -108,8 +108,8 @@
       border-radius: 7px;
       background: transparent;
       color: var(--muted);
-      padding: 4px 6px;
-      font-size: 11px;
+      padding: 4px 5px;
+      font-size: 10.5px;
       white-space: nowrap;
     }
 
@@ -392,6 +392,16 @@
       color: #fff;
     }
 
+    .all-task-tools {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+    }
+    .activate-task {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
     .move-tools {
       display: grid;
       grid-template-columns: auto 1fr 1fr;
@@ -646,7 +656,8 @@
       <div class="brand">
         <h1>Five</h1>
         <nav class="view-tabs" aria-label="Task views">
-          <button type="button" class="view-tab active" id="activeTab">Active <span id="taskCount">0/5</span></button>
+          <button type="button" class="view-tab active" id="allTab">All <span id="allCount">0</span></button>
+          <button type="button" class="view-tab" id="activeTab">Active <span id="taskCount">0/5</span></button>
           <button type="button" class="view-tab" id="waitingTab">Waiting <span id="waitingCount">0</span></button>
           <button type="button" class="view-tab" id="archiveTab">Archive <span id="archiveCount">0</span></button>
         </nav>
@@ -678,9 +689,11 @@
       const STORAGE_KEY = 'fiveTasks.v1';
       const MAX_TASKS = 5;
       const tasksHost = document.getElementById('tasks');
+      const allCountElement = document.getElementById('allCount');
       const countElement = document.getElementById('taskCount');
       const waitingCountElement = document.getElementById('waitingCount');
       const archiveCountElement = document.getElementById('archiveCount');
+      const allTab = document.getElementById('allTab');
       const activeTab = document.getElementById('activeTab');
       const waitingTab = document.getElementById('waitingTab');
       const archiveTab = document.getElementById('archiveTab');
@@ -694,7 +707,7 @@
 
       let statusTimer;
       let editingId = null;
-      let currentView = 'active';
+      let currentView = 'all';
       let dragState = null;
       let editSnapshot = null;
       let newDraftId = null;
@@ -711,6 +724,7 @@
           requestor: String(task.requestor ?? '').slice(0, 200),
           title: String(task.title ?? '').slice(0, 300),
           description: String(task.description ?? '').slice(0, 5000),
+          list: task.list === 'all' ? 'all' : 'active',
           waiting: Boolean(task.waiting) && !Boolean(task.archived),
           waitingSince: task.waitingSince ? String(task.waitingSince) : null,
           followUpDate: /^\d{4}-\d{2}-\d{2}$/.test(String(task.followUpDate || '')) ? String(task.followUpDate) : '',
@@ -732,6 +746,7 @@
           requestor: '',
           title: '',
           description: '',
+          list: 'all',
           waiting: false,
           waitingSince: null,
           followUpDate: '',
@@ -816,8 +831,11 @@
         el.setSelectionRange?.(pos, pos);
       }
 
+      function allTasks() {
+        return tasks.filter(task => !task.archived && !task.waiting && task.list === 'all');
+      }
       function activeTasks() {
-        return tasks.filter(task => !task.archived && !task.waiting);
+        return tasks.filter(task => !task.archived && !task.waiting && task.list === 'active');
       }
 
       function waitingTasks() {
@@ -838,21 +856,25 @@
       }
 
       function updateHeader() {
+        const allCount = allTasks().length;
         const activeCount = activeTasks().length;
         const waitingCount = waitingTasks().length;
         const archiveCount = archivedTasks().length;
+        allCountElement.textContent = allCount;
         countElement.textContent = `${activeCount}/${MAX_TASKS}`;
         waitingCountElement.textContent = waitingCount;
         archiveCountElement.textContent = archiveCount;
+        allTab.classList.toggle('active', currentView === 'all');
         activeTab.classList.toggle('active', currentView === 'active');
         waitingTab.classList.toggle('active', currentView === 'waiting');
         archiveTab.classList.toggle('active', currentView === 'archive');
+        allTab.setAttribute('aria-current', currentView === 'all' ? 'page' : 'false');
         activeTab.setAttribute('aria-current', currentView === 'active' ? 'page' : 'false');
         waitingTab.setAttribute('aria-current', currentView === 'waiting' ? 'page' : 'false');
         archiveTab.setAttribute('aria-current', currentView === 'archive' ? 'page' : 'false');
-        addTaskButton.hidden = currentView !== 'active';
-        addTaskButton.disabled = activeCount >= MAX_TASKS;
-        addTaskButton.textContent = activeCount >= MAX_TASKS ? 'Limit reached' : '+ Task';
+        addTaskButton.hidden = Boolean(editingId);
+        addTaskButton.disabled = false;
+        addTaskButton.textContent = '+ Task';
         exportButton.disabled = tasks.length === 0;
       }
 
@@ -877,7 +899,13 @@
 
       function render() {
         tasksHost.replaceChildren();
-        const allVisibleTasks = currentView === 'active' ? activeTasks() : currentView === 'waiting' ? waitingTasks() : archivedTasks();
+        const allVisibleTasks = currentView === 'all'
+          ? allTasks()
+          : currentView === 'active'
+            ? activeTasks()
+            : currentView === 'waiting'
+              ? waitingTasks()
+              : archivedTasks();
         const visibleTasks = editingId
           ? allVisibleTasks.filter(task => task.id === editingId)
           : allVisibleTasks;
@@ -885,9 +913,11 @@
         if (!visibleTasks.length) {
           const empty = document.createElement('div');
           empty.className = 'empty';
-          empty.innerHTML = currentView === 'active'
-            ? '<strong>No active tasks</strong>Add up to five tasks.'
-            : currentView === 'waiting'
+          empty.innerHTML = currentView === 'all'
+            ? '<strong>No tasks</strong>Add tasks here, then move up to five into Active.'
+            : currentView === 'active'
+              ? '<strong>No active tasks</strong>Move a task here when you are ready to focus.'
+              : currentView === 'waiting'
               ? '<strong>Waiting is empty</strong>Tasks waiting on others will appear here.'
               : '<strong>Archive is empty</strong>Archived tasks will appear here.';
           tasksHost.appendChild(empty);
@@ -900,7 +930,7 @@
           card.className = `task${editingId === task.id ? ' editing' : ''}`;
           if (currentView === 'active' && index === 0) card.classList.add('top-focus');
           card.dataset.taskId = task.id;
-          if (currentView === 'active') {
+          if (currentView === 'all' || currentView === 'active') {
             card.append(createView(task, index), createEditor(task));
           } else if (currentView === 'waiting') {
             card.append(createWaitingView(task));
@@ -923,7 +953,11 @@
         handle.textContent = '⋮⋮';
         handle.setAttribute('aria-label', `Reorder ${task.title.trim() || `task ${index + 1}`}`);
         handle.title = 'Hold and drag to reorder';
-        handle.addEventListener('pointerdown', event => startReorder(event, task.id));
+        if (currentView === 'active') {
+          handle.addEventListener('pointerdown', event => startReorder(event, task.id));
+        } else {
+          handle.hidden = true;
+        }
 
         const content = document.createElement('div');
         content.className = 'task-content';
@@ -1182,6 +1216,7 @@
       function moveToWaiting(taskId, followUpDate = '') {
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.list = 'active';
         task.waiting = true;
         task.waitingSince = new Date().toISOString();
         task.followUpDate = followUpDate;
@@ -1197,10 +1232,25 @@
         }
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.list = 'active';
         task.waiting = false;
         task.waitingSince = null;
         task.followUpDate = '';
         save('Moved to Active');
+        render();
+      }
+
+      function moveAllTaskToActive(taskId) {
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.list = 'active';
+        finishEditing();
+        save('Moved to Active');
+        currentView = 'active';
         render();
       }
 
@@ -1281,6 +1331,7 @@
         }
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
+        task.list = 'active';
         task.waiting = false;
         task.waitingSince = null;
         task.followUpDate = '';
@@ -1427,7 +1478,23 @@
           save('Task deleted');
           render();
         });
-        tools.append(saveCancelRow, moveTools, waitingPicker, deleteButton);
+        if (task.list === 'all') {
+          const allTaskTools = document.createElement('div');
+          allTaskTools.className = 'all-task-tools';
+          const activateButton = makeButton('Move to Active', 'activate-task', () => {
+            const hasAction = task.actions.some(action => action.text.trim().length > 0);
+            if (!hasAction) {
+              showStatus('Add at least one next action');
+              editor.querySelector('.action-edit-row input')?.focus();
+              return;
+            }
+            moveAllTaskToActive(task.id);
+          });
+          allTaskTools.append(activateButton, deleteButton);
+          tools.append(saveCancelRow, allTaskTools);
+        } else {
+          tools.append(saveCancelRow, moveTools, waitingPicker, deleteButton);
+        }
 
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
@@ -1446,6 +1513,12 @@
           actionInputs?.[actionInputs.length - 1]?.focus();
         });
       }
+
+      allTab.addEventListener('click', () => {
+        if (editingId) cancelEditing();
+        currentView = 'all';
+        render();
+      });
 
       activeTab.addEventListener('click', () => {
         currentView = 'active';
@@ -1466,7 +1539,8 @@
       });
 
       addTaskButton.addEventListener('click', () => {
-        if (activeTasks().length >= MAX_TASKS) return;
+        if (editingId) return;
+        currentView = 'all';
         const task = newTask();
         tasks.push(task);
         save();
@@ -1480,7 +1554,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.18,
+          version: 2.19,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1509,17 +1583,14 @@
           if (!confirm('Replace current tasks with this backup?')) return;
           let activeSeen = 0;
           tasks = incoming.map(normaliseTask).map(task => {
-            if (!task.archived && !task.waiting) {
+            if (!task.archived && !task.waiting && task.list === 'active') {
               activeSeen += 1;
-              if (activeSeen > MAX_TASKS) {
-                task.archived = true;
-                task.archivedAt = task.archivedAt || new Date().toISOString();
-              }
+              if (activeSeen > MAX_TASKS) task.list = 'all';
             }
             return task;
           });
           editingId = null;
-          currentView = 'active';
+          currentView = 'all';
           save('Backup imported');
           render();
         } catch {
@@ -1580,7 +1651,7 @@
         );
         if (isTyping || event.altKey || event.ctrlKey || event.metaKey) return;
         if (event.key.toLowerCase() !== 't') return;
-        if (currentView !== 'active' || editingId || activeTasks().length >= MAX_TASKS) return;
+        if (editingId) return;
         event.preventDefault();
         addTaskButton.click();
       });
