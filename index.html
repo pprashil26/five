@@ -119,6 +119,7 @@
     }
 
     .view-tab span { font-weight: 780; }
+    .actions-filter-row{margin-top:4px;display:flex;justify-content:center;}
 
     button {
       min-height: 34px;
@@ -649,7 +650,7 @@
           <button type="button" class="view-tab active" id="activeTab">Active <span id="taskCount">0/5</span></button>
           <button type="button" class="view-tab" id="waitingTab">Waiting <span id="waitingCount">0</span></button>
           <button type="button" class="view-tab" id="archiveTab">Archive <span id="archiveCount">0</span></button>
-        </nav><button type="button" id="toggleActions" class="view-tab">Actions ✓</button>
+        </nav><div class="actions-filter-row"><button type="button" id="toggleActions" class="view-tab">Actions ✓</button></div>
       </div>
       <button type="button" class="add-task" id="addTask">+ Task</button>
     </header>
@@ -683,8 +684,7 @@
       const archiveCountElement = document.getElementById('archiveCount');
       const activeTab = document.getElementById('activeTab');
       const waitingTab = document.getElementById('waitingTab');
-      const archiveTab = document.getElementById('archiveTab');
-      const toggleActionsBtn=document.getElementById('toggleActions');
+      const archiveTab = document.getElementById('archiveTab'); const toggleActionsBtn=document.getElementById('toggleActions');
       const addTaskButton = document.getElementById('addTask');
       const exportButton = document.getElementById('exportData');
       const importButton = document.getElementById('importData');
@@ -699,8 +699,7 @@
       let dragState = null;
       let editSnapshot = null;
       let newDraftId = null;
-      let tasks = loadTasks();
-      let showActions = localStorage.getItem('fiveShowActions') !== '0';
+      let tasks = loadTasks(); let showActions=localStorage.getItem("fiveShowActions")!=="0";
 
       function createId() {
         return self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -855,8 +854,7 @@
         addTaskButton.hidden = currentView !== 'active';
         addTaskButton.disabled = activeCount >= MAX_TASKS;
         addTaskButton.textContent = activeCount >= MAX_TASKS ? 'Limit reached' : '+ Task';
-        toggleActionsBtn.textContent = showActions ? 'Actions ✓' : 'Actions ✕';
-        exportButton.disabled = tasks.length === 0;
+        toggleActionsBtn.textContent=showActions?"Actions ✓":"Actions ✕"; exportButton.disabled = tasks.length === 0;
       }
 
       function makeButton(text, className, handler) {
@@ -952,7 +950,7 @@
         titleRow.append(title, edit);
         content.append(requestor, titleRow);
 
-        if (task.description.trim()) {
+        if (showActions && task.description.trim()) {
           const description = document.createElement('p');
           description.className = 'description';
           description.textContent = task.description;
@@ -985,16 +983,7 @@
           });
 
           content.appendChild(actions);
-        }
-
-        if (!showActions) {
-          const summary=document.createElement('div');
-          summary.className='no-actions';
-          const done=task.actions.filter(a=>a.done).length;
-          summary.textContent=`${task.actions.length} actions • ${done} complete`;
-          content.appendChild(summary);
-        }
-        else if (showActions) {
+        } else if (showActions) {
           const noActions = document.createElement('div');
           noActions.className = 'no-actions';
           noActions.textContent = 'No next actions';
@@ -1492,7 +1481,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.21,
+          version: 2.18,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1596,7 +1585,7 @@
         event.preventDefault();
         addTaskButton.click();
       });
-      toggleActionsBtn?.addEventListener("click",()=>{showActions=!showActions;localStorage.setItem("fiveShowActions",showActions?"1":"0");updateHeader();render();});
+      toggleActionsBtn?.addEventListener('click',()=>{showActions=!showActions;localStorage.setItem('fiveShowActions',showActions?'1':'0');render();});
       shortcutHelp?.addEventListener('click',()=>shortcutDialog.showModal());
       document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
       render();
