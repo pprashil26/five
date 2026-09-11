@@ -832,7 +832,7 @@
       }
 
       function allTasks() {
-        return tasks.filter(task => !task.archived && !task.waiting && task.list === 'all');
+        return tasks.filter(task => !task.archived && !task.waiting);
       }
       function activeTasks() {
         return tasks.filter(task => !task.archived && !task.waiting && task.list === 'active');
@@ -1554,7 +1554,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.19,
+          version: 2.19.1,
           exportedAt: new Date().toISOString(),
           tasks
         };
