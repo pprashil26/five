@@ -407,7 +407,7 @@
     }
     .move-tools {
       display: grid;
-      grid-template-columns: auto 1fr 1fr;
+      grid-template-columns: auto repeat(3, minmax(0, 1fr));
       align-items: center;
       gap: 5px;
       padding-top: 2px;
@@ -1256,6 +1256,16 @@
         render();
       }
 
+      function moveActiveTaskToAll(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task || task.list !== 'active' || task.waiting || task.archived) return;
+        task.list = 'all';
+        finishEditing();
+        currentView = 'all';
+        save('Moved to All');
+        render();
+      }
+
       function moveAllTaskToActive(taskId) {
         if (activeTasks().length >= MAX_TASKS) {
           showStatus('Five active tasks already exist');
@@ -1471,6 +1481,9 @@
         pickerActions.append(confirmWaiting, cancelWaiting);
         waitingPicker.append(followLabel, pickerActions);
 
+        const allButton = makeButton('All', 'activate-task', () => {
+          moveActiveTaskToAll(task.id);
+        });
         const waitingButton = makeButton('Waiting', 'waiting-task', () => {
           waitingPicker.classList.toggle('open');
           if (waitingPicker.classList.contains('open')) requestAnimationFrame(() => followInput.showPicker?.());
@@ -1485,7 +1498,7 @@
           if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
           archiveTask(task.id);
         });
-        moveTools.append(moveLabel, waitingButton, archiveButton);
+        moveTools.append(moveLabel, allButton, waitingButton, archiveButton);
 
         const deleteButton = makeButton('Delete task', 'delete-link', () => {
           if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
@@ -1570,7 +1583,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.19,
+          version: 2.20,
           exportedAt: new Date().toISOString(),
           tasks
         };
