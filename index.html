@@ -598,7 +598,7 @@
       font-size: 15px;
     }
 
-    .footer {
+    .capture-panel{position:absolute;top:0;right:0;height:100%;width:min(320px,90%);background:#fff;border-left:1px solid #ddd;transform:translateX(100%);transition:.2s;z-index:1001;padding:10px;overflow:auto}.capture-panel.open{transform:translateX(0)}.capture-list{display:grid;gap:4px;margin-top:8px}.capture-item{padding:6px;border:1px solid #ddd;border-radius:6px;cursor:pointer}.capture-header{display:flex;justify-content:space-between;align-items:center}.capture-row{display:grid;grid-template-columns:1fr auto;gap:6px}.capture-btn{margin-left:6px}.footer {
       flex: 0 0 auto;
       width: 100%;
       margin-top: 0;
@@ -616,7 +616,7 @@
       gap: 3px;
     }
 
-    .capture-drawer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #ddd;max-height:50vh;display:none;z-index:1000;padding:10px;overflow:auto}.capture-drawer.open{display:block}.capture-list{display:grid;gap:4px;margin-top:8px}.capture-item{padding:6px;border:1px solid #ddd;border-radius:6px;cursor:pointer}.capture-row{display:grid;grid-template-columns:1fr auto;gap:6px}.footer button {
+    .footer button {
       min-height: 30px;
       border: 0;
       background: transparent;
@@ -651,7 +651,7 @@
           <button type="button" class="view-tab" id="archiveTab">Archive <span id="archiveCount">0</span></button>
         </nav>
       </div>
-      <button type="button" class="add-task" id="addTask">+ Task</button>
+      <div><button type="button" id="captureBtn" class="capture-btn">Capture</button><button type="button" class="add-task" id="addTask">+ Task</button></div>
     </header>
 
     <section class="tasks" id="tasks" aria-live="polite"></section>
@@ -660,7 +660,7 @@
       <div class="footer-actions">
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
-        <button type="button" id="shortcutHelp">Keyboard shortcuts</button><button type="button" id="captureBtn">Capture</button>
+        <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
       </div>
       <div class="philosophy">
@@ -668,10 +668,10 @@
         <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
       </div>
     </footer>
-    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog><div id="captureDrawer" class="capture-drawer"><b>Quick Capture</b><div class="capture-row"><input id="captureInput" type="text" placeholder="Capture task"><button id="captureAdd">Add</button></div><div id="captureList" class="capture-list"></div><button id="captureClose">Close</button></div>
+    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
   </main>
 
-  <script>
+  <aside id="capturePanel" class="capture-panel"><div class="capture-header"><b>Capture</b><button id="captureClose">✕</button></div><div class="capture-row"><input id="captureInput" type="text" placeholder="Capture task"><button id="captureAdd">Add</button></div><div id="captureList" class="capture-list"></div></aside><script>
     (() => {
       'use strict';
 
@@ -690,12 +690,7 @@
       const importFile = document.getElementById('importFile');
       const statusElement = document.getElementById('status');
       const shortcutHelp = document.getElementById('shortcutHelp');
-      const shortcutDialog = document.getElementById('shortcutDialog');
-      const captureBtn=document.getElementById('captureBtn');
-      const captureDrawer=document.getElementById('captureDrawer');
-      const captureInput=document.getElementById('captureInput');
-      const captureAdd=document.getElementById('captureAdd');
-      const captureList=document.getElementById('captureList');
+      const shortcutDialog = document.getElementById('shortcutDialog');const captureBtn=document.getElementById('captureBtn');const capturePanel=document.getElementById('capturePanel');const captureInput=document.getElementById('captureInput');const captureAdd=document.getElementById('captureAdd');const captureList=document.getElementById('captureList');
 
       let statusTimer;
       let editingId = null;
@@ -755,9 +750,6 @@
         }
       }
 
-      function loadCaptures(){ try{return JSON.parse(localStorage.getItem("fiveCapture")||"[]")}catch{return []}}
-      function saveCaptures(items){ localStorage.setItem("fiveCapture",JSON.stringify(items)); }
-      function renderCaptures(){ const items=loadCaptures(); captureList.innerHTML=""; items.forEach((t,i)=>{ const d=document.createElement("div"); d.className="capture-item"; d.textContent=t; d.onclick=()=>{ if(activeTasks().length>=MAX_TASKS) return showStatus('Five active tasks already exist'); const task=newTask(); task.title=t.toUpperCase(); tasks.push(task); save(); saveCaptures(items.filter((_,x)=>x!==i)); beginEditing(task,true); captureDrawer.classList.remove('open'); }; captureList.appendChild(d);}); }
       function save(message = '') {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -824,7 +816,10 @@
         el.setSelectionRange?.(pos, pos);
       }
 
-      function activeTasks() {
+      function loadCaptures(){try{return JSON.parse(localStorage.getItem("fiveCapture")||"[]")}catch{return []}}
+function saveCaptures(v){localStorage.setItem("fiveCapture",JSON.stringify(v))}
+function renderCaptures(){const items=loadCaptures();captureList.innerHTML="";items.forEach((t,i)=>{const d=document.createElement("div");d.className="capture-item";d.textContent=t;d.onclick=()=>{if(activeTasks().length>=MAX_TASKS)return;const task=newTask();task.title=t.toUpperCase();tasks.push(task);save();saveCaptures(items.filter((_,x)=>x!==i));beginEditing(task,true);capturePanel.classList.remove("open")};captureList.appendChild(d)})}
+function activeTasks() {
         return tasks.filter(task => !task.archived && !task.waiting);
       }
 
@@ -1488,7 +1483,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.19,
+          version: 2.20,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1587,14 +1582,13 @@
           target.matches('input, textarea, select') || target.isContentEditable
         );
         if (isTyping || event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.key.toLowerCase() === 'c'){event.preventDefault();capturePanel.classList.add('open');renderCaptures();captureInput.focus();return;}
         if (event.key.toLowerCase() !== 't') return;
         if (currentView !== 'active' || editingId || activeTasks().length >= MAX_TASKS) return;
         event.preventDefault();
         addTaskButton.click();
       });
-      captureBtn?.addEventListener("click",()=>{captureDrawer.classList.add("open");renderCaptures();captureInput.focus();});
-      document.getElementById("captureClose")?.addEventListener("click",()=>captureDrawer.classList.remove("open"));
-      captureAdd?.addEventListener("click",()=>{const v=captureInput.value.trim(); if(!v) return; const items=loadCaptures(); items.unshift(v); saveCaptures(items); captureInput.value=""; renderCaptures();});
+      captureBtn?.addEventListener("click",()=>{capturePanel.classList.add("open");renderCaptures();captureInput.focus()});document.getElementById("captureClose")?.addEventListener("click",()=>capturePanel.classList.remove("open"));captureAdd?.addEventListener("click",()=>{const v=captureInput.value.trim();if(!v)return;const a=loadCaptures();a.unshift(v);saveCaptures(a);captureInput.value="";renderCaptures();});
       shortcutHelp?.addEventListener('click',()=>shortcutDialog.showModal());
       document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
       render();
