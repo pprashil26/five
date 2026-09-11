@@ -45,11 +45,13 @@
     button { touch-action: manipulation; }
 
     .app {
-      display:flex;
-      flex-direction:column;
+      display: flex;
+      flex-direction: column;
       width: 100%;
       max-width: 600px;
-      min-height: 100dvh;
+      height: 100dvh;
+      min-height: 0;
+      overflow: hidden;
       margin: 0 auto;
       padding:
         max(8px, env(safe-area-inset-top))
@@ -152,11 +154,15 @@
     }
 
     .tasks {
-      flex:1;
-      min-height:0;
-      overflow:auto;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       display: grid;
+      align-content: start;
       gap: 8px;
+      padding-bottom: 8px;
     }
 
     .task {
@@ -240,7 +246,7 @@
       letter-spacing: -0.15px;
     }
 
-    .edit-button { display:none;
+    .edit-button {
       min-height: 28px;
       border: 0;
       background: transparent;
@@ -456,14 +462,14 @@
       font-size: 1.05em;
     }
     .philosophy-tagline {
-      margin-top: 4px;
-      font-size: 10px;
+      margin-top: 2px;
+      font-size: 9px;
       opacity: .85;
     }
 
     .philosophy {
-      margin: 0 0 8px;
-      padding: 7px 10px;
+      margin: 4px 0 0;
+      padding: 5px 8px;
       border-radius: 8px;
       background: #f1f3f5;
       color: #69717c;
@@ -576,15 +582,19 @@
     }
 
     .footer {
-      position:sticky;
-      bottom:0;
-      background: rgba(247,247,245,.98);
+      flex: 0 0 auto;
+      margin-top: 0;
+      padding-top: 6px;
+      padding-bottom: max(2px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: rgba(247, 247, 245, 0.98);
+    }
+
+    .footer-actions {
       display: flex;
       justify-content: center;
-      gap: 5px;
-      margin-top: 12px;
-      padding-top: 8px;
-      border-top: 1px solid var(--line);
+      flex-wrap: wrap;
+      gap: 3px;
     }
 
     .footer button {
@@ -625,15 +635,20 @@
       <button type="button" class="add-task" id="addTask">+ Task</button>
     </header>
 
-    <section class="tasks" id="tasks" aria-live="polite"></section> id="tasks" aria-live="polite"></section>
+    <section class="tasks" id="tasks" aria-live="polite"></section>
 
     <footer class="footer">
-      <button type="button" id="exportData">Export backup</button>
-      <button type="button" id="importData">Import backup</button><button type="button" id="shortcutHelp">Keyboard shortcuts</button>
-      <input class="hidden" type="file" id="importFile" accept="application/json,.json">
-    <div class="philosophy">
-<span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
-<div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div></footer>
+      <div class="footer-actions">
+        <button type="button" id="exportData">Export backup</button>
+        <button type="button" id="importData">Import backup</button>
+        <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
+        <input class="hidden" type="file" id="importFile" accept="application/json,.json">
+      </div>
+      <div class="philosophy">
+        <span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
+        <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
+      </div>
+    </footer>
     <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Save<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
   </main>
 
@@ -868,13 +883,18 @@
         title.className = 'task-title';
         title.textContent = task.title.trim() || 'Untitled task';
 
-        const edit = makeButton('Edit', 'edit-button', () => {
+        const openEditor = () => {
           editingId = task.id;
           render();
           requestAnimationFrame(() => {
             const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
             card?.querySelector('input')?.focus();
           });
+        };
+        const edit = makeButton('Edit', 'edit-button', openEditor);
+        view.addEventListener('click', event => {
+          if (event.target.closest('input, button, .drag-handle')) return;
+          openEditor();
         });
 
         titleRow.append(title, edit);
