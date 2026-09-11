@@ -100,7 +100,10 @@
       align-items: center;
       gap: 2px;
       min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+    .view-tabs::-webkit-scrollbar { display: none; }
 
     .view-tab {
       min-height: 28px;
@@ -394,11 +397,11 @@
 
     .all-task-tools {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 6px;
     }
     .activate-task {
-      border-color: var(--accent);
+      border-color: #cbd8f4;
       background: var(--accent-soft);
       color: var(--accent);
     }
@@ -645,6 +648,20 @@
 
     .hidden { display: none !important; }
 
+    @media (max-width: 470px) {
+      .topbar {
+        grid-template-columns: 1fr auto;
+      }
+      .brand {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+      }
+      h1 { font-size: 19px; }
+      .view-tab { padding-inline: 4px; font-size: 10px; }
+      .add-task { padding-inline: 8px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       * { scroll-behavior: auto !important; }
     }
@@ -832,7 +849,7 @@
       }
 
       function allTasks() {
-        return tasks.filter(task => !task.archived && !task.waiting);
+        return tasks.filter(task => !task.archived && !task.waiting && task.list === 'all');
       }
       function activeTasks() {
         return tasks.filter(task => !task.archived && !task.waiting && task.list === 'active');
@@ -914,9 +931,9 @@
           const empty = document.createElement('div');
           empty.className = 'empty';
           empty.innerHTML = currentView === 'all'
-            ? '<strong>No tasks</strong>Add tasks here, then move up to five into Active.'
+            ? '<strong>No tasks</strong>Add an unlimited number of tasks here.'
             : currentView === 'active'
-              ? '<strong>No active tasks</strong>Move a task here when you are ready to focus.'
+              ? '<strong>No active tasks</strong>Move up to five tasks here from All.'
               : currentView === 'waiting'
               ? '<strong>Waiting is empty</strong>Tasks waiting on others will appear here.'
               : '<strong>Archive is empty</strong>Archived tasks will appear here.';
@@ -953,11 +970,7 @@
         handle.textContent = '⋮⋮';
         handle.setAttribute('aria-label', `Reorder ${task.title.trim() || `task ${index + 1}`}`);
         handle.title = 'Hold and drag to reorder';
-        if (currentView === 'active') {
-          handle.addEventListener('pointerdown', event => startReorder(event, task.id));
-        } else {
-          handle.hidden = true;
-        }
+        handle.addEventListener('pointerdown', event => startReorder(event, task.id));
 
         const content = document.createElement('div');
         content.className = 'task-content';
@@ -1029,8 +1042,9 @@
 
       function startReorder(event, taskId) {
         if (event.button !== undefined && event.button !== 0) return;
-        const active = activeTasks();
-        const sourceIndex = active.findIndex(task => task.id === taskId);
+        if (currentView !== 'all' && currentView !== 'active') return;
+        const reorderTasks = currentView === 'all' ? allTasks() : activeTasks();
+        const sourceIndex = reorderTasks.findIndex(task => task.id === taskId);
         const sourceCard = tasksHost.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
         if (sourceIndex < 0 || !sourceCard) return;
 
@@ -1065,7 +1079,8 @@
           if (event.clientY >= rect.top && event.clientY <= rect.bottom) {
             target = card;
             const targetId = card.dataset.taskId;
-            dragState.targetIndex = activeTasks().findIndex(task => task.id === targetId);
+            const reorderTasks = currentView === 'all' ? allTasks() : activeTasks();
+            dragState.targetIndex = reorderTasks.findIndex(task => task.id === targetId);
             dragState.insertAfter = event.clientY > rect.top + rect.height / 2;
             card.classList.add(dragState.insertAfter ? 'drag-over-after' : 'drag-over-before');
             break;
@@ -1083,15 +1098,16 @@
         cleanupReorder();
 
         if (targetIndex === sourceIndex) return;
-        const active = activeTasks();
-        const archived = tasks.filter(task => task.archived);
-        const [moved] = active.splice(sourceIndex, 1);
+        const subset = currentView === 'all' ? allTasks() : activeTasks();
+        const [moved] = subset.splice(sourceIndex, 1);
         let destination = targetIndex;
         if (sourceIndex < targetIndex) destination -= 1;
         if (insertAfter) destination += 1;
-        destination = Math.max(0, Math.min(destination, active.length));
-        active.splice(destination, 0, moved);
-        tasks = [...active, ...archived];
+        destination = Math.max(0, Math.min(destination, subset.length));
+        subset.splice(destination, 0, moved);
+        const subsetIds = new Set(subset.map(task => task.id));
+        let replacementIndex = 0;
+        tasks = tasks.map(task => subsetIds.has(task.id) ? subset[replacementIndex++] : task);
         save('Order saved');
         render();
       }
@@ -1246,11 +1262,11 @@
           return;
         }
         const task = tasks.find(item => item.id === taskId);
-        if (!task) return;
+        if (!task || task.list !== 'all') return;
         task.list = 'active';
         finishEditing();
-        save('Moved to Active');
         currentView = 'active';
+        save('Moved to Active');
         render();
       }
 
@@ -1554,7 +1570,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.19.1,
+          version: 2.19,
           exportedAt: new Date().toISOString(),
           tasks
         };
