@@ -376,10 +376,15 @@
       margin-top: 8px;
     }
 
-    .save-cancel-row { display:grid; grid-template-columns: 3fr 1fr; gap:6px; }
-
-    .cancel-task { background:#f3f4f6; color:#69717c; }
-
+    .save-cancel-row {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(84px, 1fr);
+      gap: 6px;
+    }
+    .cancel-task {
+      background: #f3f4f6;
+      color: var(--muted);
+    }
     .save-task {
       width: 100%;
       border-color: var(--accent);
@@ -663,7 +668,7 @@
         <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
       </div>
     </footer>
-    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Save<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
   </main>
 
   <script>
@@ -691,6 +696,8 @@
       let editingId = null;
       let currentView = 'active';
       let dragState = null;
+      let editSnapshot = null;
+      let newDraftId = null;
       let tasks = loadTasks();
 
       function createId() {
@@ -757,6 +764,38 @@
         clearTimeout(statusTimer);
         statusElement.textContent = message;
         statusTimer = setTimeout(() => { statusElement.textContent = ''; }, 2500);
+      }
+      function cloneTask(task) {
+        return JSON.parse(JSON.stringify(task));
+      }
+      function beginEditing(task, isNew = false) {
+        editingId = task.id;
+        editSnapshot = isNew ? null : cloneTask(task);
+        newDraftId = isNew ? task.id : null;
+        render();
+        requestAnimationFrame(() => {
+          const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
+          card?.querySelector('input')?.focus();
+        });
+      }
+      function cancelEditing() {
+        if (!editingId) return;
+        if (newDraftId === editingId) {
+          tasks = tasks.filter(task => task.id !== editingId);
+        } else if (editSnapshot) {
+          const index = tasks.findIndex(task => task.id === editingId);
+          if (index >= 0) tasks[index] = cloneTask(editSnapshot);
+        }
+        editingId = null;
+        editSnapshot = null;
+        newDraftId = null;
+        save('Changes cancelled');
+        render();
+      }
+      function finishEditing() {
+        editingId = null;
+        editSnapshot = null;
+        newDraftId = null;
       }
 
       function formatDate() {
@@ -897,14 +936,7 @@
         title.className = 'task-title';
         title.textContent = task.title.trim() || 'Untitled task';
 
-        const openEditor = () => {
-          editingId = task.id;
-          render();
-          requestAnimationFrame(() => {
-            const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
-            card?.querySelector('input')?.focus();
-          });
-        };
+        const openEditor = () => beginEditing(task);
         const edit = makeButton('Edit', 'edit-button', openEditor);
         view.addEventListener('click', event => {
           if (event.target.closest('input, button, .drag-handle')) return;
@@ -1327,10 +1359,15 @@
             editor.querySelector('.action-edit-row input')?.focus();
             return;
           }
-          editingId = null;
+          finishEditing();
           save('Saved');
           render();
         });
+
+        const cancelButton = makeButton('Cancel', 'cancel-task', cancelEditing);
+        const saveCancelRow = document.createElement('div');
+        saveCancelRow.className = 'save-cancel-row';
+        saveCancelRow.append(saveButton, cancelButton);
 
         const moveTools = document.createElement('div');
         moveTools.className = 'move-tools';
@@ -1387,7 +1424,7 @@
           save('Task deleted');
           render();
         });
-        tools.append(saveButton, moveTools, waitingPicker, deleteButton);
+        tools.append(saveCancelRow, moveTools, waitingPicker, deleteButton);
 
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
@@ -1429,12 +1466,10 @@
         if (activeTasks().length >= MAX_TASKS) return;
         const task = newTask();
         tasks.push(task);
-        editingId = task.id;
         save();
-        render();
+        beginEditing(task, true);
         requestAnimationFrame(() => {
           const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
-          card?.querySelector('input')?.focus();
           card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
       });
@@ -1531,9 +1566,10 @@
           if (archBtn) { event.preventDefault(); archBtn.click(); return; }
         }
 
-        if (event.key === 'Escape') {
-          const saveButton = document.querySelector('.task.editing .save-task');
-          if (saveButton) { event.preventDefault(); saveButton.click(); return; }
+        if (event.key === 'Escape' && editingId) {
+          event.preventDefault();
+          cancelEditing();
+          return;
         }
 
         const isTyping = target instanceof HTMLElement && (
