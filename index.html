@@ -376,6 +376,10 @@
       margin-top: 8px;
     }
 
+    .save-cancel-row { display:grid; grid-template-columns: 3fr 1fr; gap:6px; }
+
+    .cancel-task { background:#f3f4f6; color:#69717c; }
+
     .save-task {
       width: 100%;
       border-color: var(--accent);
@@ -1438,7 +1442,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.16,
+          version: 2.17,
           exportedAt: new Date().toISOString(),
           tasks
         };
