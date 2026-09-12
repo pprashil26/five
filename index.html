@@ -387,9 +387,25 @@
 
     .action-edit-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 34px;
+      grid-template-columns: 28px minmax(0, 1fr) 34px;
       gap: 4px;
+      border-radius: 7px;
     }
+    .action-drag-handle {
+      min-width: 28px;
+      min-height: 36px;
+      border: 0;
+      background: transparent;
+      color: #9aa0a8;
+      padding: 0;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .action-drag-handle:active { cursor: grabbing; }
+    .action-edit-row.action-dragging { opacity: .65; background: var(--accent-soft); }
+    .action-edit-row.action-over-before { box-shadow: inset 0 2px 0 var(--accent); }
+    .action-edit-row.action-over-after { box-shadow: inset 0 -2px 0 var(--accent); }
 
     .remove-action {
       min-width: 34px;
@@ -679,8 +695,7 @@
     @media (max-width: 470px) {
       .topbar { gap: 4px; }
       .view-tab { padding-inline: 4px; font-size: 10px; }
-      .actions-filter { padding-inline: 5px; font-size: 9.5px; }
-      .add-task { flex: 0 0 auto; padding-inline: 8px; }
+      .add-task { padding-inline: 8px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -750,6 +765,7 @@
       let editingId = null;
       let currentView = 'all';
       let dragState = null;
+      let actionDragState = null;
       let editSnapshot = null;
       let newDraftId = null;
       let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
@@ -1434,6 +1450,11 @@
         task.actions.forEach(action => {
           const row = document.createElement('div');
           row.className = 'action-edit-row';
+          row.dataset.actionId = action.id;
+          const actionHandle = makeButton('⋮', 'action-drag-handle', () => {});
+          actionHandle.setAttribute('aria-label', `Reorder ${action.text || 'action'}`);
+          actionHandle.title = 'Hold and drag to reorder';
+          actionHandle.addEventListener('pointerdown', event => startActionReorder(event, task.id, action.id));
           const input = makeInput(action.text, task.actions.indexOf(action) === 0 ? 'Next action, required' : 'Next action', 1000, value => {
             action.text = value;
             save();
@@ -1454,7 +1475,7 @@
             render();
           });
           remove.setAttribute('aria-label', 'Delete action');
-          row.append(input, remove);
+          row.append(actionHandle, input, remove);
           actionList.appendChild(row);
         });
 
@@ -1561,6 +1582,68 @@
         return editor;
       }
 
+      function startActionReorder(event, taskId, actionId) {
+        if (event.button !== undefined && event.button !== 0) return;
+        const task = tasks.find(item => item.id === taskId);
+        const sourceIndex = task?.actions.findIndex(action => action.id === actionId) ?? -1;
+        const sourceRow = event.currentTarget.closest('.action-edit-row');
+        if (!task || sourceIndex < 0 || !sourceRow) return;
+        event.preventDefault();
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+        actionDragState = { pointerId: event.pointerId, taskId, sourceIndex, targetIndex: sourceIndex, insertAfter: false, handle: event.currentTarget, sourceRow };
+        sourceRow.classList.add('action-dragging');
+        document.addEventListener('pointermove', moveActionReorder, { passive: false });
+        document.addEventListener('pointerup', finishActionReorder);
+        document.addEventListener('pointercancel', cancelActionReorder);
+      }
+      function clearActionDropMarkers() {
+        tasksHost.querySelectorAll('.action-over-before, .action-over-after').forEach(row => row.classList.remove('action-over-before', 'action-over-after'));
+      }
+      function moveActionReorder(event) {
+        if (!actionDragState || event.pointerId !== actionDragState.pointerId) return;
+        event.preventDefault();
+        clearActionDropMarkers();
+        const task = tasks.find(item => item.id === actionDragState.taskId);
+        for (const row of tasksHost.querySelectorAll('.action-edit-row')) {
+          if (row === actionDragState.sourceRow) continue;
+          const rect = row.getBoundingClientRect();
+          if (event.clientY >= rect.top && event.clientY <= rect.bottom) {
+            actionDragState.targetIndex = task.actions.findIndex(action => action.id === row.dataset.actionId);
+            actionDragState.insertAfter = event.clientY > rect.top + rect.height / 2;
+            row.classList.add(actionDragState.insertAfter ? 'action-over-after' : 'action-over-before');
+            break;
+          }
+        }
+      }
+      function finishActionReorder(event) {
+        if (!actionDragState || event.pointerId !== actionDragState.pointerId) return;
+        const { taskId, sourceIndex, targetIndex, insertAfter } = actionDragState;
+        cleanupActionReorder();
+        if (sourceIndex === targetIndex) return;
+        const task = tasks.find(item => item.id === taskId);
+        const [moved] = task.actions.splice(sourceIndex, 1);
+        let destination = targetIndex;
+        if (sourceIndex < targetIndex) destination -= 1;
+        if (insertAfter) destination += 1;
+        task.actions.splice(Math.max(0, Math.min(destination, task.actions.length)), 0, moved);
+        save('Action order saved');
+        render();
+      }
+      function cancelActionReorder(event) {
+        if (!actionDragState || event.pointerId !== actionDragState.pointerId) return;
+        cleanupActionReorder();
+      }
+      function cleanupActionReorder() {
+        if (!actionDragState) return;
+        actionDragState.sourceRow.classList.remove('action-dragging');
+        actionDragState.handle.releasePointerCapture?.(actionDragState.pointerId);
+        clearActionDropMarkers();
+        document.removeEventListener('pointermove', moveActionReorder);
+        document.removeEventListener('pointerup', finishActionReorder);
+        document.removeEventListener('pointercancel', cancelActionReorder);
+        actionDragState = null;
+      }
+
       function addAction(taskId) {
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
@@ -1615,7 +1698,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.22,
+          version: 2.23,
           exportedAt: new Date().toISOString(),
           tasks
         };
