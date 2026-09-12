@@ -726,7 +726,7 @@
     .event-entry input, .event-entry select { min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
     .event-add { min-height:34px; padding:4px 8px; border-color:var(--accent); background:var(--accent); color:#fff; }
     .events-list { display:grid; gap:5px; margin-top:10px; overflow:auto; }
-    .event-item { display:grid; grid-template-columns:76px minmax(0,1fr) auto; align-items:center; gap:7px; padding:7px; border:1px solid var(--line); border-radius:8px; }
+    .event-item { display:grid; grid-template-columns:76px minmax(0,1fr) auto auto; align-items:center; gap:7px; padding:7px; border:1px solid var(--line); border-radius:8px; }
     .event-item.today { border-color:#e5b8b4; background:#fff7f6; }
     .event-when { color:var(--accent); font-size:11px; font-weight:760; }
     .event-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:680; }
@@ -907,6 +907,7 @@
         return source.slice(0, 5000).map(item => ({
           id: typeof item?.id === 'string' && item.id ? item.id : createId(),
           title: String(item?.title || '').slice(0, 200),
+          promoted: Boolean(item?.promoted),
           date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || '')) ? String(item.date) : '',
           time: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.time || '')) ? String(item.time) : ''
         })).filter(item => item.title && item.date);
@@ -947,12 +948,7 @@
           const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
           const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
           const title=document.createElement('div'); title.className='event-title'; title.textContent=item.title;
-          const remove=makeButton('×','event-delete',()=>{
-            if (!confirm(`Delete "${item.title}"?`)) return;
-            events=events.filter(event=>event.id!==item.id);
-            saveEvents('Event deleted');
-            renderEvents();
-          });
+          const remove=makeButton('×','event-delete',()=>{ events=events.filter(event=>event.id!==item.id); saveEvents('Event deleted'); renderEvents(); });
           remove.setAttribute('aria-label',`Delete ${item.title}`); row.append(when,title,remove); eventsList.appendChild(row);
         });
       }
@@ -964,7 +960,7 @@
           eventTimeInput.focus();
           return;
         }
-        events.push({id:createId(),title,date,time}); saveEvents('Event added');
+        events.push({id:createId(),title,date,time,promoted:false}); saveEvents('Event added');
         eventTitleInput.value=''; eventTimeInput.value=''; renderEvents(); eventTitleInput.focus();
       }
 
@@ -1804,7 +1800,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.31,
+          version: 2.32,
           exportedAt: new Date().toISOString(),
           tasks,
           events
