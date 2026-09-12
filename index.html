@@ -787,7 +787,7 @@
       <div class="event-entry">
         <input type="text" id="eventTitle" maxlength="200" placeholder="Event title">
         <input type="date" id="eventDate" aria-label="Event date">
-        <input type="time" id="eventTime" aria-label="Event time">
+        <input type="time" id="eventTime" step="900" aria-label="Event time in 15-minute intervals">
         <button type="button" class="event-add" id="addEvent">Add</button>
       </div>
       <div class="events-list" id="eventsList"></div>
@@ -938,6 +938,11 @@
       function addEvent() {
         const title=eventTitleInput.value.trim(); const date=eventDateInput.value; const time=eventTimeInput.value;
         if (!title || !date) { showStatus('Event title and date are required'); return; }
+        if (time && !/^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(time)) {
+          showStatus('Select time in 15-minute intervals');
+          eventTimeInput.focus();
+          return;
+        }
         events.push({id:createId(),title,date,time}); saveEvents('Event added');
         eventTitleInput.value=''; eventTimeInput.value=''; renderEvents(); eventTitleInput.focus();
       }
@@ -1778,7 +1783,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.27,
+          version: 2.28,
           exportedAt: new Date().toISOString(),
           tasks
         };
