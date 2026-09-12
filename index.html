@@ -947,7 +947,12 @@
           const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
           const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
           const title=document.createElement('div'); title.className='event-title'; title.textContent=item.title;
-          const remove=makeButton('×','event-delete',()=>{ events=events.filter(event=>event.id!==item.id); saveEvents('Event deleted'); renderEvents(); });
+          const remove=makeButton('×','event-delete',()=>{
+            if (!confirm(`Delete "${item.title}"?`)) return;
+            events=events.filter(event=>event.id!==item.id);
+            saveEvents('Event deleted');
+            renderEvents();
+          });
           remove.setAttribute('aria-label',`Delete ${item.title}`); row.append(when,title,remove); eventsList.appendChild(row);
         });
       }
@@ -1799,7 +1804,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.30,
+          version: 2.31,
           exportedAt: new Date().toISOString(),
           tasks,
           events
