@@ -902,15 +902,18 @@
         }
       }
 
+      function normaliseEvents(source) {
+        if (!Array.isArray(source)) return [];
+        return source.slice(0, 5000).map(item => ({
+          id: typeof item?.id === 'string' && item.id ? item.id : createId(),
+          title: String(item?.title || '').slice(0, 200),
+          date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || '')) ? String(item.date) : '',
+          time: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.time || '')) ? String(item.time) : ''
+        })).filter(item => item.title && item.date);
+      }
       function loadEvents() {
         try {
-          const raw = JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');
-          return Array.isArray(raw) ? raw.map(item => ({
-            id: typeof item?.id === 'string' && item.id ? item.id : createId(),
-            title: String(item?.title || '').slice(0, 200),
-            date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || '')) ? String(item.date) : '',
-            time: /^\d{2}:\d{2}$/.test(String(item?.time || '')) ? String(item.time) : ''
-          })).filter(item => item.title && item.date) : [];
+          return normaliseEvents(JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]'));
         } catch { return []; }
       }
       function saveEvents(message = '') {
@@ -1796,9 +1799,10 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.29,
+          version: 2.30,
           exportedAt: new Date().toISOString(),
-          tasks
+          tasks,
+          events
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1820,21 +1824,38 @@
         if (!file) return;
         try {
           const parsed = JSON.parse(await file.text());
-          const incoming = Array.isArray(parsed) ? parsed : parsed.tasks;
-          if (!Array.isArray(incoming)) throw new Error('Invalid backup');
-          if (!confirm('Replace current tasks with this backup?')) return;
+          const incomingTasks = Array.isArray(parsed) ? parsed : parsed?.tasks;
+          if (!Array.isArray(incomingTasks)) throw new Error('Invalid backup');
+
+          const incomingEvents = Array.isArray(parsed) ? null : parsed?.events;
+          if (incomingEvents !== undefined && !Array.isArray(incomingEvents)) throw new Error('Invalid events');
+
           let activeSeen = 0;
-          tasks = incoming.map(normaliseTask).map(task => {
+          const nextTasks = incomingTasks.map(normaliseTask).map(task => {
             if (!task.archived && !task.waiting && task.list === 'active') {
               activeSeen += 1;
               if (activeSeen > MAX_TASKS) task.list = 'all';
             }
             return task;
           });
+          const hasEventsInBackup = Array.isArray(incomingEvents);
+          const nextEvents = hasEventsInBackup ? normaliseEvents(incomingEvents) : events;
+
+          const importLabel = hasEventsInBackup ? 'tasks and events' : 'tasks only';
+          if (!confirm(`Replace current ${importLabel} with this backup?`)) return;
+
+          tasks = nextTasks;
+          events = nextEvents;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+          if (hasEventsInBackup) localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
           editingId = null;
+          editSnapshot = null;
+          newDraftId = null;
           currentView = 'all';
-          save('Backup imported');
           render();
+          renderEvents();
+          updateEventButton();
+          showStatus(hasEventsInBackup ? 'Tasks and events imported' : 'Tasks imported; existing events kept');
         } catch {
           showStatus('Could not import this backup');
         }
