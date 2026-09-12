@@ -719,13 +719,25 @@
     .events-dialog::backdrop { background: rgba(29,35,42,.28); }
     .events-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .events-header h2 { margin:0; font-size:16px; }
+    .events-header-actions { display:flex; align-items:center; gap:4px; }
+    .events-new { min-width:30px; min-height:28px; border-color:var(--accent); background:var(--accent); color:#fff; padding:2px 8px; }
     .events-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
-    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:5px; margin-top:10px; }
+    .event-form-view { display:none; }
+    .events-dialog.form-mode .event-list-view { display:none; }
+    .events-dialog.form-mode .event-form-view { display:block; }
+    .event-form-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
+    .event-form-heading strong { font-size:13px; }
+    .event-cancel { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 4px; font-size:11px; }
+    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:5px; margin-top:6px; }
     #eventTitle { grid-column:1 / -1; }
     .event-add { grid-column:1 / -1; }
     .event-entry input, .event-entry select { min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
     .event-add { min-height:34px; padding:4px 8px; border-color:var(--accent); background:var(--accent); color:#fff; }
-    .events-list { display:grid; gap:5px; margin-top:10px; overflow:auto; }
+    .events-list { display:grid; gap:5px; margin-top:8px; overflow:auto; }
+    .events-section { display:grid; gap:5px; }
+    .events-section + .events-section { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+    .events-section-title { color:var(--muted); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; }
+    .event-edit { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 5px; font-size:10px; }
     .event-item { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:start; gap:4px 8px; padding:7px; border:1px solid var(--line); border-radius:8px; }
     .event-actions { grid-column:2; display:flex; align-items:center; justify-content:flex-end; gap:5px; min-width:0; }
     .event-link { min-height:28px; padding:3px 6px; border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); font-size:10px; white-space:nowrap; }
@@ -786,14 +798,25 @@
     </footer>
     <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
     <dialog id="eventsDialog" class="events-dialog">
-      <div class="events-header"><h2>Events</h2><button type="button" class="events-close" id="closeEvents" aria-label="Close events">✕</button></div>
-      <div class="event-entry">
-        <input type="text" id="eventTitle" maxlength="200" placeholder="Event title">
-        <input type="date" id="eventDate" aria-label="Event date">
-        <select id="eventTime" aria-label="Event time in 15-minute intervals"><option value="">No time</option></select>
-        <button type="button" class="event-add" id="addEvent">Add</button>
+      <div class="events-header">
+        <h2>Events</h2>
+        <div class="events-header-actions">
+          <button type="button" class="events-new" id="newEvent" aria-label="Add event" title="Add event">+</button>
+          <button type="button" class="events-close" id="closeEvents" aria-label="Close events">✕</button>
+        </div>
       </div>
-      <div class="events-list" id="eventsList"></div>
+      <div class="event-list-view">
+        <div class="events-list" id="eventsList"></div>
+      </div>
+      <div class="event-form-view">
+        <div class="event-form-heading"><strong id="eventFormTitle">New Event</strong><button type="button" class="event-cancel" id="cancelEventEdit">Cancel</button></div>
+        <div class="event-entry">
+          <input type="text" id="eventTitle" maxlength="200" placeholder="Event title">
+          <input type="date" id="eventDate" aria-label="Event date">
+          <select id="eventTime" aria-label="Event time in 15-minute intervals"><option value="">No time</option></select>
+          <button type="button" class="event-add" id="addEvent">Add Event</button>
+        </div>
+      </div>
     </dialog>
   </main>
 
@@ -818,6 +841,9 @@
       const eventCountElement = document.getElementById('eventCount');
       const eventsDialog = document.getElementById('eventsDialog');
       const eventsList = document.getElementById('eventsList');
+      const newEventButton = document.getElementById('newEvent');
+      const eventFormTitle = document.getElementById('eventFormTitle');
+      const cancelEventEditButton = document.getElementById('cancelEventEdit');
       const eventTitleInput = document.getElementById('eventTitle');
       const eventDateInput = document.getElementById('eventDate');
       const eventTimeInput = document.getElementById('eventTime');
@@ -836,6 +862,7 @@
       let dragState = null;
       let editSnapshot = null;
       let newDraftId = null;
+      let editingEventId = null;
       let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
       let tasks = loadTasks();
       let events = loadEvents();
@@ -971,51 +998,83 @@
         saveEvents('Event moved to Active');
         renderEvents();
       }
+      function setEventMode(mode, item = null) {
+        const editing = mode === 'form';
+        eventsDialog.classList.toggle('form-mode', editing);
+        newEventButton.hidden = editing;
+        if (!editing) {
+          editingEventId = null;
+          eventTitleInput.value = '';
+          eventTimeInput.value = '';
+          renderEvents();
+          return;
+        }
+        editingEventId = item?.id || null;
+        eventFormTitle.textContent = item ? 'Edit Event' : 'New Event';
+        addEventButton.textContent = item ? 'Save Changes' : 'Add Event';
+        eventTitleInput.value = item?.title || '';
+        eventDateInput.value = item?.date || todayValue();
+        eventTimeInput.value = item?.time || '';
+        requestAnimationFrame(() => eventTitleInput.focus());
+      }
+      function renderEventItem(item) {
+        const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
+        const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
+        const title=document.createElement('div'); title.className='event-title'; title.textContent=item.title;
+        const state=linkedTaskState(item);
+        const link=makeButton(state.label,'event-link',()=>moveEventToActive(item));
+        link.disabled=Boolean(state.task);
+        const edit=makeButton('Edit','event-edit',()=>setEventMode('form',item));
+        const remove=makeButton('×','event-delete',()=>{
+          if (!confirm(`Delete "${item.title}"?`)) return;
+          events=events.filter(event=>event.id!==item.id);
+          saveEvents('Event deleted');
+          renderEvents();
+        });
+        remove.setAttribute('aria-label',`Delete ${item.title}`);
+        const actions=document.createElement('div'); actions.className='event-actions'; actions.append(link,edit,remove);
+        row.append(when,title,document.createElement('div'),actions);
+        return row;
+      }
+      function makeEventSection(label, items) {
+        const section=document.createElement('section'); section.className='events-section';
+        const heading=document.createElement('div'); heading.className='events-section-title'; heading.textContent=`${label} ${items.length}`;
+        section.appendChild(heading);
+        if (!items.length) {
+          const empty=document.createElement('div'); empty.className='events-empty'; empty.textContent=`No ${label.toLowerCase()} events`; section.appendChild(empty);
+        } else items.forEach(item=>section.appendChild(renderEventItem(item)));
+        return section;
+      }
       function renderEvents() {
         eventsList.replaceChildren();
         let repairedLinks = false;
         events.forEach(item => {
           const state = linkedTaskState(item);
-          if (state.broken) {
-            item.linkedTaskId = '';
-            repairedLinks = true;
-          }
+          if (state.broken) { item.linkedTaskId = ''; repairedLinks = true; }
         });
         if (repairedLinks) saveEvents();
-        const ordered = [...events].sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-        if (!ordered.length) {
-          const empty = document.createElement('div'); empty.className='events-empty'; empty.textContent='No scheduled events'; eventsList.appendChild(empty); return;
-        }
-        ordered.forEach(item => {
-          const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
-          const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
-          const title=document.createElement('div'); title.className='event-title'; title.textContent=item.title;
-          const state=linkedTaskState(item);
-          const link=makeButton(state.label,'event-link',()=>moveEventToActive(item));
-          link.disabled=Boolean(state.task);
-          const remove=makeButton('×','event-delete',()=>{
-            if (!confirm(`Delete "${item.title}"?`)) return;
-            events=events.filter(event=>event.id!==item.id);
-            saveEvents('Event deleted');
-            renderEvents();
-          });
-          remove.setAttribute('aria-label',`Delete ${item.title}`);
-          const actions=document.createElement('div'); actions.className='event-actions'; actions.append(link,remove);
-          row.append(when,title,document.createElement('div'),actions); eventsList.appendChild(row);
-        });
+        const today=todayValue();
+        const upcoming=events.filter(item=>item.date>=today).sort((a,b)=>`${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+        const past=events.filter(item=>item.date<today).sort((a,b)=>`${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
+        eventsList.append(makeEventSection('Upcoming',upcoming),makeEventSection('Past',past));
       }
-      function addEvent() {
+      function saveEventFromForm() {
         const title=eventTitleInput.value.trim(); const date=eventDateInput.value; const time=eventTimeInput.value;
         if (!title || !date) { showStatus('Event title and date are required'); return; }
         if (time && !/^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(time)) {
-          showStatus('Select time in 15-minute intervals');
-          eventTimeInput.focus();
-          return;
+          showStatus('Select time in 15-minute intervals'); eventTimeInput.focus(); return;
         }
-        events.push({id:createId(),title,date,time,linkedTaskId:''}); saveEvents('Event added');
-        eventTitleInput.value=''; eventTimeInput.value=''; renderEvents(); eventTitleInput.focus();
+        if (editingEventId) {
+          const item=events.find(event=>event.id===editingEventId);
+          if (!item) { showStatus('Event no longer exists'); setEventMode('list'); return; }
+          item.title=title; item.date=date; item.time=time;
+          saveEvents('Event updated');
+        } else {
+          events.push({id:createId(),title,date,time,linkedTaskId:''});
+          saveEvents('Event added');
+        }
+        setEventMode('list');
       }
-
       function save(message = '') {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -1852,7 +1911,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.33,
+          version: 2.34,
           exportedAt: new Date().toISOString(),
           tasks,
           events
@@ -1972,14 +2031,14 @@
         addTaskButton.click();
       });
       eventsButton.addEventListener('click', () => {
-        eventDateInput.value = eventDateInput.value || todayValue();
-        renderEvents();
+        setEventMode('list');
         eventsDialog.showModal();
-        requestAnimationFrame(() => eventTitleInput.focus());
       });
-      document.getElementById('closeEvents').addEventListener('click', () => eventsDialog.close());
-      addEventButton.addEventListener('click', addEvent);
-      eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); addEvent(); } });
+      newEventButton.addEventListener('click', () => setEventMode('form'));
+      cancelEventEditButton.addEventListener('click', () => setEventMode('list'));
+      document.getElementById('closeEvents').addEventListener('click', () => { setEventMode('list'); eventsDialog.close(); });
+      addEventButton.addEventListener('click', saveEventFromForm);
+      eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); saveEventFromForm(); } });
 
       toggleActionsButton.addEventListener('click', () => {
         showTaskDetails = !showTaskDetails;
