@@ -720,7 +720,9 @@
     .events-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .events-header h2 { margin:0; font-size:16px; }
     .events-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
-    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) 116px 86px auto; gap:5px; margin-top:10px; }
+    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:5px; margin-top:10px; }
+    #eventTitle { grid-column:1 / -1; }
+    .event-add { grid-column:1 / -1; }
     .event-entry input { min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; }
     .event-add { min-height:34px; padding:4px 8px; border-color:var(--accent); background:var(--accent); color:#fff; }
     .events-list { display:grid; gap:5px; margin-top:10px; overflow:auto; }
@@ -730,10 +732,9 @@
     .event-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:680; }
     .event-delete { min-height:28px; border:0; background:transparent; color:var(--danger); padding:2px 4px; }
     .events-empty { padding:16px 8px; color:var(--muted); text-align:center; font-size:12px; }
-    @media (max-width:470px) {
-      .event-entry { grid-template-columns:minmax(0,1fr) 108px auto; }
-      .event-entry input[type="time"] { grid-column:1 / 2; }
-      .event-add { grid-column:2 / 4; }
+    @media (max-width:360px) {
+      .event-entry { grid-template-columns:1fr; }
+      #eventTitle, .event-add { grid-column:1; }
     }
     .hidden { display: none !important; }
 
@@ -1777,7 +1778,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.26,
+          version: 2.27,
           exportedAt: new Date().toISOString(),
           tasks
         };
