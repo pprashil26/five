@@ -387,12 +387,12 @@
 
     .action-edit-row {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) 34px;
+      grid-template-columns: 36px minmax(0, 1fr) 34px;
       gap: 4px;
       border-radius: 7px;
     }
     .action-drag-handle {
-      min-width: 28px;
+      min-width: 36px;
       min-height: 36px;
       border: 0;
       background: transparent;
@@ -1698,7 +1698,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.23,
+          version: 2.24,
           exportedAt: new Date().toISOString(),
           tasks
         };
