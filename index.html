@@ -849,6 +849,7 @@
       const RECOVERY_STORE = 'snapshots';
       const MAX_SNAPSHOTS = 10;
       const ROUTINE_SNAPSHOT_MS = 30000;
+      const EVENTS_DISMISSED_KEY = 'five.eventsDismissedDate';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const countElement = document.getElementById('taskCount');
@@ -1121,6 +1122,24 @@ Current data will be preserved first.`)) return;
         eventsButton.classList.toggle('has-today', todayCount > 0);
         eventsButton.title = todayCount ? `${todayCount} event${todayCount === 1 ? '' : 's'} today` : `${upcoming} upcoming events`;
       }
+      function hasUpcomingEvents() {
+        return events.some(item => item.date >= todayValue());
+      }
+      function eventsDismissedToday() {
+        return localStorage.getItem(EVENTS_DISMISSED_KEY) === todayValue();
+      }
+      function dismissEventsForToday() {
+        localStorage.setItem(EVENTS_DISMISSED_KEY, todayValue());
+      }
+      function openEventsList() {
+        setEventMode('list');
+        if (!eventsDialog.open) eventsDialog.showModal();
+      }
+      function autoOpenEventsIfNeeded() {
+        if (!hasUpcomingEvents() || eventsDismissedToday() || eventsDialog.open) return;
+        requestAnimationFrame(openEventsList);
+      }
+
       function linkedTaskState(item) {
         if (!item.linkedTaskId) return { task: null, label: 'Move to Active' };
         const task = tasks.find(candidate => candidate.id === item.linkedTaskId);
@@ -2071,7 +2090,7 @@ Current data will be preserved first.`)) return;
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.35,
+          version: 2.36,
           exportedAt: new Date().toISOString(),
           tasks,
           events
@@ -2193,13 +2212,11 @@ Current data will be preserved first.`)) return;
         event.preventDefault();
         addTaskButton.click();
       });
-      eventsButton.addEventListener('click', () => {
-        setEventMode('list');
-        eventsDialog.showModal();
-      });
+      eventsButton.addEventListener('click', openEventsList);
       newEventButton.addEventListener('click', () => setEventMode('form'));
       cancelEventEditButton.addEventListener('click', () => setEventMode('list'));
-      document.getElementById('closeEvents').addEventListener('click', () => { setEventMode('list'); eventsDialog.close(); });
+      document.getElementById('closeEvents').addEventListener('click', () => { dismissEventsForToday(); setEventMode('list'); eventsDialog.close(); });
+      eventsDialog.addEventListener('cancel', event => { event.preventDefault(); dismissEventsForToday(); setEventMode('list'); eventsDialog.close(); });
       addEventButton.addEventListener('click', saveEventFromForm);
       eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); saveEventFromForm(); } });
 
@@ -2217,6 +2234,7 @@ Current data will be preserved first.`)) return;
       document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
       render();
       initRecovery();
+      autoOpenEventsIfNeeded();
     })();
   </script>
 </body>
