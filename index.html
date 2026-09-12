@@ -177,7 +177,20 @@
       transform: none;
     }
 
+    .event-button {
+      flex: 0 0 auto;
+      min-height: 28px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 3px 5px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .event-button.has-today { color: var(--danger); background: #fff1f0; }
     .add-task {
+      min-width: 34px;
+      padding-inline: 9px;
       border-color: var(--accent);
       background: var(--accent);
       color: #fff;
@@ -694,6 +707,34 @@
       text-align: center;
     }
 
+    .events-dialog {
+      width: min(92vw, 430px);
+      max-height: 78dvh;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .events-dialog::backdrop { background: rgba(29,35,42,.28); }
+    .events-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .events-header h2 { margin:0; font-size:16px; }
+    .events-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
+    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) 116px 86px auto; gap:5px; margin-top:10px; }
+    .event-entry input { min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; }
+    .event-add { min-height:34px; padding:4px 8px; border-color:var(--accent); background:var(--accent); color:#fff; }
+    .events-list { display:grid; gap:5px; margin-top:10px; overflow:auto; }
+    .event-item { display:grid; grid-template-columns:76px minmax(0,1fr) auto; align-items:center; gap:7px; padding:7px; border:1px solid var(--line); border-radius:8px; }
+    .event-item.today { border-color:#e5b8b4; background:#fff7f6; }
+    .event-when { color:var(--accent); font-size:11px; font-weight:760; }
+    .event-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:680; }
+    .event-delete { min-height:28px; border:0; background:transparent; color:var(--danger); padding:2px 4px; }
+    .events-empty { padding:16px 8px; color:var(--muted); text-align:center; font-size:12px; }
+    @media (max-width:470px) {
+      .event-entry { grid-template-columns:minmax(0,1fr) 108px auto; }
+      .event-entry input[type="time"] { grid-column:1 / 2; }
+      .event-add { grid-column:2 / 4; }
+    }
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
@@ -721,7 +762,8 @@
           <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
         </div>
       </div>
-      <button type="button" class="add-task" id="addTask">+ Task</button>
+      <button type="button" class="event-button" id="eventsButton" aria-label="Open events">📅 <span id="eventCount">0</span></button>
+      <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
     </header>
 
     <section class="tasks" id="tasks" aria-live="polite"></section>
@@ -739,6 +781,16 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <dialog id="eventsDialog" class="events-dialog">
+      <div class="events-header"><h2>Events</h2><button type="button" class="events-close" id="closeEvents" aria-label="Close events">✕</button></div>
+      <div class="event-entry">
+        <input type="text" id="eventTitle" maxlength="200" placeholder="Event title">
+        <input type="date" id="eventDate" aria-label="Event date">
+        <input type="time" id="eventTime" aria-label="Event time">
+        <button type="button" class="event-add" id="addEvent">Add</button>
+      </div>
+      <div class="events-list" id="eventsList"></div>
+    </dialog>
   </main>
 
   <script>
@@ -747,6 +799,7 @@
 
       const STORAGE_KEY = 'fiveTasks.v1';
       const MAX_TASKS = 5;
+      const EVENTS_KEY = 'fiveEvents.v1';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const countElement = document.getElementById('taskCount');
@@ -757,6 +810,14 @@
       const waitingTab = document.getElementById('waitingTab');
       const archiveTab = document.getElementById('archiveTab');
       const toggleActionsButton = document.getElementById('toggleActions');
+      const eventsButton = document.getElementById('eventsButton');
+      const eventCountElement = document.getElementById('eventCount');
+      const eventsDialog = document.getElementById('eventsDialog');
+      const eventsList = document.getElementById('eventsList');
+      const eventTitleInput = document.getElementById('eventTitle');
+      const eventDateInput = document.getElementById('eventDate');
+      const eventTimeInput = document.getElementById('eventTime');
+      const addEventButton = document.getElementById('addEvent');
       const addTaskButton = document.getElementById('addTask');
       const exportButton = document.getElementById('exportData');
       const importButton = document.getElementById('importData');
@@ -773,6 +834,7 @@
       let newDraftId = null;
       let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
       let tasks = loadTasks();
+      let events = loadEvents();
 
       function createId() {
         return self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -824,6 +886,59 @@
         } catch {
           return [];
         }
+      }
+
+      function loadEvents() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');
+          return Array.isArray(raw) ? raw.map(item => ({
+            id: typeof item?.id === 'string' && item.id ? item.id : createId(),
+            title: String(item?.title || '').slice(0, 200),
+            date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || '')) ? String(item.date) : '',
+            time: /^\d{2}:\d{2}$/.test(String(item?.time || '')) ? String(item.time) : ''
+          })).filter(item => item.title && item.date) : [];
+        } catch { return []; }
+      }
+      function saveEvents(message = '') {
+        try { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); }
+        catch { showStatus('Unable to save events'); return; }
+        if (message) showStatus(message);
+        updateEventButton();
+      }
+      function todayValue() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      }
+      function eventDateLabel(value) {
+        const date = new Date(`${value}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+      }
+      function updateEventButton() {
+        const upcoming = events.filter(item => item.date >= todayValue()).length;
+        const todayCount = events.filter(item => item.date === todayValue()).length;
+        eventCountElement.textContent = upcoming;
+        eventsButton.classList.toggle('has-today', todayCount > 0);
+        eventsButton.title = todayCount ? `${todayCount} event${todayCount === 1 ? '' : 's'} today` : `${upcoming} upcoming events`;
+      }
+      function renderEvents() {
+        eventsList.replaceChildren();
+        const ordered = [...events].sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+        if (!ordered.length) {
+          const empty = document.createElement('div'); empty.className='events-empty'; empty.textContent='No scheduled events'; eventsList.appendChild(empty); return;
+        }
+        ordered.forEach(item => {
+          const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
+          const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
+          const title=document.createElement('div'); title.className='event-title'; title.textContent=item.title;
+          const remove=makeButton('×','event-delete',()=>{ events=events.filter(event=>event.id!==item.id); saveEvents('Event deleted'); renderEvents(); });
+          remove.setAttribute('aria-label',`Delete ${item.title}`); row.append(when,title,remove); eventsList.appendChild(row);
+        });
+      }
+      function addEvent() {
+        const title=eventTitleInput.value.trim(); const date=eventDateInput.value; const time=eventTimeInput.value;
+        if (!title || !date) { showStatus('Event title and date are required'); return; }
+        events.push({id:createId(),title,date,time}); saveEvents('Event added');
+        eventTitleInput.value=''; eventTimeInput.value=''; renderEvents(); eventTitleInput.focus();
       }
 
       function save(message = '') {
@@ -940,6 +1055,7 @@
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
         exportButton.disabled = tasks.length === 0;
+        updateEventButton();
       }
 
       function makeButton(text, className, handler) {
@@ -1661,7 +1777,7 @@
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.25,
+          version: 2.26,
           exportedAt: new Date().toISOString(),
           tasks
         };
@@ -1762,6 +1878,16 @@
         event.preventDefault();
         addTaskButton.click();
       });
+      eventsButton.addEventListener('click', () => {
+        eventDateInput.value = eventDateInput.value || todayValue();
+        renderEvents();
+        eventsDialog.showModal();
+        requestAnimationFrame(() => eventTitleInput.focus());
+      });
+      document.getElementById('closeEvents').addEventListener('click', () => eventsDialog.close());
+      addEventButton.addEventListener('click', addEvent);
+      eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); addEvent(); } });
+
       toggleActionsButton.addEventListener('click', () => {
         showTaskDetails = !showTaskDetails;
         localStorage.setItem('five.showTaskDetails', String(showTaskDetails));
