@@ -726,8 +726,10 @@
     .event-entry input, .event-entry select { min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
     .event-add { min-height:34px; padding:4px 8px; border-color:var(--accent); background:var(--accent); color:#fff; }
     .events-list { display:grid; gap:5px; margin-top:10px; overflow:auto; }
-    .event-item { display:grid; grid-template-columns:76px minmax(0,1fr); gap:4px 8px; padding:7px; border:1px solid var(--line); border-radius:8px; }
-    .event-actions { display:flex; gap:6px; align-items:center; }
+    .event-item { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:start; gap:4px 8px; padding:7px; border:1px solid var(--line); border-radius:8px; }
+    .event-actions { grid-column:2; display:flex; align-items:center; justify-content:flex-end; gap:5px; min-width:0; }
+    .event-link { min-height:28px; padding:3px 6px; border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); font-size:10px; white-space:nowrap; }
+    .event-link:disabled { visibility:visible; opacity:.7; }
     .event-item.today { border-color:#e5b8b4; background:#fff7f6; }
     .event-when { color:var(--accent); font-size:11px; font-weight:760; }
     .event-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:680; }
@@ -908,6 +910,7 @@
         return source.slice(0, 5000).map(item => ({
           id: typeof item?.id === 'string' && item.id ? item.id : createId(),
           title: String(item?.title || '').slice(0, 200),
+          linkedTaskId: typeof item?.linkedTaskId === 'string' ? item.linkedTaskId : '',
           date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || '')) ? String(item.date) : '',
           time: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.time || '')) ? String(item.time) : ''
         })).filter(item => item.title && item.date);
@@ -938,8 +941,47 @@
         eventsButton.classList.toggle('has-today', todayCount > 0);
         eventsButton.title = todayCount ? `${todayCount} event${todayCount === 1 ? '' : 's'} today` : `${upcoming} upcoming events`;
       }
+      function linkedTaskState(item) {
+        if (!item.linkedTaskId) return { task: null, label: 'Move to Active' };
+        const task = tasks.find(candidate => candidate.id === item.linkedTaskId);
+        if (!task) return { task: null, label: 'Move to Active', broken: true };
+        if (task.archived) return { task, label: 'Archived' };
+        if (task.waiting) return { task, label: 'In Waiting' };
+        return { task, label: task.list === 'all' ? 'In All' : 'In Active' };
+      }
+      function moveEventToActive(item) {
+        const state = linkedTaskState(item);
+        if (state.task) {
+          showStatus(`Event task is ${state.label.toLowerCase()}`);
+          return;
+        }
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = newTask();
+        task.list = 'active';
+        task.requestor = 'EVENT';
+        task.title = item.title.toUpperCase();
+        task.description = `📅 Event: ${item.date}${item.time ? ` ${item.time}` : ''}`;
+        task.actions[0].text = 'Attend event';
+        tasks.push(task);
+        item.linkedTaskId = task.id;
+        save();
+        saveEvents('Event moved to Active');
+        renderEvents();
+      }
       function renderEvents() {
         eventsList.replaceChildren();
+        let repairedLinks = false;
+        events.forEach(item => {
+          const state = linkedTaskState(item);
+          if (state.broken) {
+            item.linkedTaskId = '';
+            repairedLinks = true;
+          }
+        });
+        if (repairedLinks) saveEvents();
         const ordered = [...events].sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
         if (!ordered.length) {
           const empty = document.createElement('div'); empty.className='events-empty'; empty.textContent='No scheduled events'; eventsList.appendChild(empty); return;
@@ -948,8 +990,18 @@
           const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
           const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
           const title=document.createElement('div'); title.className='event-title'; title.textContent=item.title;
-          const remove=makeButton('×','event-delete',()=>{ events=events.filter(event=>event.id!==item.id); saveEvents('Event deleted'); renderEvents(); });
-          remove.setAttribute('aria-label',`Delete ${item.title}`); row.append(when,title,remove); eventsList.appendChild(row);
+          const state=linkedTaskState(item);
+          const link=makeButton(state.label,'event-link',()=>moveEventToActive(item));
+          link.disabled=Boolean(state.task);
+          const remove=makeButton('×','event-delete',()=>{
+            if (!confirm(`Delete "${item.title}"?`)) return;
+            events=events.filter(event=>event.id!==item.id);
+            saveEvents('Event deleted');
+            renderEvents();
+          });
+          remove.setAttribute('aria-label',`Delete ${item.title}`);
+          const actions=document.createElement('div'); actions.className='event-actions'; actions.append(link,remove);
+          row.append(when,title,document.createElement('div'),actions); eventsList.appendChild(row);
         });
       }
       function addEvent() {
@@ -960,7 +1012,7 @@
           eventTimeInput.focus();
           return;
         }
-        events.push({id:createId(),title,date,time}); saveEvents('Event added');
+        events.push({id:createId(),title,date,time,linkedTaskId:''}); saveEvents('Event added');
         eventTitleInput.value=''; eventTimeInput.value=''; renderEvents(); eventTitleInput.focus();
       }
 
