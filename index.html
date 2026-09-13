@@ -860,7 +860,8 @@
         <div class="event-form-heading"><strong id="eventFormTitle">New Event</strong><button type="button" class="event-cancel" id="cancelEventEdit">Cancel</button></div>
         <div class="event-entry">
           <input type="text" id="eventTitle" maxlength="200" placeholder="Event title">
-          <input type="date" id="eventDate" aria-label="Event date">
+          <input type="date" id="eventStartDate" aria-label="Event start date" title="Start date">
+          <input type="date" id="eventEndDate" aria-label="Event end date" title="End date">
           <select id="eventTime" aria-label="Event time in 15-minute intervals"><option value="">No time</option></select>
           <button type="button" class="event-add" id="addEvent">Add Event</button>
         </div>
@@ -908,7 +909,8 @@
       const eventFormTitle = document.getElementById('eventFormTitle');
       const cancelEventEditButton = document.getElementById('cancelEventEdit');
       const eventTitleInput = document.getElementById('eventTitle');
-      const eventDateInput = document.getElementById('eventDate');
+      const eventStartDateInput = document.getElementById('eventStartDate');
+      const eventEndDateInput = document.getElementById('eventEndDate');
       const eventTimeInput = document.getElementById('eventTime');
       const addEventButton = document.getElementById('addEvent');
       const addTaskButton = document.getElementById('addTask');
@@ -1132,9 +1134,10 @@ Current data will be preserved first.`)) return;
           id: typeof item?.id === 'string' && item.id ? item.id : createId(),
           title: String(item?.title || '').slice(0, 200),
           linkedTaskId: typeof item?.linkedTaskId === 'string' ? item.linkedTaskId : '',
-          date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || '')) ? String(item.date) : '',
+          startDate: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.startDate || item?.date || '')) ? String(item.startDate || item.date) : '',
+          endDate: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.endDate || item?.startDate || item?.date || '')) ? String(item.endDate || item.startDate || item.date) : '',
           time: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.time || '')) ? String(item.time) : ''
-        })).filter(item => item.title && item.date);
+        })).filter(item => item.title && item.startDate).map(item => { if (item.endDate < item.startDate) item.endDate = item.startDate; return item; });
       }
       function loadEvents() {
         try {
@@ -1161,14 +1164,14 @@ Current data will be preserved first.`)) return;
         return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{day:'numeric',month:'short'});
       }
       function updateEventButton() {
-        const upcoming = events.filter(item => item.date >= todayValue()).length;
-        const todayCount = events.filter(item => item.date === todayValue()).length;
+        const upcoming = events.filter(item => item.endDate >= todayValue()).length;
+        const todayCount = events.filter(item => item.startDate <= todayValue() && item.endDate >= todayValue()).length;
         eventCountElement.textContent = upcoming;
         eventsButton.classList.toggle('has-today', todayCount > 0);
         eventsButton.title = todayCount ? `${todayCount} event${todayCount === 1 ? '' : 's'} today` : `${upcoming} upcoming events`;
       }
       function hasUpcomingEvents() {
-        return events.some(item => item.date >= todayValue());
+        return events.some(item => item.endDate >= todayValue());
       }
       function eventsDismissedToday() {
         return localStorage.getItem(EVENTS_DISMISSED_KEY) === todayValue();
@@ -1197,9 +1200,24 @@ Current data will be preserved first.`)) return;
         selectedCalendarDate = date;
         renderCalendar();
       }
+      function eventIncludesDate(item, date) {
+        return item.startDate <= date && item.endDate >= date;
+      }
+      function eachDateInRange(startDate, endDate, callback) {
+        const current = new Date(`${startDate}T00:00:00`);
+        const last = new Date(`${endDate}T00:00:00`);
+        while (current <= last) {
+          callback(`${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}-${String(current.getDate()).padStart(2,'0')}`);
+          current.setDate(current.getDate()+1);
+        }
+      }
+      function eventRangeLabel(item) {
+        if (item.startDate === item.endDate) return eventDateLabel(item.startDate);
+        return `${eventDateLabel(item.startDate)} – ${eventDateLabel(item.endDate)}`;
+      }
       function renderCalendarDateEvents() {
         calendarDateEvents.replaceChildren();
-        const items = events.filter(item => item.date === selectedCalendarDate).sort((a,b) => a.time.localeCompare(b.time));
+        const items = events.filter(item => eventIncludesDate(item, selectedCalendarDate)).sort((a,b) => a.time.localeCompare(b.time));
         if (!items.length) { calendarDateEvents.classList.remove('open'); return; }
         calendarDateEvents.classList.add('open');
         const heading = document.createElement('div'); heading.className = 'calendar-date-heading';
@@ -1208,14 +1226,15 @@ Current data will be preserved first.`)) return;
         items.forEach(item => {
           const row=document.createElement('div'); row.className='calendar-date-event';
           const time=document.createElement('span'); time.className='calendar-date-time'; time.textContent=item.time || 'All day';
-          const title=document.createElement('span'); title.textContent=item.title;
+          const title=document.createElement('span'); title.textContent=`${item.title} · ${eventRangeLabel(item)}`;
           row.append(time,title); calendarDateEvents.appendChild(row);
         });
       }
       function renderCalendar() {
         calendarYearElement.textContent = calendarYearValue;
         yearCalendar.replaceChildren();
-        const eventDates = new Set(events.filter(item => item.date.startsWith(`${calendarYearValue}-`)).map(item => item.date));
+        const eventDates = new Set();
+        events.forEach(item => eachDateInRange(item.startDate, item.endDate, date => { if (date.startsWith(`${calendarYearValue}-`)) eventDates.add(date); }));
         const monthNames = Array.from({length:12},(_,month) => new Date(calendarYearValue,month,1).toLocaleDateString(undefined,{month:'short'}));
         const weekdayNames = ['S','M','T','W','T','F','S'];
         for (let month=0; month<12; month+=1) {
@@ -1265,7 +1284,7 @@ Current data will be preserved first.`)) return;
         task.list = 'active';
         task.requestor = 'EVENT';
         task.title = item.title.toUpperCase();
-        task.description = `📅 Event: ${item.date}${item.time ? ` ${item.time}` : ''}`;
+        task.description = `📅 Event: ${item.startDate}${item.endDate !== item.startDate ? ` to ${item.endDate}` : ''}${item.time ? ` ${item.time}` : ''}`;
         task.actions[0].text = 'Attend event';
         tasks.push(task);
         item.linkedTaskId = task.id;
@@ -1280,6 +1299,8 @@ Current data will be preserved first.`)) return;
         if (!editing) {
           editingEventId = null;
           eventTitleInput.value = '';
+          eventStartDateInput.value = '';
+          eventEndDateInput.value = '';
           eventTimeInput.value = '';
           renderEvents();
           return;
@@ -1288,13 +1309,14 @@ Current data will be preserved first.`)) return;
         eventFormTitle.textContent = item ? 'Edit Event' : 'New Event';
         addEventButton.textContent = item ? 'Save Changes' : 'Add Event';
         eventTitleInput.value = item?.title || '';
-        eventDateInput.value = item?.date || todayValue();
+        eventStartDateInput.value = item?.startDate || todayValue();
+        eventEndDateInput.value = item?.endDate || item?.startDate || todayValue();
         eventTimeInput.value = item?.time || '';
         requestAnimationFrame(() => eventTitleInput.focus());
       }
       function renderEventItem(item) {
-        const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
-        const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
+        const row=document.createElement('div'); row.className=`event-item${eventIncludesDate(item,todayValue())?' today':''}`;
+        const when=document.createElement('div'); when.className='event-when'; when.textContent=`${eventIncludesDate(item,todayValue())?'Today · ':''}${eventRangeLabel(item)}${item.time?' · '+item.time:''}`;
         const title=document.createElement('div'); title.className='event-title'; title.textContent=(item.title || '').toUpperCase();
         const state=linkedTaskState(item);
         const link=makeButton(state.label,'event-link',()=>moveEventToActive(item));
@@ -1330,23 +1352,24 @@ Current data will be preserved first.`)) return;
         });
         if (repairedLinks) saveEvents();
         const today=todayValue();
-        const upcoming=events.filter(item=>item.date>=today).sort((a,b)=>`${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-        const past=events.filter(item=>item.date<today).sort((a,b)=>`${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
+        const upcoming=events.filter(item=>item.endDate>=today).sort((a,b)=>`${a.startDate} ${a.time}`.localeCompare(`${b.startDate} ${b.time}`));
+        const past=events.filter(item=>item.endDate<today).sort((a,b)=>`${b.endDate} ${b.time}`.localeCompare(`${a.endDate} ${a.time}`));
         eventsList.append(makeEventSection('Upcoming',upcoming),makeEventSection('Past',past));
       }
       function saveEventFromForm() {
-        const title=eventTitleInput.value.trim(); const date=eventDateInput.value; const time=eventTimeInput.value;
-        if (!title || !date) { showStatus('Event title and date are required'); return; }
+        const title=eventTitleInput.value.trim(); const startDate=eventStartDateInput.value; const endDate=eventEndDateInput.value || startDate; const time=eventTimeInput.value;
+        if (!title || !startDate) { showStatus('Event title and start date are required'); return; }
+        if (endDate < startDate) { showStatus('End date cannot be before start date'); eventEndDateInput.focus(); return; }
         if (time && !/^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(time)) {
           showStatus('Select time in 15-minute intervals'); eventTimeInput.focus(); return;
         }
         if (editingEventId) {
           const item=events.find(event=>event.id===editingEventId);
           if (!item) { showStatus('Event no longer exists'); setEventMode('list'); return; }
-          item.title=title; item.date=date; item.time=time;
+          item.title=title; item.startDate=startDate; item.endDate=endDate; item.time=time;
           saveEvents('Event updated');
         } else {
-          events.push({id:createId(),title,date,time,linkedTaskId:''});
+          events.push({id:createId(),title,startDate,endDate,time,linkedTaskId:''});
           saveEvents('Event added');
         }
         setEventMode('list');
@@ -2123,7 +2146,7 @@ Current data will be preserved first.`)) return;
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.43,
+          version: 2.44,
           exportedAt: new Date().toISOString(),
           tasks,
           events
@@ -2253,6 +2276,10 @@ Current data will be preserved first.`)) return;
       cancelEventEditButton.addEventListener('click', () => setEventMode('list'));
       document.getElementById('closeEvents').addEventListener('click', () => { dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
       eventsDialog.addEventListener('cancel', event => { event.preventDefault(); dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
+      eventStartDateInput.addEventListener('change', () => {
+        eventEndDateInput.min = eventStartDateInput.value;
+        if (!eventEndDateInput.value || eventEndDateInput.value < eventStartDateInput.value) eventEndDateInput.value = eventStartDateInput.value;
+      });
       addEventButton.addEventListener('click', saveEventFromForm);
       eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); saveEventFromForm(); } });
 
