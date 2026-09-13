@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Five</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f5;
+      --surface: #ffffff;
+      --text: #1d232a;
+      --muted: #69717c;
+      --line: #e2e4e7;
+      --accent: #2858c7;
+      --accent-soft: #eef3ff;
+      --danger: #b42318;
+      --done: #858b93;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-width: 280px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.4;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { touch-action: manipulation; }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 600px;
+      height: 100dvh;
+      min-height: 0;
+      overflow: hidden;
+      margin: 0 auto;
+      padding:
+        max(8px, env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        max(14px, env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      padding: 4px 0 6px;
+      background: rgba(247, 247, 245, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+    .view-tabs-row {
+      display: flex;
+      align-items: center;
+      flex: 1 1 auto;
+      gap: 4px;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .view-tabs-row::-webkit-scrollbar { display: none; }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.2;
+      letter-spacing: -0.45px;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .view-tabs {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      gap: 2px;
+      min-width: max-content;
+    }
+    .view-tabs::-webkit-scrollbar { display: none; }
+
+    .actions-filter-row {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      min-height: 24px;
+    }
+    .actions-filter {
+      min-height: 24px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .actions-filter.active {
+      background: #f0f2f5;
+      color: var(--accent);
+    }
+    .view-tab {
+      min-height: 28px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      padding: 4px 5px;
+      font-size: 10.5px;
+      white-space: nowrap;
+    }
+
+    .view-tab.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .view-tab span { font-weight: 780; }
+
+    button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      padding: 6px 10px;
+      font-weight: 680;
+      cursor: pointer;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid rgba(40, 88, 199, 0.4);
+      outline-offset: 1px;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+      transform: none;
+    }
+
+    .event-button {
+      flex: 0 0 auto;
+      min-height: 28px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 3px 5px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .event-button.has-today { color: var(--danger); background: #fff1f0; }
+    .add-task {
+      min-width: 34px;
+      padding-inline: 9px;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .tasks {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding-bottom: 8px;
+    }
+
+    .task {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .task.top-focus {
+      background: #fff9db;
+      border-color: #eee3a7;
+    }
+
+    .task-view {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 6px;
+      padding: 10px 10px 10px 6px;
+    }
+
+    .task-content { min-width: 0; }
+
+    .drag-handle {
+      align-self: stretch;
+      min-width: 24px;
+      min-height: 42px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #9aa0a8;
+      padding: 0;
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .drag-handle:active { cursor: grabbing; }
+
+    .task.dragging {
+      position: relative;
+      z-index: 20;
+      opacity: 0.96;
+      border-color: #9bb2e8;
+      box-shadow: 0 5px 16px rgba(29, 35, 42, 0.14);
+    }
+
+    .task.drag-over-before { box-shadow: inset 0 3px 0 var(--accent); }
+    .task.drag-over-after { box-shadow: inset 0 -3px 0 var(--accent); }
+
+    body.reordering {
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .requestor-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 26px;
+      align-items: center;
+      gap: 5px;
+    }
+    .requestor {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.3;
+    }
+
+    .pin-task {
+      width: 26px;
+      min-width: 26px;
+      min-height: 26px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #a4a9b0;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1;
+      opacity: .55;
+    }
+    .pin-task.pinned {
+      color: var(--accent);
+      opacity: 1;
+    }
+    .title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .task-title {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-size: 16px;
+      font-weight: 760;
+      line-height: 1.3;
+      letter-spacing: -0.15px;
+    }
+
+    .edit-button {
+      min-height: 28px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 2px 4px;
+      font-size: 12px;
+    }
+
+    .description {
+      margin: 6px 0 0;
+      overflow-wrap: anywhere;
+      color: #4f5863;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    .actions {
+      display: grid;
+      gap: 2px;
+      margin-top: 8px;
+    }
+
+    .action-view {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      align-items: start;
+      gap: 4px;
+      min-height: 30px;
+      border-radius: 7px;
+      padding: 3px 2px;
+    }
+
+    .action-view:hover { background: #fafafa; }
+
+    .action-view input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 2px 0 0;
+      accent-color: var(--accent);
+    }
+
+    .action-text {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      padding-top: 1px;
+      font-size: 15px;
+    }
+
+    .action-view.done .action-text {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+
+    .no-actions {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .task-editor {
+      display: none;
+      padding: 9px;
+      background: var(--surface);
+      border-radius: var(--radius);
+    }
+
+    .task.editing .task-view { display: none; }
+    .task.editing .task-editor { display: block; }
+
+    .field { margin-bottom: 6px; }
+
+    input[type="text"], textarea {
+      display: block;
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text);
+      padding: 7px 8px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 38px;
+      max-height: 120px;
+      resize: vertical;
+    }
+
+    .title-field input { font-weight: 720; }
+
+    input::placeholder, textarea::placeholder { color: #8a919a; }
+
+    .editor-heading {
+      margin: 7px 0 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
+    }
+
+    .action-edit-list {
+      display: grid;
+      gap: 4px;
+    }
+
+    .action-edit-row {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 34px;
+      gap: 4px;
+      border-radius: 7px;
+    }
+    .action-order-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .move-action {
+      min-width: 25px;
+      min-height: 36px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      padding: 0;
+      font-size: 15px;
+      font-weight: 760;
+    }
+    .move-action:disabled {
+      visibility: hidden;
+    }
+
+    .remove-action {
+      min-width: 34px;
+      min-height: 36px;
+      border: 0;
+      color: var(--muted);
+      padding: 2px;
+      font-size: 19px;
+      font-weight: 450;
+    }
+
+    .editor-tools {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .save-cancel-row {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(84px, 1fr);
+      gap: 6px;
+    }
+    .cancel-task {
+      background: #f3f4f6;
+      color: var(--muted);
+    }
+    .save-task {
+      width: 100%;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .all-task-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+    }
+    .activate-task {
+      border-color: #cbd8f4;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .move-tools {
+      display: grid;
+      grid-template-columns: auto repeat(3, minmax(0, 1fr));
+      align-items: center;
+      gap: 5px;
+      padding-top: 2px;
+    }
+
+    .move-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .delete-link {
+      justify-self: start;
+      min-height: 26px;
+      border: 0;
+      background: transparent;
+      color: var(--danger);
+      padding: 2px 0;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .waiting-picker {
+      display: none;
+      margin-top: 2px;
+      padding: 8px;
+      border: 1px solid #eadfab;
+      border-radius: 8px;
+      background: #fffbed;
+    }
+
+    .waiting-picker.open { display: grid; gap: 6px; }
+
+    .waiting-picker label {
+      color: #65551b;
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .waiting-picker input[type="date"] {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #dfd39c;
+      border-radius: 7px;
+      background: #fff;
+      padding: 6px 8px;
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .waiting-picker-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 5px;
+    }
+
+    .confirm-waiting {
+      border-color: #d8c873;
+      background: #fff3b0;
+      color: #5f4d00;
+    }
+
+    .add-action {
+      background: var(--accent-soft);
+      border-color: #d9e3fa;
+      color: var(--accent);
+    }
+
+    
+    
+    .philosophy-acronym .initial {
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 1.05em;
+    }
+    .philosophy-tagline {
+      margin-top: 2px;
+      font-size: 9px;
+      opacity: .85;
+    }
+
+    .philosophy {
+      width: 100%;
+      margin: 4px auto 0;
+      padding: 5px 8px;
+      border-radius: 8px;
+      background: #f1f3f5;
+      color: #69717c;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .philosophy-acronym {
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+
+    .waiting-task { color: #765b00; }
+    .archive-task { color: #6b5600; }
+
+    .waiting-card { padding: 10px; }
+    .waiting-meta {
+      display: grid;
+      gap: 2px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .follow-up-due {
+      margin: 7px -4px 0;
+      padding: 5px 6px;
+      border-radius: 6px;
+      background: #fff4c2;
+      color: #654f00;
+      font-weight: 720;
+    }
+    .waiting-tools {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .waiting-followup {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .waiting-followup input[type="date"] {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 5px 7px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .move-active {
+      background: var(--accent-soft);
+      border-color: #d9e3fa;
+      color: var(--accent);
+    }
+    .delete-task { color: var(--danger); }
+
+    .archive-card { padding: 10px; }
+
+    .archive-date {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .archive-actions-static {
+      display: grid;
+      gap: 3px;
+      margin-top: 8px;
+    }
+
+    .archive-action-static {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 6px;
+      color: #4f5863;
+      font-size: 14px;
+    }
+
+    .archive-action-static.done { color: var(--done); }
+    .archive-action-static.done span:last-child { text-decoration: line-through; }
+
+    .archive-tools {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .restore-task {
+      background: var(--accent-soft);
+      border-color: #d9e3fa;
+      color: var(--accent);
+    }
+
+    .empty {
+      border: 1px dashed #cdd1d5;
+      border-radius: var(--radius);
+      padding: 28px 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .footer {
+      flex: 0 0 auto;
+      width: 100%;
+      margin-top: 0;
+      text-align: center;
+      padding-top: 6px;
+      padding-bottom: max(2px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: rgba(247, 247, 245, 0.98);
+    }
+
+    .footer-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .footer button {
+      min-height: 30px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .status {
+      min-height: 17px;
+      padding-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .events-dialog {
+      width: min(92vw, 430px);
+      max-height: 78dvh;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .events-dialog::backdrop { background: rgba(29,35,42,.28); }
+    .events-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .events-header h2 { margin:0; font-size:16px; }
+    .events-header-actions { display:flex; align-items:center; gap:4px; }
+    .events-new { min-width:30px; min-height:28px; border-color:var(--accent); background:var(--accent); color:#fff; padding:2px 8px; }
+    .events-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
+    .event-form-view { display:none; }
+    .events-dialog.form-mode .event-list-view { display:none; }
+    .events-dialog.form-mode .event-form-view { display:block; }
+    .event-form-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
+    .event-form-heading strong { font-size:13px; }
+    .event-cancel { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 4px; font-size:11px; }
+    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:5px; margin-top:6px; }
+    #eventTitle { grid-column:1 / -1; }
+    .event-add { grid-column:1 / -1; }
+    .event-entry input, .event-entry select { min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
+    .event-add { min-height:34px; padding:4px 8px; border-color:var(--accent); background:var(--accent); color:#fff; }
+    .events-list { display:grid; gap:5px; margin-top:8px; overflow:auto; }
+    .events-section { display:grid; gap:5px; }
+    .events-section + .events-section { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+    .events-section-title { color:var(--muted); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; }
+    .event-edit { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 5px; font-size:10px; }
+    .event-item { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:3px 8px; padding:7px; border:1px solid var(--line); border-radius:8px; }
+    .event-actions { grid-column:2; grid-row:2; display:flex; align-items:center; justify-content:flex-end; gap:5px; min-width:0; }
+    .event-link { min-height:28px; padding:3px 6px; border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); font-size:10px; white-space:nowrap; }
+    .event-link:disabled { visibility:visible; opacity:.7; }
+    .event-item.today { border-color:#e5b8b4; background:#fff7f6; }
+    .event-when { grid-column:1; grid-row:2; min-width:0; color:var(--accent); font-size:11px; font-weight:760; }
+    .event-title { grid-column:1 / -1; grid-row:1; min-width:0; overflow-wrap:anywhere; font-size:16px; font-weight:760; line-height:1.3; letter-spacing:-0.15px; text-transform:uppercase; }
+    .event-delete { min-height:28px; border:0; background:transparent; color:var(--danger); padding:2px 4px; }
+    .events-empty { padding:16px 8px; color:var(--muted); text-align:center; font-size:12px; }
+    @media (max-width:360px) {
+      .event-entry { grid-template-columns:1fr; }
+      #eventTitle, .event-add { grid-column:1; }
+    }
+    .recovery-dialog { width:min(92vw,460px); max-height:80dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
+    .recovery-dialog::backdrop { background:rgba(29,35,42,.28); }
+    .recovery-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .recovery-header h2 { margin:0; font-size:16px; }
+    .recovery-summary { margin-top:8px; padding:8px; border-radius:8px; background:#f5f6f7; color:var(--muted); font-size:11px; }
+    .recovery-list { display:grid; gap:6px; margin-top:10px; overflow:auto; }
+    .recovery-item { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; padding:8px; border:1px solid var(--line); border-radius:8px; }
+    .recovery-meta { min-width:0; }
+    .recovery-time { font-size:12px; font-weight:760; }
+    .recovery-counts { color:var(--muted); font-size:10px; }
+    .recovery-restore { min-height:30px; padding:4px 8px; border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); font-size:10px; }
+    .recovery-empty { padding:18px 8px; color:var(--muted); text-align:center; font-size:12px; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 470px) {
+      .topbar { gap: 4px; }
+      .view-tab { padding-inline: 4px; font-size: 10px; }
+      .add-task { padding-inline: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="view-tabs-row">
+        <nav class="view-tabs" aria-label="Task views">
+          <button type="button" class="view-tab active" id="allTab">All <span id="allCount">0</span></button>
+          <button type="button" class="view-tab" id="activeTab">Active <span id="taskCount">0/5</span></button>
+          <button type="button" class="view-tab" id="waitingTab">Waiting <span id="waitingCount">0</span></button>
+          <button type="button" class="view-tab" id="archiveTab">Archive <span id="archiveCount">0</span></button>
+        </nav>
+        <div class="actions-filter-row">
+          <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
+        </div>
+      </div>
+      <button type="button" class="event-button" id="eventsButton" aria-label="Open events">📅 <span id="eventCount">0</span></button>
+      <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
+    </header>
+
+    <section class="tasks" id="tasks" aria-live="polite"></section>
+
+    <footer class="footer">
+      <div class="footer-actions">
+        <button type="button" id="exportData">Export backup</button>
+        <button type="button" id="importData">Import backup</button>
+        <button type="button" id="recoveryButton">Recovery</button>
+        <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
+        <input class="hidden" type="file" id="importFile" accept="application/json,.json">
+      </div>
+      <div class="philosophy">
+        <span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
+        <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
+      </div>
+    </footer>
+    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <dialog id="eventsDialog" class="events-dialog">
+      <div class="events-header">
+        <h2>Events</h2>
+        <div class="events-header-actions">
+          <button type="button" class="events-new" id="newEvent" aria-label="Add event" title="Add event">+</button>
+          <button type="button" class="events-close" id="closeEvents" aria-label="Close events">✕</button>
+        </div>
+      </div>
+      <div class="event-list-view">
+        <div class="events-list" id="eventsList"></div>
+      </div>
+      <div class="event-form-view">
+        <div class="event-form-heading"><strong id="eventFormTitle">New Event</strong><button type="button" class="event-cancel" id="cancelEventEdit">Cancel</button></div>
+        <div class="event-entry">
+          <input type="text" id="eventTitle" maxlength="200" placeholder="Event title">
+          <input type="date" id="eventDate" aria-label="Event date">
+          <select id="eventTime" aria-label="Event time in 15-minute intervals"><option value="">No time</option></select>
+          <button type="button" class="event-add" id="addEvent">Add Event</button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="recoveryDialog" class="recovery-dialog">
+      <div class="recovery-header"><h2>Data Recovery</h2><button type="button" class="events-close" id="closeRecovery" aria-label="Close recovery">✕</button></div>
+      <div class="recovery-summary" id="recoverySummary"></div>
+      <div class="recovery-list" id="recoveryList"></div>
+    </dialog>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'fiveTasks.v1';
+      const MAX_TASKS = 5;
+      const EVENTS_KEY = 'fiveEvents.v1';
+      const RECOVERY_DB = 'fiveRecovery.v1';
+      const RECOVERY_STORE = 'snapshots';
+      const MAX_SNAPSHOTS = 10;
+      const ROUTINE_SNAPSHOT_MS = 30000;
+      const EVENTS_DISMISSED_KEY = 'five.eventsDismissedDate';
+      const tasksHost = document.getElementById('tasks');
+      const allCountElement = document.getElementById('allCount');
+      const countElement = document.getElementById('taskCount');
+      const waitingCountElement = document.getElementById('waitingCount');
+      const archiveCountElement = document.getElementById('archiveCount');
+      const allTab = document.getElementById('allTab');
+      const activeTab = document.getElementById('activeTab');
+      const waitingTab = document.getElementById('waitingTab');
+      const archiveTab = document.getElementById('archiveTab');
+      const toggleActionsButton = document.getElementById('toggleActions');
+      const eventsButton = document.getElementById('eventsButton');
+      const eventCountElement = document.getElementById('eventCount');
+      const eventsDialog = document.getElementById('eventsDialog');
+      const eventsList = document.getElementById('eventsList');
+      const newEventButton = document.getElementById('newEvent');
+      const eventFormTitle = document.getElementById('eventFormTitle');
+      const cancelEventEditButton = document.getElementById('cancelEventEdit');
+      const eventTitleInput = document.getElementById('eventTitle');
+      const eventDateInput = document.getElementById('eventDate');
+      const eventTimeInput = document.getElementById('eventTime');
+      const addEventButton = document.getElementById('addEvent');
+      const addTaskButton = document.getElementById('addTask');
+      const exportButton = document.getElementById('exportData');
+      const importButton = document.getElementById('importData');
+      const importFile = document.getElementById('importFile');
+      const statusElement = document.getElementById('status');
+      const shortcutHelp = document.getElementById('shortcutHelp');
+      const shortcutDialog = document.getElementById('shortcutDialog');
+      const recoveryButton = document.getElementById('recoveryButton');
+      const recoveryDialog = document.getElementById('recoveryDialog');
+      const recoverySummary = document.getElementById('recoverySummary');
+      const recoveryList = document.getElementById('recoveryList');
+
+      let statusTimer;
+      let editingId = null;
+      let currentView = 'all';
+      let dragState = null;
+      let editSnapshot = null;
+      let newDraftId = null;
+      let editingEventId = null;
+      let recoveryDbPromise = null;
+      let lastSnapshotAt = 0;
+      let snapshotTimer = null;
+      let storagePersistent = false;
+      let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
+      let tasks = loadTasks();
+      let events = loadEvents();
+      populateEventTimes();
+
+      function openRecoveryDb() {
+        if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB unavailable'));
+        if (recoveryDbPromise) return recoveryDbPromise;
+        recoveryDbPromise = new Promise((resolve,reject) => {
+          const request=indexedDB.open(RECOVERY_DB,1);
+          request.onupgradeneeded=()=>{
+            const db=request.result;
+            if (!db.objectStoreNames.contains(RECOVERY_STORE)) {
+              const store=db.createObjectStore(RECOVERY_STORE,{keyPath:'id',autoIncrement:true});
+              store.createIndex('savedAt','savedAt');
+            }
+          };
+          request.onsuccess=()=>resolve(request.result);
+          request.onerror=()=>reject(request.error || new Error('Recovery database failed'));
+        });
+        return recoveryDbPromise;
+      }
+      function requestToPromise(request) {
+        return new Promise((resolve,reject)=>{ request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error); });
+      }
+      function transactionDone(transaction) {
+        return new Promise((resolve,reject)=>{ transaction.oncomplete=resolve; transaction.onerror=()=>reject(transaction.error); transaction.onabort=()=>reject(transaction.error || new Error('Transaction aborted')); });
+      }
+      function combinedPayload() {
+        return { schemaVersion:1, savedAt:new Date().toISOString(), tasks:JSON.parse(JSON.stringify(tasks)), events:JSON.parse(JSON.stringify(events)) };
+      }
+      async function payloadChecksum(payload) {
+        const text=JSON.stringify({tasks:payload.tasks,events:payload.events});
+        if (!crypto?.subtle) return String(text.length);
+        const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+        return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+      }
+      async function createRecoverySnapshot(reason='automatic',force=false) {
+        const now=Date.now();
+        if (!force && now-lastSnapshotAt<ROUTINE_SNAPSHOT_MS) return false;
+        const db=await openRecoveryDb();
+        const payload=combinedPayload();
+        payload.reason=reason;
+        payload.checksum=await payloadChecksum(payload);
+        let transaction;
+        try { transaction=db.transaction(RECOVERY_STORE,'readwrite',{durability:force?'strict':'default'}); }
+        catch { transaction=db.transaction(RECOVERY_STORE,'readwrite'); }
+        const store=transaction.objectStore(RECOVERY_STORE);
+        store.add(payload);
+        await transactionDone(transaction);
+        lastSnapshotAt=now;
+        const snapshots=await getRecoverySnapshots();
+        if (snapshots.length>MAX_SNAPSHOTS) {
+          const trim=db.transaction(RECOVERY_STORE,'readwrite');
+          const trimStore=trim.objectStore(RECOVERY_STORE);
+          snapshots.slice(MAX_SNAPSHOTS).forEach(item=>trimStore.delete(item.id));
+          await transactionDone(trim);
+        }
+        return true;
+      }
+      function scheduleRecoverySnapshot(reason='automatic') {
+        clearTimeout(snapshotTimer);
+        snapshotTimer=setTimeout(()=>createRecoverySnapshot(reason).catch(()=>showStatus('Automatic recovery snapshot failed')),700);
+      }
+      async function getRecoverySnapshots() {
+        const db=await openRecoveryDb();
+        const tx=db.transaction(RECOVERY_STORE,'readonly');
+        const items=await requestToPromise(tx.objectStore(RECOVERY_STORE).getAll());
+        return items.sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));
+      }
+      function formatRecoveryDate(value) {
+        const date=new Date(value);
+        return Number.isNaN(date.getTime())?value:date.toLocaleString(undefined,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+      }
+      async function renderRecovery() {
+        recoveryList.replaceChildren();
+        const snapshots=await getRecoverySnapshots();
+        let estimate='';
+        try {
+          const info=await navigator.storage?.estimate?.();
+          if (info?.usage!=null && info?.quota) estimate=` • Storage ${Math.round(info.usage/1024)} KB of ${Math.round(info.quota/1024/1024)} MB`;
+        } catch {}
+        const lastExport=localStorage.getItem('five.lastExportAt');
+        recoverySummary.textContent=`Current: ${tasks.length} tasks • ${events.length} events • Browser storage: ${storagePersistent?'Persistent':'Best effort'}${estimate}${lastExport?` • Last export ${formatRecoveryDate(lastExport)}`:' • No recorded external backup'}`;
+        if (!snapshots.length) {
+          const empty=document.createElement('div'); empty.className='recovery-empty'; empty.textContent='No automatic snapshots yet'; recoveryList.appendChild(empty); return;
+        }
+        snapshots.forEach(snapshot=>{
+          const row=document.createElement('div'); row.className='recovery-item';
+          const meta=document.createElement('div'); meta.className='recovery-meta';
+          const time=document.createElement('div'); time.className='recovery-time'; time.textContent=formatRecoveryDate(snapshot.savedAt);
+          const counts=document.createElement('div'); counts.className='recovery-counts'; counts.textContent=`${snapshot.tasks?.length||0} tasks • ${snapshot.events?.length||0} events • ${snapshot.reason||'automatic'}`;
+          meta.append(time,counts);
+          const restore=makeButton('Restore','recovery-restore',async()=>{
+            if (!confirm(`Restore snapshot from ${formatRecoveryDate(snapshot.savedAt)}?
+
+Current data will be preserved first.`)) return;
+            try {
+              await createRecoverySnapshot('before restore',true);
+              const nextTasks=Array.isArray(snapshot.tasks)?snapshot.tasks.map(normaliseTask):[];
+              const nextEvents=normaliseEvents(snapshot.events);
+              tasks=nextTasks; events=nextEvents;
+              localStorage.setItem(STORAGE_KEY,JSON.stringify(tasks));
+              localStorage.setItem(EVENTS_KEY,JSON.stringify(events));
+              editingId=null; editingEventId=null; currentView='all';
+              render(); renderEvents(); updateEventButton();
+              await createRecoverySnapshot('after restore',true);
+              showStatus('Recovery snapshot restored');
+              await renderRecovery();
+            } catch { showStatus('Could not restore snapshot'); }
+          });
+          row.append(meta,restore); recoveryList.appendChild(row);
+        });
+      }
+      async function initRecovery() {
+        try {
+          storagePersistent=Boolean(await navigator.storage?.persisted?.());
+          if (!storagePersistent && navigator.storage?.persist) storagePersistent=Boolean(await navigator.storage.persist());
+          await openRecoveryDb();
+          await createRecoverySnapshot('startup',true);
+        } catch { showStatus('Recovery storage unavailable; export a backup'); }
+      }
+
+      function createId() {
+        return self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function normaliseTask(source) {
+        const task = source && typeof source === 'object' ? source : {};
+        return {
+          id: typeof task.id === 'string' && task.id ? task.id : createId(),
+          requestor: String(task.requestor ?? '').slice(0, 200),
+          title: String(task.title ?? '').slice(0, 300),
+          description: String(task.description ?? '').slice(0, 5000),
+          pinned: Boolean(task.pinned),
+          list: task.list === 'all' ? 'all' : 'active',
+          waiting: Boolean(task.waiting) && !Boolean(task.archived),
+          waitingSince: task.waitingSince ? String(task.waitingSince) : null,
+          followUpDate: /^\d{4}-\d{2}-\d{2}$/.test(String(task.followUpDate || '')) ? String(task.followUpDate) : '',
+          archived: Boolean(task.archived),
+          archivedAt: task.archivedAt ? String(task.archivedAt) : null,
+          actions: Array.isArray(task.actions)
+            ? task.actions.slice(0, 500).map(action => ({
+                id: typeof action?.id === 'string' && action.id ? action.id : createId(),
+                text: String(action?.text ?? '').slice(0, 1000),
+                done: Boolean(action?.done)
+              }))
+            : []
+        };
+      }
+
+      function newTask() {
+        return {
+          id: createId(),
+          requestor: '',
+          title: '',
+          description: '',
+          pinned: false,
+          list: 'all',
+          waiting: false,
+          waitingSince: null,
+          followUpDate: '',
+          archived: false,
+          archivedAt: null,
+          actions: [{ id: createId(), text: '', done: false }]
+        };
+      }
+
+      function loadTasks() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          return Array.isArray(raw) ? raw.map(normaliseTask) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function populateEventTimes() {
+        for (let hour = 0; hour < 24; hour += 1) {
+          for (const minute of [0, 15, 30, 45]) {
+            const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            eventTimeInput.appendChild(option);
+          }
+        }
+      }
+
+      function normaliseEvents(source) {
+        if (!Array.isArray(source)) return [];
+        return source.slice(0, 5000).map(item => ({
+          id: typeof item?.id === 'string' && item.id ? item.id : createId(),
+          title: String(item?.title || '').slice(0, 200),
+          linkedTaskId: typeof item?.linkedTaskId === 'string' ? item.linkedTaskId : '',
+          date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || '')) ? String(item.date) : '',
+          time: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.time || '')) ? String(item.time) : ''
+        })).filter(item => item.title && item.date);
+      }
+      function loadEvents() {
+        try {
+          return normaliseEvents(JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]'));
+        } catch { return []; }
+      }
+      function saveEvents(message = '') {
+        try {
+          const encoded=JSON.stringify(events);
+          localStorage.setItem(EVENTS_KEY, encoded);
+          if (localStorage.getItem(EVENTS_KEY) !== encoded) throw new Error('Event verification failed');
+          scheduleRecoverySnapshot(message || 'event update');
+        }
+        catch { showStatus('Unable to save events'); return; }
+        if (message) showStatus(message);
+        updateEventButton();
+      }
+      function todayValue() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      }
+      function eventDateLabel(value) {
+        const date = new Date(`${value}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+      }
+      function updateEventButton() {
+        const upcoming = events.filter(item => item.date >= todayValue()).length;
+        const todayCount = events.filter(item => item.date === todayValue()).length;
+        eventCountElement.textContent = upcoming;
+        eventsButton.classList.toggle('has-today', todayCount > 0);
+        eventsButton.title = todayCount ? `${todayCount} event${todayCount === 1 ? '' : 's'} today` : `${upcoming} upcoming events`;
+      }
+      function hasUpcomingEvents() {
+        return events.some(item => item.date >= todayValue());
+      }
+      function eventsDismissedToday() {
+        return localStorage.getItem(EVENTS_DISMISSED_KEY) === todayValue();
+      }
+      function dismissEventsForToday() {
+        localStorage.setItem(EVENTS_DISMISSED_KEY, todayValue());
+      }
+      function openEventsList() {
+        setEventMode('list');
+        if (!eventsDialog.open) eventsDialog.showModal();
+      }
+      function autoOpenEventsIfNeeded() {
+        if (!hasUpcomingEvents() || eventsDismissedToday() || eventsDialog.open) return;
+        requestAnimationFrame(openEventsList);
+      }
+
+      function linkedTaskState(item) {
+        if (!item.linkedTaskId) return { task: null, label: 'Move to Active' };
+        const task = tasks.find(candidate => candidate.id === item.linkedTaskId);
+        if (!task) return { task: null, label: 'Move to Active', broken: true };
+        if (task.archived) return { task, label: 'Archived' };
+        if (task.waiting) return { task, label: 'In Waiting' };
+        return { task, label: task.list === 'all' ? 'In All' : 'In Active' };
+      }
+      function moveEventToActive(item) {
+        const state = linkedTaskState(item);
+        if (state.task) {
+          showStatus(`Event task is ${state.label.toLowerCase()}`);
+          return;
+        }
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = newTask();
+        task.list = 'active';
+        task.requestor = 'EVENT';
+        task.title = item.title.toUpperCase();
+        task.description = `📅 Event: ${item.date}${item.time ? ` ${item.time}` : ''}`;
+        task.actions[0].text = 'Attend event';
+        tasks.push(task);
+        item.linkedTaskId = task.id;
+        save();
+        saveEvents('Event moved to Active');
+        renderEvents();
+      }
+      function setEventMode(mode, item = null) {
+        const editing = mode === 'form';
+        eventsDialog.classList.toggle('form-mode', editing);
+        newEventButton.hidden = editing;
+        if (!editing) {
+          editingEventId = null;
+          eventTitleInput.value = '';
+          eventTimeInput.value = '';
+          renderEvents();
+          return;
+        }
+        editingEventId = item?.id || null;
+        eventFormTitle.textContent = item ? 'Edit Event' : 'New Event';
+        addEventButton.textContent = item ? 'Save Changes' : 'Add Event';
+        eventTitleInput.value = item?.title || '';
+        eventDateInput.value = item?.date || todayValue();
+        eventTimeInput.value = item?.time || '';
+        requestAnimationFrame(() => eventTitleInput.focus());
+      }
+      function renderEventItem(item) {
+        const row=document.createElement('div'); row.className=`event-item${item.date===todayValue()?' today':''}`;
+        const when=document.createElement('div'); when.className='event-when'; when.textContent=`${item.date===todayValue()?'Today':eventDateLabel(item.date)}${item.time?' '+item.time:''}`;
+        const title=document.createElement('div'); title.className='event-title'; title.textContent=(item.title || '').toUpperCase();
+        const state=linkedTaskState(item);
+        const link=makeButton(state.label,'event-link',()=>moveEventToActive(item));
+        link.disabled=Boolean(state.task);
+        const edit=makeButton('Edit','event-edit',()=>setEventMode('form',item));
+        const remove=makeButton('×','event-delete',async()=>{
+          if (!confirm(`Delete "${item.title}"?`)) return;
+          try { await createRecoverySnapshot('before event delete',true); } catch { showStatus('Could not secure recovery snapshot'); return; }
+          events=events.filter(event=>event.id!==item.id);
+          saveEvents('Event deleted');
+          renderEvents();
+        });
+        remove.setAttribute('aria-label',`Delete ${item.title}`);
+        const actions=document.createElement('div'); actions.className='event-actions'; actions.append(link,edit,remove);
+        row.append(title,when,actions);
+        return row;
+      }
+      function makeEventSection(label, items) {
+        const section=document.createElement('section'); section.className='events-section';
+        const heading=document.createElement('div'); heading.className='events-section-title'; heading.textContent=`${label} ${items.length}`;
+        section.appendChild(heading);
+        if (!items.length) {
+          const empty=document.createElement('div'); empty.className='events-empty'; empty.textContent=`No ${label.toLowerCase()} events`; section.appendChild(empty);
+        } else items.forEach(item=>section.appendChild(renderEventItem(item)));
+        return section;
+      }
+      function renderEvents() {
+        eventsList.replaceChildren();
+        let repairedLinks = false;
+        events.forEach(item => {
+          const state = linkedTaskState(item);
+          if (state.broken) { item.linkedTaskId = ''; repairedLinks = true; }
+        });
+        if (repairedLinks) saveEvents();
+        const today=todayValue();
+        const upcoming=events.filter(item=>item.date>=today).sort((a,b)=>`${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+        const past=events.filter(item=>item.date<today).sort((a,b)=>`${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
+        eventsList.append(makeEventSection('Upcoming',upcoming),makeEventSection('Past',past));
+      }
+      function saveEventFromForm() {
+        const title=eventTitleInput.value.trim(); const date=eventDateInput.value; const time=eventTimeInput.value;
+        if (!title || !date) { showStatus('Event title and date are required'); return; }
+        if (time && !/^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(time)) {
+          showStatus('Select time in 15-minute intervals'); eventTimeInput.focus(); return;
+        }
+        if (editingEventId) {
+          const item=events.find(event=>event.id===editingEventId);
+          if (!item) { showStatus('Event no longer exists'); setEventMode('list'); return; }
+          item.title=title; item.date=date; item.time=time;
+          saveEvents('Event updated');
+        } else {
+          events.push({id:createId(),title,date,time,linkedTaskId:''});
+          saveEvents('Event added');
+        }
+        setEventMode('list');
+      }
+      function save(message = '') {
+        try {
+          const encoded=JSON.stringify(tasks);
+          localStorage.setItem(STORAGE_KEY, encoded);
+          if (localStorage.getItem(STORAGE_KEY) !== encoded) throw new Error('Task verification failed');
+          scheduleRecoverySnapshot(message || 'task update');
+          if (message) showStatus(message);
+        } catch {
+          showStatus('Unable to save in browser storage');
+        }
+        updateHeader();
+      }
+
+      function showStatus(message) {
+        clearTimeout(statusTimer);
+        statusElement.textContent = message;
+        statusTimer = setTimeout(() => { statusElement.textContent = ''; }, 2500);
+      }
+      function cloneTask(task) {
+        return JSON.parse(JSON.stringify(task));
+      }
+      function beginEditing(task, isNew = false) {
+        editingId = task.id;
+        editSnapshot = isNew ? null : cloneTask(task);
+        newDraftId = isNew ? task.id : null;
+        render();
+        requestAnimationFrame(() => {
+          const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
+          card?.querySelector('input')?.focus();
+        });
+      }
+      function cancelEditing() {
+        if (!editingId) return;
+        if (newDraftId === editingId) {
+          tasks = tasks.filter(task => task.id !== editingId);
+        } else if (editSnapshot) {
+          const index = tasks.findIndex(task => task.id === editingId);
+          if (index >= 0) tasks[index] = cloneTask(editSnapshot);
+        }
+        editingId = null;
+        editSnapshot = null;
+        newDraftId = null;
+        save('Changes cancelled');
+        render();
+      }
+      function finishEditing() {
+        editingId = null;
+        editSnapshot = null;
+        newDraftId = null;
+      }
+
+      function formatDate() {
+        return new Date().toLocaleDateString();
+      }
+      function formatTime() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      function formatTimestamp() {
+        return `${formatDate()} ${formatTime()}`;
+      }
+      function insertAtCursor(el, text) {
+        const start = el.selectionStart ?? el.value.length;
+        const end = el.selectionEnd ?? el.value.length;
+        el.value = el.value.slice(0, start) + text + el.value.slice(end);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        const pos = start + text.length;
+        el.setSelectionRange?.(pos, pos);
+      }
+
+      function pinnedFirst(items) {
+        return items.map((task,index)=>({task,index}))
+          .sort((a,b)=>Number(b.task.pinned)-Number(a.task.pinned) || a.index-b.index)
+          .map(item=>item.task);
+      }
+      function allTasks() {
+        return pinnedFirst(tasks.filter(task => !task.archived && !task.waiting && task.list === 'all'));
+      }
+      function activeTasks() {
+        return pinnedFirst(tasks.filter(task => !task.archived && !task.waiting && task.list === 'active'));
+      }
+
+      function waitingTasks() {
+        return pinnedFirst(tasks
+          .filter(task => task.waiting && !task.archived)
+          .sort((a, b) => {
+            if (a.followUpDate && b.followUpDate) return a.followUpDate.localeCompare(b.followUpDate);
+            if (a.followUpDate) return -1;
+            if (b.followUpDate) return 1;
+            return String(b.waitingSince || '').localeCompare(String(a.waitingSince || ''));
+          }));
+      }
+
+      function archivedTasks() {
+        return pinnedFirst(tasks
+          .filter(task => task.archived)
+          .sort((a, b) => String(b.archivedAt || '').localeCompare(String(a.archivedAt || ''))));
+      }
+
+      function toggleTaskPin(taskId) {
+        const task=tasks.find(item=>item.id===taskId);
+        if (!task) return;
+        task.pinned=!task.pinned;
+        save(task.pinned?'Task pinned':'Task unpinned');
+        render();
+      }
+      function updateHeader() {
+        const allCount = allTasks().length;
+        const activeCount = activeTasks().length;
+        const waitingCount = waitingTasks().length;
+        const archiveCount = archivedTasks().length;
+        allCountElement.textContent = allCount;
+        countElement.textContent = `${activeCount}/${MAX_TASKS}`;
+        waitingCountElement.textContent = waitingCount;
+        archiveCountElement.textContent = archiveCount;
+        allTab.classList.toggle('active', currentView === 'all');
+        activeTab.classList.toggle('active', currentView === 'active');
+        waitingTab.classList.toggle('active', currentView === 'waiting');
+        archiveTab.classList.toggle('active', currentView === 'archive');
+        allTab.setAttribute('aria-current', currentView === 'all' ? 'page' : 'false');
+        activeTab.setAttribute('aria-current', currentView === 'active' ? 'page' : 'false');
+        waitingTab.setAttribute('aria-current', currentView === 'waiting' ? 'page' : 'false');
+        archiveTab.setAttribute('aria-current', currentView === 'archive' ? 'page' : 'false');
+        addTaskButton.hidden = Boolean(editingId);
+        addTaskButton.disabled = false;
+        addTaskButton.textContent = '+ Task';
+        toggleActionsButton.textContent = showTaskDetails ? 'Actions visible' : 'Compact view';
+        toggleActionsButton.classList.toggle('active', !showTaskDetails);
+        toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
+        exportButton.disabled = tasks.length === 0;
+        updateEventButton();
+      }
+
+      function makeButton(text, className, handler) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = className;
+        button.textContent = text;
+        button.addEventListener('click', handler);
+        return button;
+      }
+
+      function makeInput(value, placeholder, maxLength, handler, textarea = false) {
+        const input = textarea ? document.createElement('textarea') : document.createElement('input');
+        if (!textarea) input.type = 'text';
+        input.value = value;
+        input.placeholder = placeholder;
+        input.maxLength = maxLength;
+        input.addEventListener('input', () => handler(input.value));
+        return input;
+      }
+
+      function render() {
+        tasksHost.replaceChildren();
+        const allVisibleTasks = currentView === 'all'
+          ? allTasks()
+          : currentView === 'active'
+            ? activeTasks()
+            : currentView === 'waiting'
+              ? waitingTasks()
+              : archivedTasks();
+        const visibleTasks = editingId
+          ? allVisibleTasks.filter(task => task.id === editingId)
+          : allVisibleTasks;
+
+        if (!visibleTasks.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.innerHTML = currentView === 'all'
+            ? '<strong>No tasks</strong>Add an unlimited number of tasks here.'
+            : currentView === 'active'
+              ? '<strong>No active tasks</strong>Move up to five tasks here from All.'
+              : currentView === 'waiting'
+              ? '<strong>Waiting is empty</strong>Tasks waiting on others will appear here.'
+              : '<strong>Archive is empty</strong>Archived tasks will appear here.';
+          tasksHost.appendChild(empty);
+          updateHeader();
+          return;
+        }
+
+        visibleTasks.forEach((task, index) => {
+          const card = document.createElement('article');
+          card.className = `task${editingId === task.id ? ' editing' : ''}`;
+          if (currentView === 'active' && index === 0) card.classList.add('top-focus');
+          card.dataset.taskId = task.id;
+          if (currentView === 'all' || currentView === 'active') {
+            card.append(createView(task, index), createEditor(task));
+          } else if (currentView === 'waiting') {
+            card.append(createWaitingView(task));
+          } else {
+            card.append(createArchiveView(task));
+          }
+          tasksHost.appendChild(card);
+        });
+
+        updateHeader();
+      }
+
+      function createView(task, index) {
+        const view = document.createElement('div');
+        view.className = 'task-view';
+
+        const handle = document.createElement('button');
+        handle.type = 'button';
+        handle.className = 'drag-handle';
+        handle.textContent = '⋮⋮';
+        handle.setAttribute('aria-label', `Reorder ${task.title.trim() || `task ${index + 1}`}`);
+        handle.title = 'Hold and drag to reorder';
+        handle.addEventListener('pointerdown', event => startReorder(event, task.id));
+
+        const content = document.createElement('div');
+        content.className = 'task-content';
+
+        const requestorRow = document.createElement('div');
+        requestorRow.className = 'requestor-row';
+        const requestor = document.createElement('div');
+        requestor.className = 'requestor';
+        requestor.textContent = task.requestor.trim() || `TASK ${index + 1}`;
+        const pin = makeButton('📌', `pin-task${task.pinned ? ' pinned' : ''}`, () => toggleTaskPin(task.id));
+        pin.setAttribute('aria-label', task.pinned ? 'Unpin task' : 'Pin task');
+        pin.title = task.pinned ? 'Unpin task' : 'Pin task';
+        requestorRow.append(requestor, pin);
+        const titleRow = document.createElement('div');
+        titleRow.className = 'title-row';
+
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = task.title.trim() || 'Untitled task';
+
+        const openEditor = () => beginEditing(task);
+        const edit = makeButton('Edit', 'edit-button', openEditor);
+        view.addEventListener('click', event => {
+          if (event.target.closest('input, button, .drag-handle')) return;
+          openEditor();
+        });
+
+        titleRow.append(title, edit);
+        content.append(requestorRow, titleRow);
+
+        if (showTaskDetails && task.description.trim()) {
+          const description = document.createElement('p');
+          description.className = 'description';
+          description.textContent = task.description;
+          content.appendChild(description);
+        }
+
+        if (showTaskDetails && task.actions.length) {
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+
+          task.actions.forEach(action => {
+            const row = document.createElement('label');
+            row.className = `action-view${action.done ? ' done' : ''}`;
+
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.checked = action.done;
+            check.setAttribute('aria-label', `Mark ${action.text || 'action'} complete`);
+            check.addEventListener('change', () => {
+              action.done = check.checked;
+              save();
+              render();
+            });
+
+            const text = document.createElement('span');
+            text.className = 'action-text';
+            text.textContent = action.text.trim() || 'Untitled action';
+            row.append(check, text);
+            actions.appendChild(row);
+          });
+
+          content.appendChild(actions);
+        } else if (showTaskDetails) {
+          const noActions = document.createElement('div');
+          noActions.className = 'no-actions';
+          noActions.textContent = 'No next actions';
+          content.appendChild(noActions);
+        }
+
+        view.append(handle, content);
+        return view;
+      }
+
+      function startReorder(event, taskId) {
+        if (event.button !== undefined && event.button !== 0) return;
+        if (currentView !== 'all' && currentView !== 'active') return;
+        const visibleTasks = currentView === 'all' ? allTasks() : activeTasks();
+        const sourceTask = visibleTasks.find(task => task.id === taskId);
+        if (!sourceTask) return;
+        const reorderTasks = visibleTasks.filter(task => task.pinned === sourceTask.pinned);
+        const sourceIndex = reorderTasks.findIndex(task => task.id === taskId);
+        const sourceCard = tasksHost.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
+        if (sourceIndex < 0 || !sourceCard) return;
+
+        event.preventDefault();
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+        dragState = {
+          pointerId: event.pointerId,
+          taskId,
+          sourceIndex,
+          targetIndex: sourceIndex,
+          insertAfter: false,
+          handle: event.currentTarget,
+          sourceCard
+        };
+        sourceCard.classList.add('dragging');
+        document.body.classList.add('reordering');
+        document.addEventListener('pointermove', moveReorder, { passive: false });
+        document.addEventListener('pointerup', finishReorder);
+        document.addEventListener('pointercancel', cancelReorder);
+      }
+
+      function moveReorder(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        event.preventDefault();
+        clearDropMarkers();
+
+        const cards = [...tasksHost.querySelectorAll('.task')];
+        let target = null;
+        for (const card of cards) {
+          if (card === dragState.sourceCard) continue;
+          const rect = card.getBoundingClientRect();
+          if (event.clientY >= rect.top && event.clientY <= rect.bottom) {
+            target = card;
+            const targetId = card.dataset.taskId;
+            const targetTask = tasks.find(task => task.id === targetId);
+            if (!targetTask || targetTask.pinned !== tasks.find(task => task.id === dragState.taskId)?.pinned) continue;
+            const reorderTasks = (currentView === 'all' ? allTasks() : activeTasks()).filter(task => task.pinned === targetTask.pinned);
+            dragState.targetIndex = reorderTasks.findIndex(task => task.id === targetId);
+            dragState.insertAfter = event.clientY > rect.top + rect.height / 2;
+            card.classList.add(dragState.insertAfter ? 'drag-over-after' : 'drag-over-before');
+            break;
+          }
+        }
+
+        const edge = 70;
+        if (event.clientY < edge) window.scrollBy(0, -8);
+        else if (event.clientY > window.innerHeight - edge) window.scrollBy(0, 8);
+      }
+
+      function finishReorder(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        const { taskId, sourceIndex, targetIndex, insertAfter } = dragState;
+        const sourceTask = tasks.find(task => task.id === taskId);
+        cleanupReorder();
+        if (!sourceTask || targetIndex === sourceIndex) return;
+        const subset = (currentView === 'all' ? allTasks() : activeTasks()).filter(task => task.pinned === sourceTask.pinned);
+        const [moved] = subset.splice(sourceIndex, 1);
+        let destination = targetIndex;
+        if (sourceIndex < targetIndex) destination -= 1;
+        if (insertAfter) destination += 1;
+        destination = Math.max(0, Math.min(destination, subset.length));
+        subset.splice(destination, 0, moved);
+        const subsetIds = new Set(subset.map(task => task.id));
+        let replacementIndex = 0;
+        tasks = tasks.map(task => subsetIds.has(task.id) ? subset[replacementIndex++] : task);
+        save('Order saved');
+        render();
+      }
+      function cancelReorder(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        cleanupReorder();
+      }
+
+      function clearDropMarkers() {
+        tasksHost.querySelectorAll('.drag-over-before, .drag-over-after').forEach(card => {
+          card.classList.remove('drag-over-before', 'drag-over-after');
+        });
+      }
+
+      function cleanupReorder() {
+        if (!dragState) return;
+        dragState.sourceCard.classList.remove('dragging');
+        dragState.handle.releasePointerCapture?.(dragState.pointerId);
+        clearDropMarkers();
+        document.body.classList.remove('reordering');
+        document.removeEventListener('pointermove', moveReorder);
+        document.removeEventListener('pointerup', finishReorder);
+        document.removeEventListener('pointercancel', cancelReorder);
+        dragState = null;
+      }
+
+      function localDateLabel(value) {
+        if (!value) return '';
+        const date = new Date(`${value}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+
+      function todayLocal() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function createWaitingView(task) {
+        const view = document.createElement('div');
+        view.className = 'waiting-card';
+        const requestorRow = document.createElement('div');
+        requestorRow.className = 'requestor-row';
+        const requestor = document.createElement('div');
+        requestor.className = 'requestor';
+        requestor.textContent = task.requestor.trim() || 'WAITING TASK';
+        const pin = makeButton('📌', `pin-task${task.pinned ? ' pinned' : ''}`, () => toggleTaskPin(task.id));
+        pin.setAttribute('aria-label', task.pinned ? 'Unpin task' : 'Pin task');
+        pin.title = task.pinned ? 'Unpin task' : 'Pin task';
+        requestorRow.append(requestor, pin);
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = task.title.trim() || 'Untitled task';
+        view.append(requestorRow, title);
+
+        if (showTaskDetails && task.description.trim()) {
+          const description = document.createElement('p');
+          description.className = 'description';
+          description.textContent = task.description;
+          view.appendChild(description);
+        }
+        if (showTaskDetails && task.actions.length) {
+          const actions = document.createElement('div');
+          actions.className = 'archive-actions-static';
+          task.actions.forEach(action => {
+            const row = document.createElement('div');
+            row.className = `archive-action-static${action.done ? ' done' : ''}`;
+            const mark = document.createElement('span');
+            mark.textContent = action.done ? '✓' : '○';
+            const text = document.createElement('span');
+            text.textContent = action.text.trim() || 'Untitled action';
+            row.append(mark, text);
+            actions.appendChild(row);
+          });
+          view.appendChild(actions);
+        }
+
+        if (!showTaskDetails) return view;
+
+        const meta = document.createElement('div');
+        meta.className = 'waiting-meta';
+        const since = task.waitingSince ? new Date(task.waitingSince) : null;
+        const sinceText = document.createElement('div');
+        sinceText.textContent = since && !Number.isNaN(since.getTime())
+          ? `Waiting since ${since.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+          : 'Waiting';
+        meta.appendChild(sinceText);
+        if (task.followUpDate) {
+          const follow = document.createElement('div');
+          const due = task.followUpDate <= todayLocal();
+          follow.textContent = `Follow up ${localDateLabel(task.followUpDate)}`;
+          if (due) follow.className = 'follow-up-due';
+          meta.appendChild(follow);
+        }
+
+        const tools = document.createElement('div');
+        tools.className = 'waiting-tools';
+        const dateWrap = document.createElement('label');
+        dateWrap.className = 'waiting-followup';
+        dateWrap.append(document.createTextNode('Next follow-up'));
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.value = task.followUpDate || '';
+        dateInput.addEventListener('change', () => {
+          task.followUpDate = dateInput.value;
+          save('Follow-up saved');
+          render();
+        });
+        dateWrap.appendChild(dateInput);
+
+        const active = makeButton('Active', 'move-active', () => moveToActive(task.id));
+        const archive = makeButton('Archive', 'archive-task', () => {
+          if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
+          archiveTask(task.id);
+        });
+        const remove = makeButton('Delete', 'delete-task', async () => {
+          if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
+          try { await createRecoverySnapshot('before waiting task delete',true); } catch { showStatus('Could not secure recovery snapshot'); return; }
+          tasks = tasks.filter(item => item.id !== task.id);
+          save('Waiting task deleted');
+          render();
+        });
+        tools.append(dateWrap, active, archive, remove);
+        view.append(meta, tools);
+        return view;
+      }
+
+      function moveToWaiting(taskId, followUpDate = '') {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.list = 'active';
+        task.waiting = true;
+        task.waitingSince = new Date().toISOString();
+        task.followUpDate = followUpDate;
+        editingId = null;
+        save('Moved to Waiting');
+        render();
+      }
+
+      function moveToActive(taskId) {
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.list = 'active';
+        task.waiting = false;
+        task.waitingSince = null;
+        task.followUpDate = '';
+        save('Moved to Active');
+        render();
+      }
+
+      function moveActiveTaskToAll(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task || task.list !== 'active' || task.waiting || task.archived) return;
+        task.list = 'all';
+        finishEditing();
+        currentView = 'all';
+        save('Moved to All');
+        render();
+      }
+
+      function moveAllTaskToActive(taskId) {
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = tasks.find(item => item.id === taskId);
+        if (!task || task.list !== 'all') return;
+        task.list = 'active';
+        finishEditing();
+        currentView = 'active';
+        save('Moved to Active');
+        render();
+      }
+
+      function createArchiveView(task) {
+        const view = document.createElement('div');
+        view.className = 'archive-card';
+
+        const requestorRow = document.createElement('div');
+        requestorRow.className = 'requestor-row';
+        const requestor = document.createElement('div');
+        requestor.className = 'requestor';
+        requestor.textContent = task.requestor.trim() || 'ARCHIVED TASK';
+        const pin = makeButton('📌', `pin-task${task.pinned ? ' pinned' : ''}`, () => toggleTaskPin(task.id));
+        pin.setAttribute('aria-label', task.pinned ? 'Unpin task' : 'Pin task');
+        pin.title = task.pinned ? 'Unpin task' : 'Pin task';
+        requestorRow.append(requestor, pin);
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = task.title.trim() || 'Untitled task';
+        view.append(requestorRow, title);
+
+        if (showTaskDetails && task.description.trim()) {
+          const description = document.createElement('p');
+          description.className = 'description';
+          description.textContent = task.description;
+          view.appendChild(description);
+        }
+
+        if (showTaskDetails && task.actions.length) {
+          const actions = document.createElement('div');
+          actions.className = 'archive-actions-static';
+          task.actions.forEach(action => {
+            const row = document.createElement('div');
+            row.className = `archive-action-static${action.done ? ' done' : ''}`;
+            const mark = document.createElement('span');
+            mark.textContent = action.done ? '✓' : '○';
+            const text = document.createElement('span');
+            text.textContent = action.text.trim() || 'Untitled action';
+            row.append(mark, text);
+            actions.appendChild(row);
+          });
+          view.appendChild(actions);
+        }
+
+        if (!showTaskDetails) return view;
+
+        const archivedDate = document.createElement('div');
+        archivedDate.className = 'archive-date';
+        const date = task.archivedAt ? new Date(task.archivedAt) : null;
+        archivedDate.textContent = date && !Number.isNaN(date.getTime())
+          ? `Archived ${date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+          : 'Archived';
+
+        const tools = document.createElement('div');
+        tools.className = 'archive-tools';
+        const restore = makeButton('Restore', 'restore-task', () => restoreTask(task.id));
+        const remove = makeButton('Delete', 'delete-task', async () => {
+          if (!confirm(`Permanently delete "${task.title.trim() || 'Untitled task'}"?`)) return;
+          try { await createRecoverySnapshot('before archived task delete',true); } catch { showStatus('Could not secure recovery snapshot'); return; }
+          tasks = tasks.filter(item => item.id !== task.id);
+          save('Archived task deleted');
+          render();
+        });
+        tools.append(restore, remove);
+        view.append(archivedDate, tools);
+        return view;
+      }
+
+      function archiveTask(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.waiting = false;
+        task.waitingSince = null;
+        task.followUpDate = '';
+        task.archived = true;
+        task.archivedAt = new Date().toISOString();
+        editingId = null;
+        save('Task archived');
+        render();
+      }
+
+      function restoreTask(taskId) {
+        if (activeTasks().length >= MAX_TASKS) {
+          showStatus('Five active tasks already exist');
+          return;
+        }
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.list = 'active';
+        task.waiting = false;
+        task.waitingSince = null;
+        task.followUpDate = '';
+        task.archived = false;
+        task.archivedAt = null;
+        save('Task restored');
+        render();
+      }
+
+      function createEditor(task) {
+        const editor = document.createElement('div');
+        editor.className = 'task-editor';
+
+        const requestorField = document.createElement('div');
+        requestorField.className = 'field';
+        requestorField.appendChild(makeInput(task.requestor, 'Requestor / Project', 200, value => {
+          task.requestor = value.toUpperCase();
+          save();
+        }));
+
+        const titleField = document.createElement('div');
+        titleField.className = 'field title-field';
+        titleField.appendChild(makeInput(task.title, 'Task title', 300, value => {
+          task.title = value.toUpperCase();
+          save();
+        }));
+
+        const descriptionField = document.createElement('div');
+        descriptionField.className = 'field';
+        descriptionField.appendChild(makeInput(task.description, 'Description', 5000, value => {
+          task.description = value;
+          save();
+        }, true));
+
+        const heading = document.createElement('div');
+        heading.className = 'editor-heading';
+        heading.textContent = 'Next actions';
+
+        const actionList = document.createElement('div');
+        actionList.className = 'action-edit-list';
+
+        task.actions.forEach(action => {
+          const row = document.createElement('div');
+          row.className = 'action-edit-row';
+          row.dataset.actionId = action.id;
+          const actionIndex = task.actions.indexOf(action);
+          const orderControls = document.createElement('div');
+          orderControls.className = 'action-order-controls';
+          const moveUp = makeButton('↑', 'move-action', () => moveAction(task.id, action.id, -1));
+          const moveDown = makeButton('↓', 'move-action', () => moveAction(task.id, action.id, 1));
+          moveUp.disabled = actionIndex === 0;
+          moveDown.disabled = actionIndex === task.actions.length - 1;
+          moveUp.setAttribute('aria-label', 'Move action up');
+          moveDown.setAttribute('aria-label', 'Move action down');
+          orderControls.append(moveUp, moveDown);
+          const input = makeInput(action.text, task.actions.indexOf(action) === 0 ? 'Next action, required' : 'Next action', 1000, value => {
+            action.text = value;
+            save();
+          });
+          input.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              addAction(task.id);
+            }
+          });
+          const remove = makeButton('×', 'remove-action', () => {
+            if (task.actions.length === 1) {
+              showStatus('A task must have at least one next action');
+              return;
+            }
+            task.actions = task.actions.filter(item => item.id !== action.id);
+            save();
+            render();
+          });
+          remove.setAttribute('aria-label', 'Delete action');
+          row.append(orderControls, input, remove);
+          actionList.appendChild(row);
+        });
+
+        const tools = document.createElement('div');
+        tools.className = 'editor-tools';
+
+        const addActionButton = makeButton('+ Add action', 'add-action', () => addAction(task.id));
+        actionList.appendChild(addActionButton);
+
+        const saveButton = makeButton('Save', 'save-task', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            editor.querySelector('.action-edit-row input')?.focus();
+            return;
+          }
+          finishEditing();
+          save('Saved');
+          render();
+        });
+
+        const cancelButton = makeButton('Cancel', 'cancel-task', cancelEditing);
+        const saveCancelRow = document.createElement('div');
+        saveCancelRow.className = 'save-cancel-row';
+        saveCancelRow.append(saveButton, cancelButton);
+
+        const moveTools = document.createElement('div');
+        moveTools.className = 'move-tools';
+        const moveLabel = document.createElement('span');
+        moveLabel.className = 'move-label';
+        moveLabel.textContent = 'Move to';
+
+        const waitingPicker = document.createElement('div');
+        waitingPicker.className = 'waiting-picker';
+        const followLabel = document.createElement('label');
+        followLabel.textContent = 'Next follow-up, optional';
+        const followInput = document.createElement('input');
+        followInput.type = 'date';
+        followInput.value = task.followUpDate || '';
+        followLabel.appendChild(followInput);
+
+        const pickerActions = document.createElement('div');
+        pickerActions.className = 'waiting-picker-actions';
+        const confirmWaiting = makeButton('Move to Waiting', 'confirm-waiting', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            editor.querySelector('.action-edit-row input')?.focus();
+            return;
+          }
+          moveToWaiting(task.id, followInput.value);
+        });
+        const cancelWaiting = makeButton('Cancel', '', () => {
+          waitingPicker.classList.remove('open');
+        });
+        pickerActions.append(confirmWaiting, cancelWaiting);
+        waitingPicker.append(followLabel, pickerActions);
+
+        const allButton = makeButton('All', 'activate-task', () => {
+          moveActiveTaskToAll(task.id);
+        });
+        const waitingButton = makeButton('Waiting', 'waiting-task', () => {
+          waitingPicker.classList.toggle('open');
+          if (waitingPicker.classList.contains('open')) requestAnimationFrame(() => followInput.showPicker?.());
+        });
+        const archiveButton = makeButton('Archive', 'archive-task', () => {
+          const hasAction = task.actions.some(action => action.text.trim().length > 0);
+          if (!hasAction) {
+            showStatus('Add at least one next action');
+            editor.querySelector('.action-edit-row input')?.focus();
+            return;
+          }
+          if (!confirm(`Archive "${task.title.trim() || 'Untitled task'}"?`)) return;
+          archiveTask(task.id);
+        });
+        moveTools.append(moveLabel, allButton, waitingButton, archiveButton);
+
+        const deleteButton = makeButton('Delete task', 'delete-link', async () => {
+          if (!confirm(`Delete "${task.title.trim() || 'Untitled task'}"?`)) return;
+          try { await createRecoverySnapshot('before task delete',true); } catch { showStatus('Could not secure recovery snapshot'); return; }
+          tasks = tasks.filter(item => item.id !== task.id);
+          editingId = null;
+          save('Task deleted');
+          render();
+        });
+        if (task.list === 'all') {
+          const allTaskTools = document.createElement('div');
+          allTaskTools.className = 'all-task-tools';
+          const activateButton = makeButton('Move to Active', 'activate-task', () => {
+            const hasAction = task.actions.some(action => action.text.trim().length > 0);
+            if (!hasAction) {
+              showStatus('Add at least one next action');
+              editor.querySelector('.action-edit-row input')?.focus();
+              return;
+            }
+            moveAllTaskToActive(task.id);
+          });
+          allTaskTools.append(activateButton, deleteButton);
+          tools.append(saveCancelRow, allTaskTools);
+        } else {
+          tools.append(saveCancelRow, moveTools, waitingPicker, deleteButton);
+        }
+
+        editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
+        return editor;
+      }
+
+      function moveAction(taskId, actionId, direction) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        const currentIndex = task.actions.findIndex(action => action.id === actionId);
+        const targetIndex = currentIndex + direction;
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= task.actions.length) return;
+        [task.actions[currentIndex], task.actions[targetIndex]] = [task.actions[targetIndex], task.actions[currentIndex]];
+        editingId = taskId;
+        save('Action order saved');
+        render();
+        requestAnimationFrame(() => {
+          const row = tasksHost.querySelector(`[data-action-id="${CSS.escape(actionId)}"]`);
+          row?.querySelector('input')?.focus();
+        });
+      }
+
+      function addAction(taskId) {
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+        task.actions.push({ id: createId(), text: '', done: false });
+        editingId = taskId;
+        save();
+        render();
+        requestAnimationFrame(() => {
+          const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
+          const actionInputs = card?.querySelectorAll('.action-edit-row input');
+          actionInputs?.[actionInputs.length - 1]?.focus();
+        });
+      }
+
+      allTab.addEventListener('click', () => {
+        if (editingId) cancelEditing();
+        currentView = 'all';
+        render();
+      });
+
+      activeTab.addEventListener('click', () => {
+        currentView = 'active';
+        editingId = null;
+        render();
+      });
+
+      waitingTab.addEventListener('click', () => {
+        currentView = 'waiting';
+        editingId = null;
+        render();
+      });
+
+      archiveTab.addEventListener('click', () => {
+        currentView = 'archive';
+        editingId = null;
+        render();
+      });
+
+      addTaskButton.addEventListener('click', () => {
+        if (editingId) return;
+        currentView = 'all';
+        const task = newTask();
+        tasks.push(task);
+        save();
+        beginEditing(task, true);
+        requestAnimationFrame(() => {
+          const card = tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);
+          card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      });
+
+      exportButton.addEventListener('click', () => {
+        const data = {
+          app: 'Five',
+          version: 2.40,
+          exportedAt: new Date().toISOString(),
+          tasks,
+          events
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `five-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        localStorage.setItem('five.lastExportAt',new Date().toISOString());
+        showStatus(`Backup exported: ${tasks.length} tasks • ${events.length} events`);
+      });
+
+      importButton.addEventListener('click', () => importFile.click());
+
+      importFile.addEventListener('change', async () => {
+        const file = importFile.files?.[0];
+        importFile.value = '';
+        if (!file) return;
+        try {
+          const parsed = JSON.parse(await file.text());
+          const incomingTasks = Array.isArray(parsed) ? parsed : parsed?.tasks;
+          if (!Array.isArray(incomingTasks)) throw new Error('Invalid backup');
+
+          const incomingEvents = Array.isArray(parsed) ? null : parsed?.events;
+          if (incomingEvents !== undefined && !Array.isArray(incomingEvents)) throw new Error('Invalid events');
+
+          let activeSeen = 0;
+          const nextTasks = incomingTasks.map(normaliseTask).map(task => {
+            if (!task.archived && !task.waiting && task.list === 'active') {
+              activeSeen += 1;
+              if (activeSeen > MAX_TASKS) task.list = 'all';
+            }
+            return task;
+          });
+          const hasEventsInBackup = Array.isArray(incomingEvents);
+          const nextEvents = hasEventsInBackup ? normaliseEvents(incomingEvents) : events;
+
+          const importLabel = hasEventsInBackup ? 'tasks and events' : 'tasks only';
+          if (!confirm(`Replace current ${importLabel} with this backup? Current data will be preserved in Recovery first.`)) return;
+          try { await createRecoverySnapshot('before import',true); }
+          catch { showStatus('Could not secure recovery snapshot'); return; }
+
+          tasks = nextTasks;
+          events = nextEvents;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+          if (hasEventsInBackup) localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+          editingId = null;
+          editSnapshot = null;
+          newDraftId = null;
+          currentView = 'all';
+          render();
+          renderEvents();
+          updateEventButton();
+          showStatus(hasEventsInBackup ? 'Tasks and events imported' : 'Tasks imported; existing events kept');
+        } catch {
+          showStatus('Could not import this backup');
+        }
+      });
+
+      document.addEventListener('keydown', event => {
+        const target = event.target;
+        const isField = target instanceof HTMLElement && (
+          target.matches('input[type="text"], textarea')
+        );
+
+        if (event.altKey && isField) {
+          let value = null;
+          if (event.shiftKey && event.key.toLowerCase() === 'd') value = formatTimestamp();
+          else if (event.key.toLowerCase() === 'd') value = formatDate();
+          else if (event.key.toLowerCase() === 't') value = formatTime();
+          if (value !== null) {
+            event.preventDefault();
+            insertAtCursor(target, value);
+            return;
+          }
+        }
+
+        if (event.ctrlKey && event.key === 'Enter') {
+          const saveButton = document.querySelector('.task.editing .save-task');
+          if (saveButton) {
+            event.preventDefault();
+            saveButton.click();
+            return;
+          }
+        }
+
+        if (event.altKey && event.key.toLowerCase() === 'n') {
+          const addBtn = document.querySelector('.task.editing .add-action');
+          if (addBtn) { event.preventDefault(); addBtn.click(); return; }
+        }
+
+        if (event.altKey && event.key.toLowerCase() === 'w') {
+          const waitBtn = document.querySelector('.task.editing .waiting-task');
+          if (waitBtn) { event.preventDefault(); waitBtn.click(); return; }
+        }
+
+        if (event.altKey && event.key.toLowerCase() === 'a') {
+          const archBtn = document.querySelector('.task.editing .archive-task');
+          if (archBtn) { event.preventDefault(); archBtn.click(); return; }
+        }
+
+        if (event.key === 'Escape' && editingId) {
+          event.preventDefault();
+          cancelEditing();
+          return;
+        }
+
+        const isTyping = target instanceof HTMLElement && (
+          target.matches('input, textarea, select') || target.isContentEditable
+        );
+        if (isTyping || event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.key.toLowerCase() !== 't') return;
+        if (editingId) return;
+        event.preventDefault();
+        addTaskButton.click();
+      });
+      eventsButton.addEventListener('click', openEventsList);
+      newEventButton.addEventListener('click', () => setEventMode('form'));
+      cancelEventEditButton.addEventListener('click', () => setEventMode('list'));
+      document.getElementById('closeEvents').addEventListener('click', () => { dismissEventsForToday(); setEventMode('list'); eventsDialog.close(); });
+      eventsDialog.addEventListener('cancel', event => { event.preventDefault(); dismissEventsForToday(); setEventMode('list'); eventsDialog.close(); });
+      addEventButton.addEventListener('click', saveEventFromForm);
+      eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); saveEventFromForm(); } });
+
+      toggleActionsButton.addEventListener('click', () => {
+        showTaskDetails = !showTaskDetails;
+        localStorage.setItem('five.showTaskDetails', String(showTaskDetails));
+        render();
+      });
+      recoveryButton.addEventListener('click',async()=>{
+        try { await createRecoverySnapshot('manual recovery view',true); await renderRecovery(); recoveryDialog.showModal(); }
+        catch { showStatus('Recovery storage unavailable'); }
+      });
+      document.getElementById('closeRecovery').addEventListener('click',()=>recoveryDialog.close());
+      shortcutHelp?.addEventListener('click',()=>shortcutDialog.showModal());
+      document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
+      render();
+      initRecovery();
+      autoOpenEventsIfNeeded();
+    })();
+  </script>
+</body>
+</html>
