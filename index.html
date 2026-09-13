@@ -756,6 +756,7 @@
     .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:7px 6px; margin-top:7px; }
     .event-field { display:grid; gap:3px; min-width:0; }
     .event-field-title { grid-column:1 / -1; }
+    .event-datetime-row { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:6px; }
     .event-field label { color:var(--muted); font-size:9px; font-weight:800; line-height:1.2; text-transform:uppercase; letter-spacing:.35px; }
     .event-field input, .event-field select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
     .event-form-actions { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px; margin-top:1px; }
@@ -867,17 +868,25 @@
             <label for="eventTitle">Event title</label>
             <input type="text" id="eventTitle" maxlength="200" placeholder="What is the event?">
           </div>
-          <div class="event-field">
-            <label for="eventStartDate">Start date</label>
-            <input type="date" id="eventStartDate">
+          <div class="event-datetime-row">
+            <div class="event-field">
+              <label for="eventStartDate">Start date</label>
+              <input type="date" id="eventStartDate">
+            </div>
+            <div class="event-field">
+              <label for="eventStartTime">Start time · optional</label>
+              <select id="eventStartTime" aria-label="Optional event start time in 15-minute intervals"><option value="">No start time</option></select>
+            </div>
           </div>
-          <div class="event-field">
-            <label for="eventEndDate">End date</label>
-            <input type="date" id="eventEndDate">
-          </div>
-          <div class="event-field">
-            <label for="eventTime">Start time · optional</label>
-            <select id="eventTime" aria-label="Optional event start time in 15-minute intervals"><option value="">No start time</option></select>
+          <div class="event-datetime-row">
+            <div class="event-field">
+              <label for="eventEndDate">End date</label>
+              <input type="date" id="eventEndDate">
+            </div>
+            <div class="event-field">
+              <label for="eventEndTime">End time · optional</label>
+              <select id="eventEndTime" aria-label="Optional event end time in 15-minute intervals"><option value="">No end time</option></select>
+            </div>
           </div>
           <div class="event-form-actions">
             <span class="event-range-hint">All dates from start through end are highlighted.</span>
@@ -930,7 +939,8 @@
       const eventTitleInput = document.getElementById('eventTitle');
       const eventStartDateInput = document.getElementById('eventStartDate');
       const eventEndDateInput = document.getElementById('eventEndDate');
-      const eventTimeInput = document.getElementById('eventTime');
+      const eventStartTimeInput = document.getElementById('eventStartTime');
+      const eventEndTimeInput = document.getElementById('eventEndTime');
       const addEventButton = document.getElementById('addEvent');
       const addTaskButton = document.getElementById('addTask');
       const exportButton = document.getElementById('exportData');
@@ -1139,10 +1149,13 @@ Current data will be preserved first.`)) return;
         for (let hour = 0; hour < 24; hour += 1) {
           for (const minute of [0, 15, 30, 45]) {
             const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-            eventTimeInput.appendChild(option);
+            const label = new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            [eventStartTimeInput, eventEndTimeInput].forEach(select => {
+              const option = document.createElement('option');
+              option.value = value;
+              option.textContent = label;
+              select.appendChild(option);
+            });
           }
         }
       }
@@ -1155,7 +1168,8 @@ Current data will be preserved first.`)) return;
           linkedTaskId: typeof item?.linkedTaskId === 'string' ? item.linkedTaskId : '',
           startDate: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.startDate || item?.date || '')) ? String(item.startDate || item.date) : '',
           endDate: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.endDate || item?.startDate || item?.date || '')) ? String(item.endDate || item.startDate || item.date) : '',
-          time: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.time || '')) ? String(item.time) : ''
+          startTime: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.startTime || item?.time || '')) ? String(item.startTime || item.time) : '',
+          endTime: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.endTime || '')) ? String(item.endTime) : ''
         })).filter(item => item.title && item.startDate).map(item => { if (item.endDate < item.startDate) item.endDate = item.startDate; return item; });
       }
       function loadEvents() {
@@ -1230,13 +1244,24 @@ Current data will be preserved first.`)) return;
           current.setDate(current.getDate()+1);
         }
       }
+      function eventTimeLabel(value) {
+        if (!value) return '';
+        return new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+      }
       function eventRangeLabel(item) {
-        if (item.startDate === item.endDate) return eventDateLabel(item.startDate);
-        return `${eventDateLabel(item.startDate)} – ${eventDateLabel(item.endDate)}`;
+        const startTime = eventTimeLabel(item.startTime);
+        const endTime = eventTimeLabel(item.endTime);
+        if (item.startDate === item.endDate) {
+          if (startTime && endTime) return `${eventDateLabel(item.startDate)} · ${startTime} – ${endTime}`;
+          if (startTime) return `${eventDateLabel(item.startDate)} · ${startTime}`;
+          if (endTime) return `${eventDateLabel(item.startDate)} · until ${endTime}`;
+          return eventDateLabel(item.startDate);
+        }
+        return `${eventDateLabel(item.startDate)}${startTime ? ` ${startTime}` : ''} – ${eventDateLabel(item.endDate)}${endTime ? ` ${endTime}` : ''}`;
       }
       function renderCalendarDateEvents() {
         calendarDateEvents.replaceChildren();
-        const items = events.filter(item => eventIncludesDate(item, selectedCalendarDate)).sort((a,b) => a.time.localeCompare(b.time));
+        const items = events.filter(item => eventIncludesDate(item, selectedCalendarDate)).sort((a,b) => a.startTime.localeCompare(b.startTime));
         if (!items.length) { calendarDateEvents.classList.remove('open'); return; }
         calendarDateEvents.classList.add('open');
         const heading = document.createElement('div'); heading.className = 'calendar-date-heading';
@@ -1244,7 +1269,7 @@ Current data will be preserved first.`)) return;
         calendarDateEvents.appendChild(heading);
         items.forEach(item => {
           const row=document.createElement('div'); row.className='calendar-date-event';
-          const time=document.createElement('span'); time.className='calendar-date-time'; time.textContent=item.time || 'All day';
+          const time=document.createElement('span'); time.className='calendar-date-time'; time.textContent=item.startTime ? eventTimeLabel(item.startTime) : 'All day';
           const title=document.createElement('span'); title.textContent=`${item.title} · ${eventRangeLabel(item)}`;
           row.append(time,title); calendarDateEvents.appendChild(row);
         });
@@ -1303,7 +1328,7 @@ Current data will be preserved first.`)) return;
         task.list = 'active';
         task.requestor = 'EVENT';
         task.title = item.title.toUpperCase();
-        task.description = `📅 Event: ${item.startDate}${item.endDate !== item.startDate ? ` to ${item.endDate}` : ''}${item.time ? ` ${item.time}` : ''}`;
+        task.description = `📅 Event: ${item.startDate}${item.startTime ? ` ${item.startTime}` : ''}${item.endDate !== item.startDate || item.endTime ? ` to ${item.endDate}${item.endTime ? ` ${item.endTime}` : ''}` : ''}`;
         task.actions[0].text = 'Attend event';
         tasks.push(task);
         item.linkedTaskId = task.id;
@@ -1320,7 +1345,8 @@ Current data will be preserved first.`)) return;
           eventTitleInput.value = '';
           eventStartDateInput.value = '';
           eventEndDateInput.value = '';
-          eventTimeInput.value = '';
+          eventStartTimeInput.value = '';
+          eventEndTimeInput.value = '';
           renderEvents();
           return;
         }
@@ -1331,12 +1357,13 @@ Current data will be preserved first.`)) return;
         eventStartDateInput.value = item?.startDate || todayValue();
         eventEndDateInput.value = item?.endDate || item?.startDate || todayValue();
         eventEndDateInput.min = eventStartDateInput.value;
-        eventTimeInput.value = item?.time || '';
+        eventStartTimeInput.value = item?.startTime || '';
+        eventEndTimeInput.value = item?.endTime || '';
         requestAnimationFrame(() => eventTitleInput.focus());
       }
       function renderEventItem(item) {
         const row=document.createElement('div'); row.className=`event-item${eventIncludesDate(item,todayValue())?' today':''}`;
-        const when=document.createElement('div'); when.className='event-when'; when.textContent=`${eventIncludesDate(item,todayValue())?'Today · ':''}${eventRangeLabel(item)}${item.time?' · '+item.time:''}`;
+        const when=document.createElement('div'); when.className='event-when'; when.textContent=`${eventIncludesDate(item,todayValue())?'Today · ':''}${eventRangeLabel(item)}`;
         const title=document.createElement('div'); title.className='event-title'; title.textContent=(item.title || '').toUpperCase();
         const state=linkedTaskState(item);
         const link=makeButton(state.label,'event-link',()=>moveEventToActive(item));
@@ -1372,24 +1399,30 @@ Current data will be preserved first.`)) return;
         });
         if (repairedLinks) saveEvents();
         const today=todayValue();
-        const upcoming=events.filter(item=>item.endDate>=today).sort((a,b)=>`${a.startDate} ${a.time}`.localeCompare(`${b.startDate} ${b.time}`));
-        const past=events.filter(item=>item.endDate<today).sort((a,b)=>`${b.endDate} ${b.time}`.localeCompare(`${a.endDate} ${a.time}`));
+        const upcoming=events.filter(item=>item.endDate>=today).sort((a,b)=>`${a.startDate} ${a.startTime}`.localeCompare(`${b.startDate} ${b.startTime}`));
+        const past=events.filter(item=>item.endDate<today).sort((a,b)=>`${b.endDate} ${b.endTime}`.localeCompare(`${a.endDate} ${a.endTime}`));
         eventsList.append(makeEventSection('Upcoming',upcoming),makeEventSection('Past',past));
       }
       function saveEventFromForm() {
-        const title=eventTitleInput.value.trim(); const startDate=eventStartDateInput.value; const endDate=eventEndDateInput.value || startDate; const time=eventTimeInput.value;
+        const title=eventTitleInput.value.trim();
+        const startDate=eventStartDateInput.value;
+        const endDate=eventEndDateInput.value || startDate;
+        const startTime=eventStartTimeInput.value;
+        const endTime=eventEndTimeInput.value;
         if (!title || !startDate) { showStatus('Event title and start date are required'); return; }
         if (endDate < startDate) { showStatus('End date cannot be before start date'); eventEndDateInput.focus(); return; }
-        if (time && !/^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(time)) {
-          showStatus('Select time in 15-minute intervals'); eventTimeInput.focus(); return;
+        const validTime = value => !value || /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(value);
+        if (!validTime(startTime) || !validTime(endTime)) { showStatus('Select times in 15-minute intervals'); return; }
+        if (startDate === endDate && startTime && endTime && endTime <= startTime) {
+          showStatus('End time must be after start time'); eventEndTimeInput.focus(); return;
         }
         if (editingEventId) {
           const item=events.find(event=>event.id===editingEventId);
           if (!item) { showStatus('Event no longer exists'); setEventMode('list'); return; }
-          item.title=title; item.startDate=startDate; item.endDate=endDate; item.time=time;
+          item.title=title; item.startDate=startDate; item.endDate=endDate; item.startTime=startTime; item.endTime=endTime;
           saveEvents('Event updated');
         } else {
-          events.push({id:createId(),title,startDate,endDate,time,linkedTaskId:''});
+          events.push({id:createId(),title,startDate,endDate,startTime,endTime,linkedTaskId:''});
           saveEvents('Event added');
         }
         setEventMode('list');
@@ -2166,7 +2199,7 @@ Current data will be preserved first.`)) return;
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.45,
+          version: 2.46,
           exportedAt: new Date().toISOString(),
           tasks,
           events
