@@ -443,8 +443,8 @@
 
     .editor-tools { display:grid; gap:5px; margin-top:8px; }
     .editor-primary-row,.editor-secondary-row { display:grid; gap:5px; }
-    .editor-primary-row { grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); }
-    .editor-secondary-row { grid-template-columns:minmax(0,1.35fr) auto auto; }
+    .editor-primary-row { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .editor-secondary-row { grid-template-columns:1fr; }
     .task-status-select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); padding:5px 28px 5px 8px; font:inherit; font-weight:680; }
     .cancel-task {
       background: #f3f4f6;
@@ -1956,8 +1956,8 @@ Current data will be preserved first.`)) return;
         const currentStatus=task.archived?'archive':task.waiting?'waiting':task.list==='active'?'active':'';
         [['','Status'],['active','Active'],['waiting','Waiting'],['archive','Archive']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;option.selected=value===currentStatus;if(!value&&currentStatus)option.disabled=true;statusSelect.appendChild(option);});
         statusSelect.addEventListener('change',()=>changeTaskStatus(task.id,statusSelect.value,editor));
-        const primaryRow=document.createElement('div');primaryRow.className='editor-primary-row';primaryRow.append(addActionButton,saveButton);
-        const secondaryRow=document.createElement('div');secondaryRow.className='editor-secondary-row';secondaryRow.append(statusSelect,deleteButton,cancelButton);
+        const primaryRow=document.createElement('div');primaryRow.className='editor-primary-row';primaryRow.append(addActionButton,saveButton,statusSelect,cancelButton);
+        const secondaryRow=document.createElement('div');secondaryRow.className='editor-secondary-row';secondaryRow.append(deleteButton);
         tools.append(primaryRow,secondaryRow);
         editor.append(requestorField, titleField, descriptionField, heading, actionList, tools);
         return editor;
