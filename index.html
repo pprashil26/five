@@ -721,6 +721,30 @@
     .events-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .events-header h2 { margin:0; font-size:16px; }
     .events-header-actions { display:flex; align-items:center; gap:4px; }
+    .events-view-switch { min-height:28px; border:0; background:transparent; color:var(--accent); padding:2px 5px; font-size:11px; }
+    .calendar-view { display:none; }
+    .events-dialog.calendar-mode .event-list-view,
+    .events-dialog.calendar-mode .event-form-view { display:none; }
+    .events-dialog.calendar-mode .calendar-view { display:block; }
+    .calendar-toolbar { display:grid; grid-template-columns:28px minmax(0,1fr) 28px; align-items:center; gap:4px; margin-top:8px; }
+    .calendar-year { text-align:center; font-size:12px; font-weight:780; }
+    .calendar-year-button { min-width:28px; min-height:26px; border:0; background:transparent; color:var(--muted); padding:0; }
+    .year-calendar { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 7px; margin-top:7px; overflow:auto; padding:1px; }
+    .mini-month { min-width:0; }
+    .mini-month-title { margin-bottom:2px; color:var(--text); font-size:10px; font-weight:800; text-align:center; text-transform:uppercase; }
+    .mini-month-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:1px; }
+    .mini-weekday { color:#9aa0a8; font-size:7px; line-height:12px; text-align:center; }
+    .mini-day { min-width:0; height:16px; min-height:16px; border:0; border-radius:4px; background:transparent; color:var(--text); padding:0; font-size:8px; font-weight:560; line-height:16px; text-align:center; }
+    .mini-day.event-date { background:#e7f1ff; color:#174ea6; font-weight:800; }
+    .mini-day.today { outline:1px solid var(--accent); outline-offset:-1px; }
+    .mini-day.selected-date { background:var(--accent); color:#fff; }
+    .mini-day-spacer { height:16px; }
+    .calendar-date-events { display:none; margin-top:9px; padding-top:8px; border-top:1px solid var(--line); }
+    .calendar-date-events.open { display:grid; gap:4px; }
+    .calendar-date-heading { color:var(--muted); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
+    .calendar-date-event { display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px; padding:5px 6px; border-radius:6px; background:#f6f8fb; font-size:11px; }
+    .calendar-date-time { color:var(--accent); font-weight:760; }
+    @media (max-width:360px) { .year-calendar { gap:8px 4px; } .mini-day { font-size:7.5px; } }
     .events-new { min-width:30px; min-height:28px; border-color:var(--accent); background:var(--accent); color:#fff; padding:2px 8px; }
     .events-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
     .event-form-view { display:none; }
@@ -813,14 +837,24 @@
     <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
     <dialog id="eventsDialog" class="events-dialog">
       <div class="events-header">
-        <h2>Events</h2>
+        <h2 id="eventsHeading">Events</h2>
         <div class="events-header-actions">
+          <button type="button" class="events-view-switch" id="calendarSwitch">Calendar</button>
           <button type="button" class="events-new" id="newEvent" aria-label="Add event" title="Add event">+</button>
           <button type="button" class="events-close" id="closeEvents" aria-label="Close events">✕</button>
         </div>
       </div>
       <div class="event-list-view">
         <div class="events-list" id="eventsList"></div>
+      </div>
+      <div class="calendar-view">
+        <div class="calendar-toolbar">
+          <button type="button" class="calendar-year-button" id="previousCalendarYear" aria-label="Previous year">‹</button>
+          <div class="calendar-year" id="calendarYear"></div>
+          <button type="button" class="calendar-year-button" id="nextCalendarYear" aria-label="Next year">›</button>
+        </div>
+        <div class="year-calendar" id="yearCalendar"></div>
+        <div class="calendar-date-events" id="calendarDateEvents"></div>
       </div>
       <div class="event-form-view">
         <div class="event-form-heading"><strong id="eventFormTitle">New Event</strong><button type="button" class="event-cancel" id="cancelEventEdit">Cancel</button></div>
@@ -865,6 +899,11 @@
       const eventCountElement = document.getElementById('eventCount');
       const eventsDialog = document.getElementById('eventsDialog');
       const eventsList = document.getElementById('eventsList');
+      const eventsHeading = document.getElementById('eventsHeading');
+      const calendarSwitch = document.getElementById('calendarSwitch');
+      const calendarYearElement = document.getElementById('calendarYear');
+      const yearCalendar = document.getElementById('yearCalendar');
+      const calendarDateEvents = document.getElementById('calendarDateEvents');
       const newEventButton = document.getElementById('newEvent');
       const eventFormTitle = document.getElementById('eventFormTitle');
       const cancelEventEditButton = document.getElementById('cancelEventEdit');
@@ -892,6 +931,8 @@
       let editSnapshot = null;
       let newDraftId = null;
       let editingEventId = null;
+      let calendarYearValue = new Date().getFullYear();
+      let selectedCalendarDate = '';
       let recoveryDbPromise = null;
       let lastSnapshotAt = 0;
       let snapshotTimer = null;
@@ -1136,8 +1177,66 @@ Current data will be preserved first.`)) return;
         localStorage.setItem(EVENTS_DISMISSED_KEY, todayValue());
       }
       function openEventsList() {
+        setEventsView('list');
         setEventMode('list');
         if (!eventsDialog.open) eventsDialog.showModal();
+      }
+      function setEventsView(mode) {
+        const calendarMode = mode === 'calendar';
+        eventsDialog.classList.toggle('calendar-mode', calendarMode);
+        eventsHeading.textContent = calendarMode ? 'Calendar' : 'Events';
+        calendarSwitch.textContent = calendarMode ? 'Events' : 'Calendar';
+        newEventButton.hidden = calendarMode;
+        if (calendarMode) renderCalendar();
+        else renderEvents();
+      }
+      function dateKey(year, month, day) {
+        return `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      }
+      function showCalendarDate(date) {
+        selectedCalendarDate = date;
+        renderCalendar();
+      }
+      function renderCalendarDateEvents() {
+        calendarDateEvents.replaceChildren();
+        const items = events.filter(item => item.date === selectedCalendarDate).sort((a,b) => a.time.localeCompare(b.time));
+        if (!items.length) { calendarDateEvents.classList.remove('open'); return; }
+        calendarDateEvents.classList.add('open');
+        const heading = document.createElement('div'); heading.className = 'calendar-date-heading';
+        heading.textContent = new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+        calendarDateEvents.appendChild(heading);
+        items.forEach(item => {
+          const row=document.createElement('div'); row.className='calendar-date-event';
+          const time=document.createElement('span'); time.className='calendar-date-time'; time.textContent=item.time || 'All day';
+          const title=document.createElement('span'); title.textContent=item.title;
+          row.append(time,title); calendarDateEvents.appendChild(row);
+        });
+      }
+      function renderCalendar() {
+        calendarYearElement.textContent = calendarYearValue;
+        yearCalendar.replaceChildren();
+        const eventDates = new Set(events.filter(item => item.date.startsWith(`${calendarYearValue}-`)).map(item => item.date));
+        const monthNames = Array.from({length:12},(_,month) => new Date(calendarYearValue,month,1).toLocaleDateString(undefined,{month:'short'}));
+        const weekdayNames = ['S','M','T','W','T','F','S'];
+        for (let month=0; month<12; month+=1) {
+          const block=document.createElement('section'); block.className='mini-month';
+          const title=document.createElement('div'); title.className='mini-month-title'; title.textContent=monthNames[month];
+          const grid=document.createElement('div'); grid.className='mini-month-grid';
+          weekdayNames.forEach(label=>{const day=document.createElement('div');day.className='mini-weekday';day.textContent=label;grid.appendChild(day);});
+          const firstDay=new Date(calendarYearValue,month,1).getDay();
+          const numberOfDays=new Date(calendarYearValue,month+1,0).getDate();
+          for(let blank=0;blank<firstDay;blank+=1){const spacer=document.createElement('span');spacer.className='mini-day-spacer';grid.appendChild(spacer);}
+          for(let dayNumber=1;dayNumber<=numberOfDays;dayNumber+=1){
+            const date=dateKey(calendarYearValue,month,dayNumber);
+            const day=document.createElement(eventDates.has(date)?'button':'span');
+            day.className=`mini-day${eventDates.has(date)?' event-date':''}${date===todayValue()?' today':''}${date===selectedCalendarDate?' selected-date':''}`;
+            day.textContent=dayNumber;
+            if(eventDates.has(date)){day.type='button';day.setAttribute('aria-label',`Show events for ${date}`);day.addEventListener('click',()=>showCalendarDate(date));}
+            grid.appendChild(day);
+          }
+          block.append(title,grid); yearCalendar.appendChild(block);
+        }
+        renderCalendarDateEvents();
       }
       function autoOpenEventsIfNeeded() {
         if (!hasUpcomingEvents() || eventsDismissedToday() || eventsDialog.open) return;
@@ -1177,7 +1276,7 @@ Current data will be preserved first.`)) return;
       function setEventMode(mode, item = null) {
         const editing = mode === 'form';
         eventsDialog.classList.toggle('form-mode', editing);
-        newEventButton.hidden = editing;
+        newEventButton.hidden = editing || eventsDialog.classList.contains('calendar-mode');
         if (!editing) {
           editingEventId = null;
           eventTitleInput.value = '';
@@ -2024,7 +2123,7 @@ Current data will be preserved first.`)) return;
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.41,
+          version: 2.43,
           exportedAt: new Date().toISOString(),
           tasks,
           events
@@ -2147,10 +2246,13 @@ Current data will be preserved first.`)) return;
         addTaskButton.click();
       });
       eventsButton.addEventListener('click', openEventsList);
+      calendarSwitch.addEventListener('click', () => setEventsView(eventsDialog.classList.contains('calendar-mode') ? 'list' : 'calendar'));
+      document.getElementById('previousCalendarYear').addEventListener('click', () => { calendarYearValue -= 1; selectedCalendarDate = ''; renderCalendar(); });
+      document.getElementById('nextCalendarYear').addEventListener('click', () => { calendarYearValue += 1; selectedCalendarDate = ''; renderCalendar(); });
       newEventButton.addEventListener('click', () => setEventMode('form'));
       cancelEventEditButton.addEventListener('click', () => setEventMode('list'));
-      document.getElementById('closeEvents').addEventListener('click', () => { dismissEventsForToday(); setEventMode('list'); eventsDialog.close(); });
-      eventsDialog.addEventListener('cancel', event => { event.preventDefault(); dismissEventsForToday(); setEventMode('list'); eventsDialog.close(); });
+      document.getElementById('closeEvents').addEventListener('click', () => { dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
+      eventsDialog.addEventListener('cancel', event => { event.preventDefault(); dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
       addEventButton.addEventListener('click', saveEventFromForm);
       eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); saveEventFromForm(); } });
 
