@@ -753,11 +753,14 @@
     .event-form-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
     .event-form-heading strong { font-size:13px; }
     .event-cancel { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 4px; font-size:11px; }
-    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:5px; margin-top:6px; }
-    #eventTitle { grid-column:1 / -1; }
-    .event-add { grid-column:1 / -1; }
-    .event-entry input, .event-entry select { min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
-    .event-add { min-height:34px; padding:4px 8px; border-color:var(--accent); background:var(--accent); color:#fff; }
+    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:7px 6px; margin-top:7px; }
+    .event-field { display:grid; gap:3px; min-width:0; }
+    .event-field-title { grid-column:1 / -1; }
+    .event-field label { color:var(--muted); font-size:9px; font-weight:800; line-height:1.2; text-transform:uppercase; letter-spacing:.35px; }
+    .event-field input, .event-field select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
+    .event-form-actions { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px; margin-top:1px; }
+    .event-range-hint { color:var(--muted); font-size:9px; line-height:1.25; }
+    .event-add { min-height:34px; padding:4px 12px; border-color:var(--accent); background:var(--accent); color:#fff; }
     .events-list { display:grid; gap:5px; margin-top:8px; overflow:auto; }
     .events-section { display:grid; gap:5px; }
     .events-section + .events-section { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
@@ -773,8 +776,9 @@
     .event-delete { min-height:28px; border:0; background:transparent; color:var(--danger); padding:2px 4px; }
     .events-empty { padding:16px 8px; color:var(--muted); text-align:center; font-size:12px; }
     @media (max-width:360px) {
-      .event-entry { grid-template-columns:1fr; }
-      #eventTitle, .event-add { grid-column:1; }
+      .event-entry { gap:6px 4px; }
+      .event-field label { font-size:8.5px; }
+      .event-form-actions { grid-template-columns:minmax(0,1fr) auto; }
     }
     .recovery-dialog { width:min(92vw,460px); max-height:80dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .recovery-dialog::backdrop { background:rgba(29,35,42,.28); }
@@ -859,11 +863,26 @@
       <div class="event-form-view">
         <div class="event-form-heading"><strong id="eventFormTitle">New Event</strong><button type="button" class="event-cancel" id="cancelEventEdit">Cancel</button></div>
         <div class="event-entry">
-          <input type="text" id="eventTitle" maxlength="200" placeholder="Event title">
-          <input type="date" id="eventStartDate" aria-label="Event start date" title="Start date">
-          <input type="date" id="eventEndDate" aria-label="Event end date" title="End date">
-          <select id="eventTime" aria-label="Event time in 15-minute intervals"><option value="">No time</option></select>
-          <button type="button" class="event-add" id="addEvent">Add Event</button>
+          <div class="event-field event-field-title">
+            <label for="eventTitle">Event title</label>
+            <input type="text" id="eventTitle" maxlength="200" placeholder="What is the event?">
+          </div>
+          <div class="event-field">
+            <label for="eventStartDate">Start date</label>
+            <input type="date" id="eventStartDate">
+          </div>
+          <div class="event-field">
+            <label for="eventEndDate">End date</label>
+            <input type="date" id="eventEndDate">
+          </div>
+          <div class="event-field">
+            <label for="eventTime">Start time · optional</label>
+            <select id="eventTime" aria-label="Optional event start time in 15-minute intervals"><option value="">No start time</option></select>
+          </div>
+          <div class="event-form-actions">
+            <span class="event-range-hint">All dates from start through end are highlighted.</span>
+            <button type="button" class="event-add" id="addEvent">Add Event</button>
+          </div>
         </div>
       </div>
     </dialog>
@@ -1311,6 +1330,7 @@ Current data will be preserved first.`)) return;
         eventTitleInput.value = item?.title || '';
         eventStartDateInput.value = item?.startDate || todayValue();
         eventEndDateInput.value = item?.endDate || item?.startDate || todayValue();
+        eventEndDateInput.min = eventStartDateInput.value;
         eventTimeInput.value = item?.time || '';
         requestAnimationFrame(() => eventTitleInput.focus());
       }
@@ -2146,7 +2166,7 @@ Current data will be preserved first.`)) return;
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.44,
+          version: 2.45,
           exportedAt: new Date().toISOString(),
           tasks,
           events
