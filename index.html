@@ -745,6 +745,22 @@
     .calendar-date-event { display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px; padding:5px 6px; border-radius:6px; background:#f6f8fb; font-size:11px; }
     .calendar-date-time { color:var(--accent); font-weight:760; }
     @media (max-width:360px) { .year-calendar { gap:8px 4px; } .mini-day { font-size:7.5px; } }
+    .year-calendar { display:grid; grid-template-columns:1fr; gap:0; margin-top:7px; overflow:auto; padding:0; border:1px solid var(--line); border-radius:8px; }
+    .planner-head,.planner-month-row { display:grid; grid-template-columns:minmax(0,44%) minmax(0,56%); }
+    .planner-head { position:sticky; top:0; z-index:2; background:#f7f8fa; border-bottom:1px solid var(--line); color:var(--muted); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
+    .planner-head>div,.planner-month-calendar,.planner-month-events { padding:7px; min-width:0; }
+    .planner-head>div+div,.planner-month-events { border-left:1px solid var(--line); }
+    .planner-month-row+.planner-month-row { border-top:1px solid var(--line); }
+    .planner-month-title { margin-bottom:4px; font-size:11px; font-weight:850; text-transform:uppercase; }
+    .planner-events-title { margin-bottom:4px; font-size:10px; font-weight:800; }
+    .planner-event { display:grid; grid-template-columns:minmax(62px,auto) minmax(0,1fr); gap:5px; padding:4px 0; border-bottom:1px solid #eef0f2; font-size:9px; line-height:1.25; }
+    .planner-event:last-child { border-bottom:0; }
+    .planner-event-when { color:#765b00; font-weight:800; }
+    .planner-event-title { overflow-wrap:anywhere; }
+    .planner-empty { color:#9aa0a8; font-size:9px; padding:4px 0; }
+    .planner-month-calendar .mini-day { height:17px; min-height:17px; line-height:17px; font-size:8px; }
+    .planner-month-calendar .mini-day-spacer { height:17px; }
+    @media(max-width:360px){.planner-head,.planner-month-row{grid-template-columns:minmax(0,47%) minmax(0,53%)}.planner-head>div,.planner-month-calendar,.planner-month-events{padding:5px}.planner-event{grid-template-columns:1fr;gap:1px}}
     .events-new { min-width:30px; min-height:28px; border-color:var(--accent); background:var(--accent); color:#fff; padding:2px 8px; }
     .events-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
     .event-form-view { display:none; }
@@ -753,14 +769,13 @@
     .event-form-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
     .event-form-heading strong { font-size:13px; }
     .event-cancel { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 4px; font-size:11px; }
-    .event-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:7px 6px; margin-top:7px; }
+    .event-entry { display:grid; gap:7px; margin-top:7px; }
     .event-field { display:grid; gap:3px; min-width:0; }
-    .event-field-title { grid-column:1 / -1; }
-    .event-datetime-row { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:6px; }
-    .event-field label { color:var(--muted); font-size:9px; font-weight:800; line-height:1.2; text-transform:uppercase; letter-spacing:.35px; }
-    .event-field input, .event-field select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
-    .event-form-actions { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px; margin-top:1px; }
-    .event-range-hint { color:var(--muted); font-size:9px; line-height:1.25; }
+    .event-field label { color:var(--muted); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
+    .event-field input,.event-field select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
+    .event-datetime-row { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:6px; }
+    .event-form-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px; }
+    .event-range-hint { color:var(--muted); font-size:9px; }
     .event-add { min-height:34px; padding:4px 12px; border-color:var(--accent); background:var(--accent); color:#fff; }
     .events-list { display:grid; gap:5px; margin-top:8px; overflow:auto; }
     .events-section { display:grid; gap:5px; }
@@ -777,9 +792,8 @@
     .event-delete { min-height:28px; border:0; background:transparent; color:var(--danger); padding:2px 4px; }
     .events-empty { padding:16px 8px; color:var(--muted); text-align:center; font-size:12px; }
     @media (max-width:360px) {
-      .event-entry { gap:6px 4px; }
-      .event-field label { font-size:8.5px; }
-      .event-form-actions { grid-template-columns:minmax(0,1fr) auto; }
+      .event-entry { grid-template-columns:1fr; }
+      #eventTitle, .event-add { grid-column:1; }
     }
     .recovery-dialog { width:min(92vw,460px); max-height:80dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .recovery-dialog::backdrop { background:rgba(29,35,42,.28); }
@@ -864,34 +878,10 @@
       <div class="event-form-view">
         <div class="event-form-heading"><strong id="eventFormTitle">New Event</strong><button type="button" class="event-cancel" id="cancelEventEdit">Cancel</button></div>
         <div class="event-entry">
-          <div class="event-field event-field-title">
-            <label for="eventTitle">Event title</label>
-            <input type="text" id="eventTitle" maxlength="200" placeholder="What is the event?">
-          </div>
-          <div class="event-datetime-row">
-            <div class="event-field">
-              <label for="eventStartDate">Start date</label>
-              <input type="date" id="eventStartDate">
-            </div>
-            <div class="event-field">
-              <label for="eventStartTime">Start time · optional</label>
-              <select id="eventStartTime" aria-label="Optional event start time in 15-minute intervals"><option value="">No start time</option></select>
-            </div>
-          </div>
-          <div class="event-datetime-row">
-            <div class="event-field">
-              <label for="eventEndDate">End date</label>
-              <input type="date" id="eventEndDate">
-            </div>
-            <div class="event-field">
-              <label for="eventEndTime">End time · optional</label>
-              <select id="eventEndTime" aria-label="Optional event end time in 15-minute intervals"><option value="">No end time</option></select>
-            </div>
-          </div>
-          <div class="event-form-actions">
-            <span class="event-range-hint">All dates from start through end are highlighted.</span>
-            <button type="button" class="event-add" id="addEvent">Add Event</button>
-          </div>
+          <div class="event-field"><label for="eventTitle">Event title</label><input type="text" id="eventTitle" maxlength="200" placeholder="What is the event?"></div>
+          <div class="event-datetime-row"><div class="event-field"><label for="eventStartDate">Start date</label><input type="date" id="eventStartDate"></div><div class="event-field"><label for="eventStartTime">Start time · optional</label><select id="eventStartTime"><option value="">No start time</option></select></div></div>
+          <div class="event-datetime-row"><div class="event-field"><label for="eventEndDate">End date</label><input type="date" id="eventEndDate"></div><div class="event-field"><label for="eventEndTime">End time · optional</label><select id="eventEndTime"><option value="">No end time</option></select></div></div>
+          <div class="event-form-actions"><span class="event-range-hint">All dates from start through end are highlighted.</span><button type="button" class="event-add" id="addEvent">Add Event</button></div>
         </div>
       </div>
     </dialog>
@@ -937,10 +927,10 @@
       const eventFormTitle = document.getElementById('eventFormTitle');
       const cancelEventEditButton = document.getElementById('cancelEventEdit');
       const eventTitleInput = document.getElementById('eventTitle');
-      const eventStartDateInput = document.getElementById('eventStartDate');
-      const eventEndDateInput = document.getElementById('eventEndDate');
-      const eventStartTimeInput = document.getElementById('eventStartTime');
-      const eventEndTimeInput = document.getElementById('eventEndTime');
+      const eventStartDateInput=document.getElementById('eventStartDate');
+      const eventEndDateInput=document.getElementById('eventEndDate');
+      const eventStartTimeInput=document.getElementById('eventStartTime');
+      const eventEndTimeInput=document.getElementById('eventEndTime');
       const addEventButton = document.getElementById('addEvent');
       const addTaskButton = document.getElementById('addTask');
       const exportButton = document.getElementById('exportData');
@@ -1149,13 +1139,8 @@ Current data will be preserved first.`)) return;
         for (let hour = 0; hour < 24; hour += 1) {
           for (const minute of [0, 15, 30, 45]) {
             const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-            const label = new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-            [eventStartTimeInput, eventEndTimeInput].forEach(select => {
-              const option = document.createElement('option');
-              option.value = value;
-              option.textContent = label;
-              select.appendChild(option);
-            });
+            const label=new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+            [eventStartTimeInput,eventEndTimeInput].forEach(select=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);});
           }
         }
       }
@@ -1170,7 +1155,7 @@ Current data will be preserved first.`)) return;
           endDate: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.endDate || item?.startDate || item?.date || '')) ? String(item.endDate || item.startDate || item.date) : '',
           startTime: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.startTime || item?.time || '')) ? String(item.startTime || item.time) : '',
           endTime: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.endTime || '')) ? String(item.endTime) : ''
-        })).filter(item => item.title && item.startDate).map(item => { if (item.endDate < item.startDate) item.endDate = item.startDate; return item; });
+        })).filter(item=>item.title&&item.startDate).map(item=>{if(item.endDate<item.startDate)item.endDate=item.startDate;return item;});
       }
       function loadEvents() {
         try {
@@ -1233,35 +1218,13 @@ Current data will be preserved first.`)) return;
         selectedCalendarDate = date;
         renderCalendar();
       }
-      function eventIncludesDate(item, date) {
-        return item.startDate <= date && item.endDate >= date;
-      }
-      function eachDateInRange(startDate, endDate, callback) {
-        const current = new Date(`${startDate}T00:00:00`);
-        const last = new Date(`${endDate}T00:00:00`);
-        while (current <= last) {
-          callback(`${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}-${String(current.getDate()).padStart(2,'0')}`);
-          current.setDate(current.getDate()+1);
-        }
-      }
-      function eventTimeLabel(value) {
-        if (!value) return '';
-        return new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
-      }
-      function eventRangeLabel(item) {
-        const startTime = eventTimeLabel(item.startTime);
-        const endTime = eventTimeLabel(item.endTime);
-        if (item.startDate === item.endDate) {
-          if (startTime && endTime) return `${eventDateLabel(item.startDate)} · ${startTime} – ${endTime}`;
-          if (startTime) return `${eventDateLabel(item.startDate)} · ${startTime}`;
-          if (endTime) return `${eventDateLabel(item.startDate)} · until ${endTime}`;
-          return eventDateLabel(item.startDate);
-        }
-        return `${eventDateLabel(item.startDate)}${startTime ? ` ${startTime}` : ''} – ${eventDateLabel(item.endDate)}${endTime ? ` ${endTime}` : ''}`;
-      }
+      function eventIncludesDate(item,date){return item.startDate<=date&&item.endDate>=date;}
+      function eachDateInRange(start,end,callback){const d=new Date(`${start}T00:00:00`),last=new Date(`${end}T00:00:00`);while(d<=last){callback(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);d.setDate(d.getDate()+1);}}
+      function eventTimeLabel(value){return value?new Date(`2000-01-01T${value}:00`).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';}
+      function eventRangeLabel(item){const st=eventTimeLabel(item.startTime),et=eventTimeLabel(item.endTime);if(item.startDate===item.endDate)return `${eventDateLabel(item.startDate)}${st?' · '+st:''}${et?' – '+et:''}`;return `${eventDateLabel(item.startDate)}${st?' '+st:''} – ${eventDateLabel(item.endDate)}${et?' '+et:''}`;}
       function renderCalendarDateEvents() {
         calendarDateEvents.replaceChildren();
-        const items = events.filter(item => eventIncludesDate(item, selectedCalendarDate)).sort((a,b) => a.startTime.localeCompare(b.startTime));
+        const items = events.filter(item=>eventIncludesDate(item,selectedCalendarDate)).sort((a,b)=>a.startTime.localeCompare(b.startTime));
         if (!items.length) { calendarDateEvents.classList.remove('open'); return; }
         calendarDateEvents.classList.add('open');
         const heading = document.createElement('div'); heading.className = 'calendar-date-heading';
@@ -1269,38 +1232,12 @@ Current data will be preserved first.`)) return;
         calendarDateEvents.appendChild(heading);
         items.forEach(item => {
           const row=document.createElement('div'); row.className='calendar-date-event';
-          const time=document.createElement('span'); time.className='calendar-date-time'; time.textContent=item.startTime ? eventTimeLabel(item.startTime) : 'All day';
+          const time=document.createElement('span'); time.className='calendar-date-time'; time.textContent=item.startTime?eventTimeLabel(item.startTime):'All day';
           const title=document.createElement('span'); title.textContent=`${item.title} · ${eventRangeLabel(item)}`;
           row.append(time,title); calendarDateEvents.appendChild(row);
         });
       }
-      function renderCalendar() {
-        calendarYearElement.textContent = calendarYearValue;
-        yearCalendar.replaceChildren();
-        const eventDates = new Set();
-        events.forEach(item => eachDateInRange(item.startDate, item.endDate, date => { if (date.startsWith(`${calendarYearValue}-`)) eventDates.add(date); }));
-        const monthNames = Array.from({length:12},(_,month) => new Date(calendarYearValue,month,1).toLocaleDateString(undefined,{month:'short'}));
-        const weekdayNames = ['M','T','W','T','F','S','S'];
-        for (let month=0; month<12; month+=1) {
-          const block=document.createElement('section'); block.className='mini-month';
-          const title=document.createElement('div'); title.className='mini-month-title'; title.textContent=monthNames[month];
-          const grid=document.createElement('div'); grid.className='mini-month-grid';
-          weekdayNames.forEach(label=>{const day=document.createElement('div');day.className='mini-weekday';day.textContent=label;grid.appendChild(day);});
-          const firstDay=(new Date(calendarYearValue,month,1).getDay()+6)%7;
-          const numberOfDays=new Date(calendarYearValue,month+1,0).getDate();
-          for(let blank=0;blank<firstDay;blank+=1){const spacer=document.createElement('span');spacer.className='mini-day-spacer';grid.appendChild(spacer);}
-          for(let dayNumber=1;dayNumber<=numberOfDays;dayNumber+=1){
-            const date=dateKey(calendarYearValue,month,dayNumber);
-            const day=document.createElement(eventDates.has(date)?'button':'span');
-            day.className=`mini-day${eventDates.has(date)?' event-date':''}${date===todayValue()?' today':''}${date===selectedCalendarDate?' selected-date':''}`;
-            day.textContent=dayNumber;
-            if(eventDates.has(date)){day.type='button';day.setAttribute('aria-label',`Show events for ${date}`);day.addEventListener('click',()=>showCalendarDate(date));}
-            grid.appendChild(day);
-          }
-          block.append(title,grid); yearCalendar.appendChild(block);
-        }
-        renderCalendarDateEvents();
-      }
+      function renderCalendar(){calendarYearElement.textContent=calendarYearValue;yearCalendar.replaceChildren();const head=document.createElement('div');head.className='planner-head';const h1=document.createElement('div');h1.textContent='Months / dates';const h2=document.createElement('div');h2.textContent='Events';head.append(h1,h2);yearCalendar.appendChild(head);const eventDates=new Set();events.forEach(item=>eachDateInRange(item.startDate,item.endDate,date=>{if(date.startsWith(`${calendarYearValue}-`))eventDates.add(date);}));const names=Array.from({length:12},(_,m)=>new Date(calendarYearValue,m,1).toLocaleDateString(undefined,{month:'long'}));const weekdays=['M','T','W','T','F','S','S'];for(let month=0;month<12;month++){const days=new Date(calendarYearValue,month+1,0).getDate(),row=document.createElement('section');row.className='planner-month-row';const cal=document.createElement('div');cal.className='planner-month-calendar';const title=document.createElement('div');title.className='planner-month-title';title.textContent=names[month];const grid=document.createElement('div');grid.className='mini-month-grid';weekdays.forEach(x=>{const d=document.createElement('div');d.className='mini-weekday';d.textContent=x;grid.appendChild(d);});const first=(new Date(calendarYearValue,month,1).getDay()+6)%7;for(let i=0;i<first;i++){const x=document.createElement('span');x.className='mini-day-spacer';grid.appendChild(x);}for(let n=1;n<=days;n++){const date=dateKey(calendarYearValue,month,n),has=eventDates.has(date),d=document.createElement(has?'button':'span');d.className=`mini-day${has?' event-date':''}${date===todayValue()?' today':''}${date===selectedCalendarDate?' selected-date':''}`;d.textContent=n;if(has){d.type='button';d.addEventListener('click',()=>showCalendarDate(date));}grid.appendChild(d);}cal.append(title,grid);const col=document.createElement('div');col.className='planner-month-events';const et=document.createElement('div');et.className='planner-events-title';et.textContent=names[month];col.appendChild(et);const ms=dateKey(calendarYearValue,month,1),me=dateKey(calendarYearValue,month,days),items=events.filter(item=>item.startDate<=me&&item.endDate>=ms).sort((a,b)=>`${a.startDate} ${a.startTime}`.localeCompare(`${b.startDate} ${b.startTime}`));if(!items.length){const e=document.createElement('div');e.className='planner-empty';e.textContent='No events';col.appendChild(e);}items.forEach(item=>{const e=document.createElement('div');e.className='planner-event';const w=document.createElement('span');w.className='planner-event-when';w.textContent=eventRangeLabel(item);const t=document.createElement('span');t.className='planner-event-title';t.textContent=item.title;e.append(w,t);col.appendChild(e);});row.append(cal,col);yearCalendar.appendChild(row);}renderCalendarDateEvents();}
       function autoOpenEventsIfNeeded() {
         if (!hasUpcomingEvents() || eventsDismissedToday() || eventsDialog.open) return;
         requestAnimationFrame(openEventsList);
@@ -1328,7 +1265,7 @@ Current data will be preserved first.`)) return;
         task.list = 'active';
         task.requestor = 'EVENT';
         task.title = item.title.toUpperCase();
-        task.description = `📅 Event: ${item.startDate}${item.startTime ? ` ${item.startTime}` : ''}${item.endDate !== item.startDate || item.endTime ? ` to ${item.endDate}${item.endTime ? ` ${item.endTime}` : ''}` : ''}`;
+        task.description = `📅 Event: ${item.startDate}${item.startTime?` ${item.startTime}`:''} to ${item.endDate}${item.endTime?` ${item.endTime}`:''}`;
         task.actions[0].text = 'Attend event';
         tasks.push(task);
         item.linkedTaskId = task.id;
@@ -1342,11 +1279,7 @@ Current data will be preserved first.`)) return;
         newEventButton.hidden = editing || eventsDialog.classList.contains('calendar-mode');
         if (!editing) {
           editingEventId = null;
-          eventTitleInput.value = '';
-          eventStartDateInput.value = '';
-          eventEndDateInput.value = '';
-          eventStartTimeInput.value = '';
-          eventEndTimeInput.value = '';
+          eventTitleInput.value='';eventStartDateInput.value='';eventEndDateInput.value='';eventStartTimeInput.value='';eventEndTimeInput.value='';
           renderEvents();
           return;
         }
@@ -1354,11 +1287,7 @@ Current data will be preserved first.`)) return;
         eventFormTitle.textContent = item ? 'Edit Event' : 'New Event';
         addEventButton.textContent = item ? 'Save Changes' : 'Add Event';
         eventTitleInput.value = item?.title || '';
-        eventStartDateInput.value = item?.startDate || todayValue();
-        eventEndDateInput.value = item?.endDate || item?.startDate || todayValue();
-        eventEndDateInput.min = eventStartDateInput.value;
-        eventStartTimeInput.value = item?.startTime || '';
-        eventEndTimeInput.value = item?.endTime || '';
+        eventStartDateInput.value=item?.startDate||todayValue();eventEndDateInput.value=item?.endDate||item?.startDate||todayValue();eventEndDateInput.min=eventStartDateInput.value;eventStartTimeInput.value=item?.startTime||'';eventEndTimeInput.value=item?.endTime||'';
         requestAnimationFrame(() => eventTitleInput.focus());
       }
       function renderEventItem(item) {
@@ -1404,22 +1333,14 @@ Current data will be preserved first.`)) return;
         eventsList.append(makeEventSection('Upcoming',upcoming),makeEventSection('Past',past));
       }
       function saveEventFromForm() {
-        const title=eventTitleInput.value.trim();
-        const startDate=eventStartDateInput.value;
-        const endDate=eventEndDateInput.value || startDate;
-        const startTime=eventStartTimeInput.value;
-        const endTime=eventEndTimeInput.value;
-        if (!title || !startDate) { showStatus('Event title and start date are required'); return; }
-        if (endDate < startDate) { showStatus('End date cannot be before start date'); eventEndDateInput.focus(); return; }
-        const validTime = value => !value || /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(value);
-        if (!validTime(startTime) || !validTime(endTime)) { showStatus('Select times in 15-minute intervals'); return; }
-        if (startDate === endDate && startTime && endTime && endTime <= startTime) {
-          showStatus('End time must be after start time'); eventEndTimeInput.focus(); return;
-        }
+        const title=eventTitleInput.value.trim(),startDate=eventStartDateInput.value,endDate=eventEndDateInput.value||startDate,startTime=eventStartTimeInput.value,endTime=eventEndTimeInput.value;
+        if(!title||!startDate){showStatus('Event title and start date are required');return;}
+        if(endDate<startDate){showStatus('End date cannot be before start date');eventEndDateInput.focus();return;}
+        if(startDate===endDate&&startTime&&endTime&&endTime<=startTime){showStatus('End time must be after start time');eventEndTimeInput.focus();return;}
         if (editingEventId) {
           const item=events.find(event=>event.id===editingEventId);
           if (!item) { showStatus('Event no longer exists'); setEventMode('list'); return; }
-          item.title=title; item.startDate=startDate; item.endDate=endDate; item.startTime=startTime; item.endTime=endTime;
+          item.title=title;item.startDate=startDate;item.endDate=endDate;item.startTime=startTime;item.endTime=endTime;
           saveEvents('Event updated');
         } else {
           events.push({id:createId(),title,startDate,endDate,startTime,endTime,linkedTaskId:''});
@@ -2199,7 +2120,7 @@ Current data will be preserved first.`)) return;
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.47,
+          version: 2.48,
           exportedAt: new Date().toISOString(),
           tasks,
           events
@@ -2329,10 +2250,7 @@ Current data will be preserved first.`)) return;
       cancelEventEditButton.addEventListener('click', () => setEventMode('list'));
       document.getElementById('closeEvents').addEventListener('click', () => { dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
       eventsDialog.addEventListener('cancel', event => { event.preventDefault(); dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
-      eventStartDateInput.addEventListener('change', () => {
-        eventEndDateInput.min = eventStartDateInput.value;
-        if (!eventEndDateInput.value || eventEndDateInput.value < eventStartDateInput.value) eventEndDateInput.value = eventStartDateInput.value;
-      });
+      eventStartDateInput.addEventListener('change',()=>{eventEndDateInput.min=eventStartDateInput.value;if(!eventEndDateInput.value||eventEndDateInput.value<eventStartDateInput.value)eventEndDateInput.value=eventStartDateInput.value;});
       addEventButton.addEventListener('click', saveEventFromForm);
       eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); saveEventFromForm(); } });
 
