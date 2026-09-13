@@ -1280,13 +1280,13 @@ Current data will be preserved first.`)) return;
         const eventDates = new Set();
         events.forEach(item => eachDateInRange(item.startDate, item.endDate, date => { if (date.startsWith(`${calendarYearValue}-`)) eventDates.add(date); }));
         const monthNames = Array.from({length:12},(_,month) => new Date(calendarYearValue,month,1).toLocaleDateString(undefined,{month:'short'}));
-        const weekdayNames = ['S','M','T','W','T','F','S'];
+        const weekdayNames = ['M','T','W','T','F','S','S'];
         for (let month=0; month<12; month+=1) {
           const block=document.createElement('section'); block.className='mini-month';
           const title=document.createElement('div'); title.className='mini-month-title'; title.textContent=monthNames[month];
           const grid=document.createElement('div'); grid.className='mini-month-grid';
           weekdayNames.forEach(label=>{const day=document.createElement('div');day.className='mini-weekday';day.textContent=label;grid.appendChild(day);});
-          const firstDay=new Date(calendarYearValue,month,1).getDay();
+          const firstDay=(new Date(calendarYearValue,month,1).getDay()+6)%7;
           const numberOfDays=new Date(calendarYearValue,month+1,0).getDate();
           for(let blank=0;blank<firstDay;blank+=1){const spacer=document.createElement('span');spacer.className='mini-day-spacer';grid.appendChild(spacer);}
           for(let dayNumber=1;dayNumber<=numberOfDays;dayNumber+=1){
@@ -2199,7 +2199,7 @@ Current data will be preserved first.`)) return;
       exportButton.addEventListener('click', () => {
         const data = {
           app: 'Five',
-          version: 2.46,
+          version: 2.47,
           exportedAt: new Date().toISOString(),
           tasks,
           events
