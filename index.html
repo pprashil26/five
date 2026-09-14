@@ -331,16 +331,7 @@
       white-space: pre-wrap;
     }
 
-    .task-timeblock { margin-top:4px; color:#536b93; font-size:11px; font-weight:720; }
-    .active-time-summary { flex:0 0 auto; display:none; min-height:22px; margin:-2px 0 5px; padding:3px 8px; border-radius:7px; background:#f0f3f8; color:#536b93; font-size:10px; font-weight:760; text-align:center; }
-    .active-time-summary.visible { display:block; }
-    .timeblock-editor { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-bottom:6px; }
-    .timeblock-field { display:grid; gap:3px; min-width:0; }
-    .timeblock-field span { color:var(--muted); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
-    .timeblock-field select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
-    .timeblock-duration { grid-column:1 / -1; min-height:14px; color:#536b93; font-size:10px; font-weight:720; }
-
-    .actions {
+    .task-duration{margin-top:4px;color:#536b93;font-size:11px;font-weight:720;} .active-time-summary{display:none;margin:0 0 6px;padding:3px 8px;border-radius:7px;background:#f0f3f8;color:#536b93;font-size:10px;font-weight:760;text-align:center}.active-time-summary.visible{display:block}.duration-select{width:100%;min-height:34px;border:1px solid var(--line);border-radius:7px;padding:5px 7px;background:#fff;} .actions {
       display: grid;
       gap: 2px;
       margin-top: 8px;
@@ -848,7 +839,7 @@
       <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
     </header>
 
-    <div class="active-time-summary" id="activeTimeSummary" aria-live="polite"></div>
+    <div class="active-time-summary" id="activeTimeSummary"></div>
     <section class="tasks" id="tasks" aria-live="polite"></section>
 
     <footer class="footer">
@@ -926,7 +917,7 @@
       const waitingTab = document.getElementById('waitingTab');
       const archiveTab = document.getElementById('archiveTab');
       const toggleActionsButton = document.getElementById('toggleActions');
-      const activeTimeSummary = document.getElementById('activeTimeSummary');
+      const activeTimeSummary=document.getElementById('activeTimeSummary');
       const eventsButton = document.getElementById('eventsButton');
       const eventCountElement = document.getElementById('eventCount');
       const eventsDialog = document.getElementById('eventsDialog');
@@ -1106,8 +1097,7 @@ Current data will be preserved first.`)) return;
           requestor: String(task.requestor ?? '').slice(0, 200),
           title: String(task.title ?? '').slice(0, 300),
           description: String(task.description ?? '').slice(0, 5000),
-          timeblockStart: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(task.timeblockStart || '')) ? String(task.timeblockStart) : '',
-          timeblockEnd: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(task.timeblockEnd || '')) ? String(task.timeblockEnd) : '',
+          durationMinutes:[15,30,45,60,90,120,180,240].includes(Number(task.durationMinutes))?Number(task.durationMinutes):0,
           pinned: Boolean(task.pinned),
           list: task.list === 'all' ? 'all' : 'active',
           waiting: Boolean(task.waiting) && !Boolean(task.archived),
@@ -1131,8 +1121,7 @@ Current data will be preserved first.`)) return;
           requestor: '',
           title: '',
           description: '',
-          timeblockStart: '',
-          timeblockEnd: '',
+          durationMinutes:0,
           pinned: false,
           list: 'all',
           waiting: false,
@@ -1250,6 +1239,7 @@ Current data will be preserved first.`)) return;
         const items = events.filter(item=>eventIncludesDate(item,selectedCalendarDate)).sort((a,b)=>a.startTime.localeCompare(b.startTime));
         if (!items.length) { calendarDateEvents.classList.remove('open'); return; }
         calendarDateEvents.classList.add('open');
+        const durationWrap=document.createElement('div');if(task.list==='active'&&!task.waiting&&!task.archived){const sel=document.createElement('select');sel.className='duration-select';[['0','No duration'],['15','15m'],['30','30m'],['45','45m'],['60','1h'],['90','1h 30m'],['120','2h'],['180','3h'],['240','4h']].forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l;if(Number(v)===Number(task.durationMinutes||0))o.selected=true;sel.appendChild(o);});sel.addEventListener('change',()=>{task.durationMinutes=Number(sel.value)||0;save();});durationWrap.appendChild(sel);}
         const heading = document.createElement('div'); heading.className = 'calendar-date-heading';
         heading.textContent = new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'});
         calendarDateEvents.appendChild(heading);
@@ -1452,19 +1442,7 @@ Current data will be preserved first.`)) return;
         return pinnedFirst(tasks.filter(task => !task.archived && !task.waiting && task.list === 'active'));
       }
 
-      function timeblockMinutes(task) {
-        if (!task.timeblockStart || !task.timeblockEnd || task.timeblockEnd <= task.timeblockStart) return 0;
-        const [sh,sm]=task.timeblockStart.split(':').map(Number),[eh,em]=task.timeblockEnd.split(':').map(Number);
-        return (eh*60+em)-(sh*60+sm);
-      }
-      function durationLabel(minutes) {
-        const hours=Math.floor(minutes/60),mins=minutes%60;
-        return `${hours?hours+'h ':''}${mins?mins+'m':''}`.trim() || '0m';
-      }
-      function taskTimeblockLabel(task) {
-        const minutes=timeblockMinutes(task);
-        return minutes ? `${eventTimeLabel(task.timeblockStart)}–${eventTimeLabel(task.timeblockEnd)} · ${durationLabel(minutes)}` : '';
-      }
+      function durationLabel(m){const h=Math.floor(m/60),mm=m%60;return `${h?h+'h ':''}${mm?mm+'m':''}`.trim()||'';}
       function waitingTasks() {
         return pinnedFirst(tasks
           .filter(task => task.waiting && !task.archived)
@@ -1513,9 +1491,9 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
         exportButton.disabled = tasks.length === 0;
-        const scheduledMinutes=activeTasks().reduce((total,task)=>total+timeblockMinutes(task),0);
-        activeTimeSummary.textContent=scheduledMinutes?`Active time · ${durationLabel(scheduledMinutes)} scheduled`:'';
-        activeTimeSummary.classList.toggle('visible',scheduledMinutes>0);
+        const total=activeTasks().reduce((a,t)=>a+(t.durationMinutes||0),0);
+        activeTimeSummary.textContent=total?`Active time · ${durationLabel(total)} planned`:'';
+        activeTimeSummary.classList.toggle('visible',total>0);
         updateEventButton();
       }
 
@@ -1624,12 +1602,7 @@ Current data will be preserved first.`)) return;
 
         titleRow.append(title, edit);
         content.append(requestorRow, titleRow);
-        if (currentView === 'active' && timeblockMinutes(task)) {
-          const timeblock=document.createElement('div');
-          timeblock.className='task-timeblock';
-          timeblock.textContent=taskTimeblockLabel(task);
-          content.appendChild(timeblock);
-        }
+        if(currentView==='active'&&task.durationMinutes){const d=document.createElement('div');d.className='task-duration';d.textContent='⏱ '+durationLabel(task.durationMinutes);content.appendChild(d);}
 
         if (showTaskDetails && task.description.trim()) {
           const description = document.createElement('p');
@@ -2048,25 +2021,6 @@ Current data will be preserved first.`)) return;
           save();
         }, true));
 
-        const timeblockEditor=document.createElement('div');
-        timeblockEditor.className='timeblock-editor';
-        if (task.list === 'active' && !task.waiting && !task.archived) {
-          const makeTimeblockSelect=(label,value,emptyLabel)=>{
-            const field=document.createElement('label'); field.className='timeblock-field';
-            const text=document.createElement('span'); text.textContent=label;
-            const select=document.createElement('select');
-            const empty=document.createElement('option'); empty.value=''; empty.textContent=emptyLabel; select.appendChild(empty);
-            for(let hour=0;hour<24;hour+=1) for(const minute of [0,15,30,45]) { const option=document.createElement('option'); option.value=`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`; option.textContent=eventTimeLabel(option.value); select.appendChild(option); }
-            select.value=value; field.append(text,select); return {field,select};
-          };
-          const start=makeTimeblockSelect('Start time',task.timeblockStart,'No start time');
-          const end=makeTimeblockSelect('End time',task.timeblockEnd,'No end time');
-          const duration=document.createElement('div'); duration.className='timeblock-duration';
-          const refreshTimeblock=()=>{ const minutes=timeblockMinutes(task); duration.textContent=minutes?`Duration · ${durationLabel(minutes)}`:''; };
-          start.select.addEventListener('change',()=>{task.timeblockStart=start.select.value;if(!task.timeblockStart){task.timeblockEnd='';end.select.value='';}else if(task.timeblockEnd&&task.timeblockEnd<=task.timeblockStart){task.timeblockEnd='';end.select.value='';}save();refreshTimeblock();});
-          end.select.addEventListener('change',()=>{if(end.select.value&&(!task.timeblockStart||end.select.value<=task.timeblockStart)){showStatus('End time must be after start time');end.select.value=task.timeblockEnd;return;}task.timeblockEnd=end.select.value;save();refreshTimeblock();});
-          refreshTimeblock(); timeblockEditor.append(start.field,end.field,duration);
-        }
         const heading = document.createElement('div');
         heading.className = 'editor-heading';
         heading.textContent = 'Next actions';
@@ -2119,9 +2073,7 @@ Current data will be preserved first.`)) return;
         const primaryRow=document.createElement('div');primaryRow.className='editor-primary-row';primaryRow.append(addActionButton,saveButton,statusSelect,cancelButton);
         const secondaryRow=document.createElement('div');secondaryRow.className='editor-secondary-row';secondaryRow.append(deleteButton);
         tools.append(primaryRow,secondaryRow);
-        editor.append(requestorField, titleField, descriptionField);
-        if (timeblockEditor.childElementCount) editor.append(timeblockEditor);
-        editor.append(heading, actionList, tools);
+        editor.append(requestorField, titleField, descriptionField);if(durationWrap.childElementCount)editor.append(durationWrap);editor.append(heading, actionList, tools);
         return editor;
       }
 
