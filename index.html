@@ -813,6 +813,7 @@
       .topbar { gap: 4px; }
       .view-tab { padding-inline: 4px; font-size: 10px; }
       .add-task { padding-inline: 8px; }
+      #shortcutHelp { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -845,6 +846,7 @@
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
         <button type="button" id="recoveryButton">Recovery</button>
+        <button type="button" id="footerCalendarButton">Calendar</button>
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
       </div>
@@ -940,6 +942,7 @@
       const shortcutHelp = document.getElementById('shortcutHelp');
       const shortcutDialog = document.getElementById('shortcutDialog');
       const recoveryButton = document.getElementById('recoveryButton');
+      const footerCalendarButton = document.getElementById('footerCalendarButton');
       const recoveryDialog = document.getElementById('recoveryDialog');
       const recoverySummary = document.getElementById('recoverySummary');
       const recoveryList = document.getElementById('recoveryList');
@@ -1200,6 +1203,11 @@ Current data will be preserved first.`)) return;
       function openEventsList() {
         setEventsView('list');
         setEventMode('list');
+        if (!eventsDialog.open) eventsDialog.showModal();
+      }
+      function openCalendarFromFooter() {
+        setEventMode('list');
+        setEventsView('calendar');
         if (!eventsDialog.open) eventsDialog.showModal();
       }
       function setEventsView(mode) {
@@ -2243,6 +2251,7 @@ Current data will be preserved first.`)) return;
         addTaskButton.click();
       });
       eventsButton.addEventListener('click', openEventsList);
+      footerCalendarButton.addEventListener('click', openCalendarFromFooter);
       calendarSwitch.addEventListener('click', () => setEventsView(eventsDialog.classList.contains('calendar-mode') ? 'list' : 'calendar'));
       document.getElementById('previousCalendarYear').addEventListener('click', () => { calendarYearValue -= 1; selectedCalendarDate = ''; renderCalendar(); });
       document.getElementById('nextCalendarYear').addEventListener('click', () => { calendarYearValue += 1; selectedCalendarDate = ''; renderCalendar(); });
