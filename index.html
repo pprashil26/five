@@ -1448,8 +1448,9 @@ Current data will be preserved first.`)) return;
       }
 
       function durationLabel(minutes) {
-        const hours=Math.floor(minutes/60), mins=minutes%60;
-        return `${hours ? hours+'h ' : ''}${mins ? mins+'m' : ''}`.trim() || '0m';
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours ? `${hours}h ` : ''}${mins ? `${mins}m` : ''}`.trim() || '0m';
       }
       function waitingTasks() {
         return pinnedFirst(tasks
@@ -1499,9 +1500,9 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
         exportButton.disabled = tasks.length === 0;
-        const plannedMinutes=activeTasks().reduce((total,task)=>total+task.durationMinutes,0);
-        activeTimeSummary.textContent=plannedMinutes ? `Active time · ${durationLabel(plannedMinutes)} planned` : '';
-        activeTimeSummary.classList.toggle('visible',plannedMinutes>0);
+        const plannedMinutes = activeTasks().reduce((total, task) => total + task.durationMinutes, 0);
+        activeTimeSummary.textContent = plannedMinutes ? `Active time · ${durationLabel(plannedMinutes)} planned` : '';
+        activeTimeSummary.classList.toggle('visible', plannedMinutes > 0);
         updateEventButton();
       }
 
@@ -1611,7 +1612,10 @@ Current data will be preserved first.`)) return;
         titleRow.append(title, edit);
         content.append(requestorRow, titleRow);
         if (currentView === 'active' && task.durationMinutes) {
-          const duration=document.createElement('div'); duration.className='task-duration'; duration.textContent=`⏱ ${durationLabel(task.durationMinutes)}`; content.appendChild(duration);
+          const duration = document.createElement('div');
+          duration.className = 'task-duration';
+          duration.textContent = `⏱ ${durationLabel(task.durationMinutes)}`;
+          content.appendChild(duration);
         }
 
         if (showTaskDetails && task.description.trim()) {
@@ -2030,14 +2034,25 @@ Current data will be preserved first.`)) return;
           task.description = value;
           save();
         }, true));
-        const durationField=document.createElement('div');
-        durationField.className='duration-field';
+        const durationField = document.createElement('div');
+        durationField.className = 'duration-field';
         if (task.list === 'active' && !task.waiting && !task.archived) {
-          const label=document.createElement('label'); label.textContent='Estimated duration';
-          const select=document.createElement('select'); select.className='duration-select';
-          [['0','No duration'],['15','15m'],['30','30m'],['45','45m'],['60','1h'],['90','1h 30m'],['120','2h'],['180','3h'],['240','4h']].forEach(([value,text])=>{ const option=document.createElement('option'); option.value=value; option.textContent=text; option.selected=Number(value)===task.durationMinutes; select.appendChild(option); });
-          select.addEventListener('change',()=>{ task.durationMinutes=Number(select.value); save('Duration saved'); });
-          durationField.append(label,select);
+          const durationLabelElement = document.createElement('label');
+          durationLabelElement.textContent = 'Estimated duration';
+          const durationSelect = document.createElement('select');
+          durationSelect.className = 'duration-select';
+          [['0','No duration'],['15','15m'],['30','30m'],['45','45m'],['60','1h'],['90','1h 30m'],['120','2h'],['180','3h'],['240','4h']].forEach(([value, text]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = text;
+            option.selected = Number(value) === task.durationMinutes;
+            durationSelect.appendChild(option);
+          });
+          durationSelect.addEventListener('change', () => {
+            task.durationMinutes = Number(durationSelect.value);
+            save('Duration saved');
+          });
+          durationField.append(durationLabelElement, durationSelect);
         }
 
 
