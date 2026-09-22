@@ -341,7 +341,19 @@
     .duration-field { display:grid; gap:3px; margin-bottom:6px; }
     .duration-field label { color:var(--muted); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
     .duration-select { width:100%; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
-    .task-actions-toggle { display:inline-flex; align-items:center; min-height:26px; margin-top:7px; border:0; border-radius:6px; background:transparent; color:var(--muted); padding:2px 4px 2px 0; font-size:11px; font-weight:720; }
+    .task-actions-toggle {
+      display:inline-flex;
+      align-items:center;
+      min-height:26px;
+      margin-top:7px;
+      border:0;
+      border-radius:6px;
+      background:transparent;
+      color:var(--muted);
+      padding:2px 4px 2px 0;
+      font-size:11px;
+      font-weight:720;
+    }
     .task-actions-toggle:hover { color:var(--accent); }
     .task-actions-toggle[aria-expanded="true"] { color:#536b93; }
     .actions {
@@ -941,10 +953,10 @@
       const tabChannel = 'BroadcastChannel' in window ? new BroadcastChannel(TAB_CHANNEL) : null;
       let remoteUpdatePending = false;
       let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
-      let collapsedTaskActions = new Set();
+      let expandedCompactTaskActions = new Set();
       try {
-        const storedCollapsed=JSON.parse(sessionStorage.getItem('five.collapsedTaskActions')||'[]');
-        if(Array.isArray(storedCollapsed)) collapsedTaskActions=new Set(storedCollapsed.filter(value=>typeof value==='string'));
+        const storedExpanded=JSON.parse(sessionStorage.getItem('five.expandedCompactTaskActions')||'[]');
+        if(Array.isArray(storedExpanded)) expandedCompactTaskActions=new Set(storedExpanded.filter(value=>typeof value==='string'));
       } catch {}
       let tasks = [];
 
@@ -1546,11 +1558,28 @@ Current data will be preserved first.`)) return;
           .sort((a, b) => String(b.archivedAt || '').localeCompare(String(a.archivedAt || ''))));
       }
 
-      function toggleTaskActions(taskId) {
-        if (collapsedTaskActions.has(taskId)) collapsedTaskActions.delete(taskId);
-        else collapsedTaskActions.add(taskId);
-        try { sessionStorage.setItem('five.collapsedTaskActions',JSON.stringify([...collapsedTaskActions])); } catch {}
+      function toggleCompactTaskActions(taskId) {
+        if (expandedCompactTaskActions.has(taskId)) expandedCompactTaskActions.delete(taskId);
+        else expandedCompactTaskActions.add(taskId);
+        try { sessionStorage.setItem('five.expandedCompactTaskActions',JSON.stringify([...expandedCompactTaskActions])); } catch {}
         render();
+      }
+      function renderActionRows(task) {
+        const actions=document.createElement('div');
+        actions.className='actions';
+        actions.id=`task-actions-${task.id}`;
+        task.actions.forEach(action=>{
+          const row=document.createElement('label');
+          row.className=`action-view${action.done?' done':''}`;
+          const check=document.createElement('input');
+          check.type='checkbox'; check.checked=action.done;
+          check.setAttribute('aria-label',`Mark ${action.text||'action'} complete`);
+          check.addEventListener('change',()=>{action.done=check.checked;save();render();});
+          const text=document.createElement('span');
+          text.className='action-text'; text.textContent=action.text.trim()||'Untitled action';
+          row.append(check,text); actions.appendChild(row);
+        });
+        return actions;
       }
       function toggleTaskPin(taskId) {
         const task=tasks.find(item=>item.id===taskId);
@@ -1739,35 +1768,20 @@ Current data will be preserved first.`)) return;
           content.appendChild(description);
         }
 
-        if (showTaskDetails && task.actions.length) {
-          const expanded=!collapsedTaskActions.has(task.id);
-          const toggle=document.createElement('button');
-          toggle.type='button';
-          toggle.className='task-actions-toggle';
-          toggle.textContent=`${expanded?'▼':'▶'} ${task.actions.length} action${task.actions.length===1?'':'s'}`;
-          toggle.setAttribute('aria-expanded',String(expanded));
-          toggle.setAttribute('aria-controls',`task-actions-${task.id}`);
-          toggle.addEventListener('click',event=>{event.stopPropagation();toggleTaskActions(task.id);});
-          content.appendChild(toggle);
-          if (expanded) {
-            const actions = document.createElement('div');
-            actions.className = 'actions';
-            actions.id=`task-actions-${task.id}`;
-            task.actions.forEach(action => {
-              const row = document.createElement('label');
-              row.className = `action-view${action.done ? ' done' : ''}`;
-              const check = document.createElement('input');
-              check.type = 'checkbox';
-              check.checked = action.done;
-              check.setAttribute('aria-label', `Mark ${action.text || 'action'} complete`);
-              check.addEventListener('change', () => { action.done = check.checked; save(); render(); });
-              const text = document.createElement('span');
-              text.className = 'action-text';
-              text.textContent = action.text.trim() || 'Untitled action';
-              row.append(check, text);
-              actions.appendChild(row);
-            });
-            content.appendChild(actions);
+        if (task.actions.length) {
+          if (showTaskDetails) {
+            content.appendChild(renderActionRows(task));
+          } else {
+            const expanded=expandedCompactTaskActions.has(task.id);
+            const toggle=document.createElement('button');
+            toggle.type='button';
+            toggle.className='task-actions-toggle';
+            toggle.textContent=`${expanded?'▼':'▶'} ${task.actions.length} action${task.actions.length===1?'':'s'}`;
+            toggle.setAttribute('aria-expanded',String(expanded));
+            toggle.setAttribute('aria-controls',`task-actions-${task.id}`);
+            toggle.addEventListener('click',event=>{event.stopPropagation();toggleCompactTaskActions(task.id);});
+            content.appendChild(toggle);
+            if (expanded) content.appendChild(renderActionRows(task));
           }
         } else if (showTaskDetails) {
           const noActions = document.createElement('div');
