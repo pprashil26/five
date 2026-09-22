@@ -386,6 +386,13 @@
     .clear-task-date { min-height:34px; border:0; background:#f3f4f6; color:var(--muted); padding:4px 8px; font-size:11px; }
     .dated-chip { border-color:#eadfab; color:#765b00; }
     .dated-chip.active { border-color:#d8c873; background:#fff4c2; color:#654f00; }
+    .inbox-chip { border-color:#dfe3e8; color:#536170; }
+    .inbox-chip.active { border-color:#cbd8f4; background:#eef3ff; color:var(--accent); }
+    .today-chip { border-color:#eadfab; color:#765b00; }
+    .today-chip.active { border-color:#d8c873; background:#fff4c2; color:#654f00; }
+    .quick-activate { width:26px; min-width:26px; min-height:26px; border:0; border-radius:6px; background:transparent; color:#7b8490; padding:0; font-size:13px; line-height:1; }
+    .quick-activate:hover { background:var(--accent-soft); color:var(--accent); }
+    .quick-activate:disabled { opacity:.28; }
     .actions {
       display: grid;
       gap: 2px;
@@ -973,7 +980,7 @@
       let editingId = null;
       let currentView = 'all';
       let selectedProjectFilter = '';
-      let datedFilterActive = false;
+      let systemFilter = '';
       let contexts=[...DEFAULT_CONTEXTS];
       try{const saved=JSON.parse(localStorage.getItem(CONTEXTS_KEY)||'[]');if(Array.isArray(saved)&&saved.length)contexts=saved.filter(value=>typeof value==='string'&&value.startsWith('@'));}catch{}
       DEFAULT_CONTEXTS.forEach(value=>{if(!contexts.includes(value))contexts.push(value);});
@@ -1688,7 +1695,7 @@ Current data will be preserved first.`)) return;
       function cleanupProjectOrder(){if(!projectOrderDragState)return;projectOrderDragState.row.classList.remove('project-dragging');projectOrderDragState.handle.releasePointerCapture?.(projectOrderDragState.pointerId);clearProjectOrderMarkers();document.body.classList.remove('reordering');document.removeEventListener('pointermove',moveProjectOrder);document.removeEventListener('pointerup',finishProjectOrder);document.removeEventListener('pointercancel',cancelProjectOrder);projectOrderDragState=null;}
       function setProjectFilter(value) {
         selectedProjectFilter=value||'';
-        datedFilterActive=false;
+        systemFilter='';
         if (editingId) { editingId=null; editSnapshot=null; newDraftId=null; }
         if (projectFilterDialog.open) projectFilterDialog.close();
         render();
@@ -1709,15 +1716,20 @@ Current data will be preserved first.`)) return;
           button.append(handle,label,tools);button.addEventListener('click',event=>{if(event.target.closest('.project-order-handle,.context-rename,.context-rename-input'))return;setProjectFilter(name);});projectFilterList.appendChild(button);
         });
       }
+      function setSystemFilter(value){systemFilter=systemFilter===value?'':value;if(systemFilter)selectedProjectFilter='';if(editingId){editingId=null;editSnapshot=null;newDraftId=null;}render();}
+      function createSystemChip(label,value,count,className){const button=document.createElement('button');button.type='button';button.className=`project-chip ${className}${systemFilter===value?' active':''}`;button.setAttribute('aria-pressed',String(systemFilter===value));const text=document.createElement('span');text.textContent=label;button.appendChild(text);if(count!=null){const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=count;button.appendChild(badge);}button.addEventListener('click',()=>setSystemFilter(value));return button;}
+      function inboxTasks(){return allTasks().filter(task=>!task.taskDate&&!task.pinned);}
+      function todayTasks(){const today=todayLocal();return allTasks().filter(task=>task.taskDate&&task.taskDate<=today);}
       function renderProjectFilter() {
         projectFilterBar.replaceChildren();
         const projects=allProjectCounts();
         const visible=currentView==='all'&&!editingId;
         projectFilterBar.classList.toggle('visible',visible);
         if(!visible)return;
-        const allChip=createProjectChip('All','',allTasks().length);if(datedFilterActive)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
-        const datedCount=allTasks().filter(task=>task.taskDate).length;
-        if(datedCount){const dated=document.createElement('button');dated.type='button';dated.className=`project-chip dated-chip${datedFilterActive?' active':''}`;dated.setAttribute('aria-pressed',String(datedFilterActive));const text=document.createElement('span');text.textContent='Dated';const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=datedCount;dated.append(text,badge);dated.addEventListener('click',()=>{datedFilterActive=!datedFilterActive;if(datedFilterActive)selectedProjectFilter='';render();});projectFilterBar.appendChild(dated);}
+        const allChip=createProjectChip('All','',allTasks().length);if(systemFilter)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
+        projectFilterBar.appendChild(createSystemChip('Inbox','inbox',inboxTasks().length,'inbox-chip'));
+        projectFilterBar.appendChild(createSystemChip('Today','today',todayTasks().length,'today-chip'));
+        projectFilterBar.appendChild(createSystemChip('Dated','dated',allTasks().filter(task=>task.taskDate).length,'dated-chip'));
         projects.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
         const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent='+';picker.setAttribute('aria-label','Open context manager');picker.title='Manage contexts';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
       }
@@ -1729,7 +1741,8 @@ Current data will be preserved first.`)) return;
         const waitingCount = waitingTasks().length;
         const archiveCount = archivedTasks().length;
         allCountElement.textContent = allCount;
-        countElement.textContent = `${activeCount}/${MAX_TASKS}`;
+        const plannedMinutes=activeTasks().reduce((total,task)=>total+task.durationMinutes,0);
+        countElement.textContent=`${activeCount}/${MAX_TASKS}${plannedMinutes?` · ${durationLabel(plannedMinutes)}`:''}`;
         waitingCountElement.textContent = waitingCount;
         archiveCountElement.textContent = archiveCount;
         allTab.classList.toggle('active', currentView === 'all');
@@ -1747,9 +1760,8 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
         exportButton.disabled = tasks.length === 0;
-        const plannedMinutes = activeTasks().reduce((total, task) => total + task.durationMinutes, 0);
-        activeTimeSummary.textContent = plannedMinutes ? `Active time · ${durationLabel(plannedMinutes)} planned` : '';
-        activeTimeSummary.classList.toggle('visible', plannedMinutes > 0);
+        activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
+        activeTimeSummary.classList.toggle('visible',currentView==='active'&&plannedMinutes>0);
         renderProjectFilter();
       }
 
@@ -1782,7 +1794,11 @@ Current data will be preserved first.`)) return;
               ? waitingTasks()
               : archivedTasks();
         const filteredTasks=currentView==='all'
-          ? datedFilterActive ? allVisibleTasks.filter(task=>Boolean(task.taskDate)) : selectedProjectFilter ? allVisibleTasks.filter(task=>(task.requestor||'').trim()===selectedProjectFilter) : allVisibleTasks
+          ? systemFilter==='inbox' ? allVisibleTasks.filter(task=>!task.taskDate&&!task.pinned)
+            : systemFilter==='today' ? allVisibleTasks.filter(task=>task.taskDate&&task.taskDate<=todayLocal())
+            : systemFilter==='dated' ? allVisibleTasks.filter(task=>Boolean(task.taskDate))
+            : selectedProjectFilter ? allVisibleTasks.filter(task=>(task.requestor||'').trim()===selectedProjectFilter)
+            : allVisibleTasks
           : allVisibleTasks;
         const visibleTasks = editingId
           ? filteredTasks.filter(task => task.id === editingId)
@@ -1792,7 +1808,7 @@ Current data will be preserved first.`)) return;
           const empty = document.createElement('div');
           empty.className = 'empty';
           empty.innerHTML = currentView === 'all'
-            ? datedFilterActive ? '<strong>No dated tasks</strong>Assign a date to an All task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No All tasks remain for ${selectedProjectFilter}.` : '<strong>No tasks</strong>Add an unlimited number of tasks here.'
+            ? systemFilter==='inbox' ? '<strong>Inbox is clear</strong>No unpinned, undated All tasks.' : systemFilter==='today' ? '<strong>Nothing due</strong>No overdue or due-today All tasks.' : systemFilter==='dated' ? '<strong>No dated tasks</strong>Assign a date to an All task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No All tasks remain for ${selectedProjectFilter}.` : '<strong>No tasks</strong>Add an unlimited number of tasks here.'
             : currentView === 'active'
               ? '<strong>No active tasks</strong>Move up to five tasks here from All.'
               : currentView === 'waiting'
@@ -1836,7 +1852,7 @@ Current data will be preserved first.`)) return;
         const content = document.createElement('div');
         content.className = 'task-content';
 
-        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const contextBadge=document.createElement('span');contextBadge.className='task-context-badge';contextBadge.textContent=task.requestor.trim()||'@CONTEXT';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(contextBadge,title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
+        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const contextBadge=document.createElement('span');contextBadge.className='task-context-badge';contextBadge.textContent=task.requestor.trim()||'@CONTEXT';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(contextBadge,title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';if(currentView==='all'){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title=activeTasks().length>=MAX_TASKS?'Active is full':'Quick Activate';quick.disabled=activeTasks().length>=MAX_TASKS;headingActions.appendChild(quick);}const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
         if (currentView === 'active' && task.durationMinutes) {
           const duration = document.createElement('div');
           duration.className = 'task-duration';
@@ -2109,6 +2125,11 @@ Current data will be preserved first.`)) return;
         render();
       }
 
+      function quickActivateTask(taskId){
+        if(activeTasks().length>=MAX_TASKS){showStatus('Five active tasks already exist');return;}
+        const task=tasks.find(item=>item.id===taskId);if(!task||task.list!=='all'||task.waiting||task.archived)return;
+        task.list='active';save('Moved to Active');render();
+      }
       function moveAllTaskToActive(taskId) {
         if (activeTasks().length >= MAX_TASKS) {
           showStatus('Five active tasks already exist');
@@ -2348,6 +2369,7 @@ Current data will be preserved first.`)) return;
       allTab.addEventListener('click', () => {
         if (editingId) cancelEditing();
         currentView = 'all';
+        systemFilter='';selectedProjectFilter='';
         render();
       });
 
