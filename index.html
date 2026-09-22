@@ -341,6 +341,11 @@
     .context-row-tools{display:flex;align-items:center;gap:3px;}
     .context-rename{min-width:42px;min-height:28px;border:0;background:transparent;color:var(--muted);padding:2px;font-size:10px;}
     .context-rename-input{width:100%;min-width:0;min-height:32px;border:1px solid #9bb2e8;border-radius:6px;padding:4px 6px;background:#fff;color:var(--text);font:inherit;font-weight:680;text-transform:uppercase;}
+    .quick-capture{display:grid;gap:7px;padding:9px;}
+    .quick-capture-note{margin:0;color:var(--muted);font-size:10px;}
+    .quick-capture-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:2px;}
+    .quick-capture-save{border-color:var(--accent);background:var(--accent);color:#fff;}
+    .quick-capture-cancel{background:#f3f4f6;color:var(--muted);}
     .context-field{display:grid;gap:3px;margin-bottom:6px;}
     .context-field label{color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.35px;}
     .context-select{width:100%;min-height:36px;border:1px solid var(--line);border-radius:7px;padding:5px 30px 5px 8px;background:#fff;color:var(--text);font:inherit;font-weight:680;}
@@ -2239,12 +2244,24 @@ Current data will be preserved first.`)) return;
         render();
       }
 
+      function createQuickCaptureEditor(task) {
+        const editor=document.createElement('div');editor.className='task-editor quick-capture';
+        const note=document.createElement('p');note.className='quick-capture-note';note.textContent='Quick capture';
+        const contextField=document.createElement('div');contextField.className='context-field';const contextLabel=document.createElement('label');contextLabel.textContent='Context';const contextSelect=document.createElement('select');contextSelect.className='context-select';contextSelect.setAttribute('aria-label','Context');
+        const empty=document.createElement('option');empty.value='';empty.textContent='Choose context';contextSelect.appendChild(empty);contexts.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;contextSelect.appendChild(option);});contextSelect.value='';contextSelect.addEventListener('change',()=>{task.requestor=contextSelect.value;});contextField.append(contextLabel,contextSelect);
+        const titleField=document.createElement('div');titleField.className='field title-field';const titleInput=makeInput(task.title,'Task title',300,value=>{task.title=value.toUpperCase();});titleField.appendChild(titleInput);
+        const dateField=document.createElement('div');dateField.className='task-date-field';const dateLabel=document.createElement('label');dateLabel.textContent='Task date · optional';const dateInput=document.createElement('input');dateInput.type='date';dateInput.className='task-date-input';dateInput.value=task.taskDate||'';dateInput.addEventListener('change',()=>{task.taskDate=dateInput.value;});dateField.append(dateLabel,dateInput);
+        const actions=document.createElement('div');actions.className='quick-capture-actions';
+        const saveButton=makeButton('Save','quick-capture-save',()=>{if(!contexts.includes(task.requestor)){showStatus('Choose a context');contextSelect.focus();return;}if(!task.title.trim()){showStatus('Add a task title');titleInput.focus();return;}task.actions=[{id:createId(),text:task.title.trim(),done:false}];finishEditing();save('Captured');render();});
+        const cancelButton=makeButton('Cancel','quick-capture-cancel',cancelEditing);actions.append(saveButton,cancelButton);
+        editor.append(note,contextField,titleField,dateField,actions);return editor;
+      }
       function createEditor(task) {
+        if(newDraftId===task.id)return createQuickCaptureEditor(task);
         const editor = document.createElement('div');
         editor.className = 'task-editor';
 
         const requestorField=document.createElement('div');requestorField.className='context-field';const contextLabel=document.createElement('label');contextLabel.textContent='Context';const contextSelect=document.createElement('select');contextSelect.className='context-select';contextSelect.setAttribute('aria-label','Context');const empty=document.createElement('option');empty.value='';empty.textContent='Choose context';contextSelect.appendChild(empty);contexts.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;option.selected=task.requestor===value;contextSelect.appendChild(option);});if(task.requestor&&!contexts.includes(task.requestor)){const legacy=document.createElement('option');legacy.value=task.requestor;legacy.textContent=`Current: ${task.requestor}`;legacy.selected=true;contextSelect.appendChild(legacy);}contextSelect.addEventListener('change',()=>{task.requestor=contextSelect.value;save('Context saved');});requestorField.append(contextLabel,contextSelect);
-        const quickCaptureNote=document.createElement('div');quickCaptureNote.className='quick-capture-note';quickCaptureNote.textContent='Quick capture: Context, Title and Date only.';
 
         const titleField = document.createElement('div');
         titleField.className = 'field title-field';
@@ -2330,7 +2347,7 @@ Current data will be preserved first.`)) return;
 
         const tools=document.createElement('div'); tools.className='editor-tools';
         const addActionButton=makeButton('+ Action','add-action',()=>addAction(task.id));
-        const saveButton=makeButton('Save','save-task',()=>{ if(isQuickCapture && !task.actions.some(a=>a.text.trim())) task.actions=[{id:createId(),text:(task.title||'').trim()||'Next action',done:false}]; if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;} finishEditing();save(isQuickCapture?'Captured':'Saved');render(); });
+        const saveButton=makeButton('Save','save-task',()=>{ if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;} finishEditing();save('Saved');render(); });
         const cancelButton=makeButton('Cancel','cancel-task',cancelEditing);
         const deleteButton=makeButton('Delete','delete-link',async()=>{if(!confirm(`Delete "${task.title.trim()||'Untitled task'}"?`))return;try{await createRecoverySnapshot('before task delete',true);}catch{showStatus('Could not secure recovery snapshot');return;}tasks=tasks.filter(item=>item.id!==task.id);editingId=null;save('Task deleted');render();});
         const statusSelect=document.createElement('select'); statusSelect.className='task-status-select'; statusSelect.setAttribute('aria-label','Task status');
@@ -2340,7 +2357,9 @@ Current data will be preserved first.`)) return;
         const primaryRow=document.createElement('div');primaryRow.className='editor-primary-row';primaryRow.append(addActionButton,saveButton,statusSelect,cancelButton);
         const secondaryRow=document.createElement('div');secondaryRow.className='editor-secondary-row';secondaryRow.append(deleteButton);
         tools.append(primaryRow,secondaryRow);
-        editor.append(requestorField,titleField); if(isQuickCapture) editor.append(quickCaptureNote,taskDateField); else { editor.append(descriptionField,taskDateField); if (durationField.childElementCount) editor.append(durationField); editor.append(heading,actionList);} editor.append(tools);
+        editor.append(requestorField, titleField, descriptionField, taskDateField);
+        if (durationField.childElementCount) editor.append(durationField);
+        editor.append(heading, actionList, tools);
         return editor;
       }
 
