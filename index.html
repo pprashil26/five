@@ -708,6 +708,23 @@
     .save-health.failed { color:var(--danger); font-weight:750; }
     .backup-reminder { display:none; border:0; min-height:22px !important; padding:2px 6px !important; color:#765b00 !important; background:#fff4c2 !important; border-radius:6px !important; }
     .backup-reminder.visible { display:inline-flex; align-items:center; }
+    .backup-sheet { width:min(100%,600px); max-width:600px; margin:auto auto 0; border:0; border-radius:16px 16px 0 0; padding:10px max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); background:var(--surface); color:var(--text); box-shadow:0 -10px 30px rgba(29,35,42,.18); }
+    .backup-sheet::backdrop { background:rgba(29,35,42,.28); }
+    .backup-sheet-handle { width:34px; height:4px; margin:0 auto 8px; border-radius:999px; background:#cfd3d8; }
+    .backup-sheet-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .backup-sheet-header h2 { margin:0; font-size:16px; }
+    .backup-sheet-close { min-width:30px; min-height:30px; border:0; background:transparent; color:var(--muted); padding:2px; }
+    .backup-sheet-actions { display:grid; gap:7px; margin-top:10px; }
+    .backup-sheet-action { display:grid; grid-template-columns:28px minmax(0,1fr); align-items:center; gap:8px; width:100%; min-height:46px; text-align:left; }
+    .backup-sheet-icon { font-size:17px; text-align:center; }
+    .backup-sheet-copy strong { display:block; font-size:13px; }
+    .backup-sheet-copy span { display:block; margin-top:1px; color:var(--muted); font-size:10px; font-weight:500; }
+    .backup-sheet-meta { margin-top:9px; padding-top:8px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; text-align:center; }
+    #backupMenuButton { display:none; }
+    @media (max-width:470px) {
+      #quickBackup,#exportData,#importData { display:none; }
+      #backupMenuButton { display:inline-flex; align-items:center; }
+    }
 
 #eventTitle, .event-add { grid-column:1; }
     }
@@ -774,6 +791,7 @@
 
     <footer class="footer">
       <div class="footer-actions">
+        <button type="button" id="backupMenuButton">Backup</button>
         <button type="button" id="quickBackup">Quick Backup</button>
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
@@ -788,6 +806,15 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <dialog id="backupSheet" class="backup-sheet" aria-labelledby="backupSheetTitle">
+      <div class="backup-sheet-handle" aria-hidden="true"></div>
+      <div class="backup-sheet-header"><h2 id="backupSheetTitle">Backup</h2><button type="button" class="backup-sheet-close" id="closeBackupSheet" aria-label="Close backup menu">✕</button></div>
+      <div class="backup-sheet-actions">
+        <button type="button" class="backup-sheet-action" id="sheetQuickBackup"><span class="backup-sheet-icon">↓</span><span class="backup-sheet-copy"><strong>Quick Backup</strong><span>Download a verified task backup</span></span></button>
+        <button type="button" class="backup-sheet-action" id="sheetImportBackup"><span class="backup-sheet-icon">↑</span><span class="backup-sheet-copy"><strong>Import Backup</strong><span>Restore tasks from a JSON backup</span></span></button>
+      </div>
+      <div class="backup-sheet-meta" id="backupSheetMeta">No backup recorded</div>
+    </dialog>
     <dialog id="recoveryDialog" class="recovery-dialog">
       <div class="recovery-header"><h2>Data Recovery</h2><button type="button" class="dialog-close" id="closeRecovery" aria-label="Close recovery">✕</button></div>
       <div class="recovery-summary" id="recoverySummary"></div>
@@ -831,6 +858,11 @@
       const toggleActionsButton = document.getElementById('toggleActions');
       const activeTimeSummary = document.getElementById('activeTimeSummary');
       const addTaskButton = document.getElementById('addTask');
+      const backupMenuButton = document.getElementById('backupMenuButton');
+      const backupSheet = document.getElementById('backupSheet');
+      const backupSheetMeta = document.getElementById('backupSheetMeta');
+      const sheetQuickBackup = document.getElementById('sheetQuickBackup');
+      const sheetImportBackup = document.getElementById('sheetImportBackup');
       const quickBackupButton = document.getElementById('quickBackup');
       const exportButton = document.getElementById('exportData');
       const importButton = document.getElementById('importData');
@@ -1107,8 +1139,17 @@
           setSaveHealth('failed','Integrity check failed');showStatus('Primary and mirror checks failed. Open Recovery.');return false;
         } catch { setSaveHealth('failed','Integrity scan failed');showStatus('Integrity scan failed. Open Recovery.');return false; }
       }
+      function backupAgeLabel(last) {
+        if (!last) return 'No backup recorded';
+        const ageDays=Math.max(0,Math.floor((Date.now()-new Date(last).getTime())/86400000));
+        if (!Number.isFinite(ageDays)) return 'No backup recorded';
+        if (ageDays===0) return 'Last backup: Today';
+        if (ageDays===1) return 'Last backup: Yesterday';
+        return `Last backup: ${ageDays} days ago`;
+      }
       function updateBackupReminder() {
         const last = localStorage.getItem(LAST_BACKUP_KEY);
+        backupSheetMeta.textContent=backupAgeLabel(last);
         const ageDays = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : null;
         const due = ageDays === null || !Number.isFinite(ageDays) || ageDays >= BACKUP_REMINDER_DAYS;
         backupReminderButton.classList.toggle('visible', due);
@@ -2158,6 +2199,12 @@ Current data will be preserved first.`)) return;
         });
       });
 
+      backupMenuButton.addEventListener('click',()=>{updateBackupReminder();backupSheet.showModal();});
+      document.getElementById('closeBackupSheet').addEventListener('click',()=>backupSheet.close());
+      backupSheet.addEventListener('cancel',event=>{event.preventDefault();backupSheet.close();});
+      backupSheet.addEventListener('click',event=>{if(event.target===backupSheet)backupSheet.close();});
+      sheetQuickBackup.addEventListener('click',()=>{backupSheet.close();createExternalBackup('Quick Backup').catch(()=>{setSaveHealth('failed','Backup failed');showStatus('Could not create backup');});});
+      sheetImportBackup.addEventListener('click',()=>{backupSheet.close();importFile.click();});
       quickBackupButton.addEventListener('click', () => createExternalBackup('Quick Backup').catch(() => { setSaveHealth('failed','Backup failed'); showStatus('Could not create backup'); }));
       exportButton.addEventListener('click', () => createExternalBackup('Backup').catch(() => { setSaveHealth('failed','Backup failed'); showStatus('Could not create backup'); }));
       backupReminderButton.addEventListener('click', () => createExternalBackup('Quick Backup').catch(() => showStatus('Could not create backup')));
