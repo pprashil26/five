@@ -177,17 +177,6 @@
       transform: none;
     }
 
-    .event-button {
-      flex: 0 0 auto;
-      min-height: 28px;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      padding: 3px 5px;
-      font-size: 11px;
-      white-space: nowrap;
-    }
-    .event-button.has-today { color: var(--danger); background: #fff1f0; }
     .add-task {
       min-width: 34px;
       padding-inline: 9px;
@@ -720,93 +709,9 @@
     .backup-reminder { display:none; border:0; min-height:22px !important; padding:2px 6px !important; color:#765b00 !important; background:#fff4c2 !important; border-radius:6px !important; }
     .backup-reminder.visible { display:inline-flex; align-items:center; }
 
-    .events-dialog {
-      width: min(92vw, 430px);
-      max-height: 78dvh;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      background: var(--surface);
-      color: var(--text);
+#eventTitle, .event-add { grid-column:1; }
     }
-    .events-dialog::backdrop { background: rgba(29,35,42,.28); }
-    .events-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .events-header h2 { margin:0; font-size:16px; }
-    .events-header-actions { display:flex; align-items:center; gap:4px; }
-    .events-view-switch { min-height:28px; border:0; background:transparent; color:var(--accent); padding:2px 5px; font-size:11px; }
-    .calendar-view { display:none; }
-    .events-dialog.calendar-mode .event-list-view,
-    .events-dialog.calendar-mode .event-form-view { display:none; }
-    .events-dialog.calendar-mode .calendar-view { display:block; }
-    .calendar-toolbar { display:grid; grid-template-columns:28px minmax(0,1fr) 28px; align-items:center; gap:4px; margin-top:8px; }
-    .calendar-year { text-align:center; font-size:12px; font-weight:780; }
-    .calendar-year-button { min-width:28px; min-height:26px; border:0; background:transparent; color:var(--muted); padding:0; }
-    .year-calendar { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 7px; margin-top:7px; overflow:auto; padding:1px; }
-    .mini-month { min-width:0; }
-    .mini-month-title { margin-bottom:2px; color:var(--text); font-size:10px; font-weight:800; text-align:center; text-transform:uppercase; }
-    .mini-month-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:1px; }
-    .mini-weekday { color:#9aa0a8; font-size:7px; line-height:12px; text-align:center; }
-    .mini-day { min-width:0; height:16px; min-height:16px; border:0; border-radius:4px; background:transparent; color:var(--text); padding:0; font-size:8px; font-weight:560; line-height:16px; text-align:center; }
-    .mini-day.event-date { background:#fff4c2; color:#654f00; font-weight:800; }
-    .mini-day.today { outline:1px solid var(--accent); outline-offset:-1px; }
-    .mini-day.selected-date { background:var(--accent); color:#fff; }
-    .mini-day-spacer { height:16px; }
-    .calendar-date-events { display:none; margin-top:9px; padding-top:8px; border-top:1px solid var(--line); }
-    .calendar-date-events.open { display:grid; gap:4px; }
-    .calendar-date-heading { color:var(--muted); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
-    .calendar-date-event { display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px; padding:5px 6px; border-radius:6px; background:#f6f8fb; font-size:11px; }
-    .calendar-date-time { color:var(--accent); font-weight:760; }
-    @media (max-width:360px) { .year-calendar { gap:8px 4px; } .mini-day { font-size:7.5px; } }
-    .year-calendar { display:grid; grid-template-columns:1fr; gap:0; margin-top:7px; overflow:auto; padding:0; border:1px solid var(--line); border-radius:8px; }
-    .planner-head,.planner-month-row { display:grid; grid-template-columns:minmax(0,44%) minmax(0,56%); }
-    .planner-head { position:sticky; top:0; z-index:2; background:#f7f8fa; border-bottom:1px solid var(--line); color:var(--muted); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
-    .planner-head>div,.planner-month-calendar,.planner-month-events { padding:7px; min-width:0; }
-    .planner-head>div+div,.planner-month-events { border-left:1px solid var(--line); }
-    .planner-month-row+.planner-month-row { border-top:1px solid var(--line); }
-    .planner-month-title { margin-bottom:4px; font-size:11px; font-weight:850; text-transform:uppercase; }
-    .planner-events-title { margin-bottom:4px; font-size:10px; font-weight:800; }
-    .planner-event { display:grid; grid-template-columns:minmax(62px,auto) minmax(0,1fr); gap:5px; padding:4px 0; border-bottom:1px solid #eef0f2; font-size:9px; line-height:1.25; }
-    .planner-event:last-child { border-bottom:0; }
-    .planner-event-when { color:#765b00; font-weight:800; }
-    .planner-event-title { overflow-wrap:anywhere; }
-    .planner-empty { color:#9aa0a8; font-size:9px; padding:4px 0; }
-    .planner-month-calendar .mini-day { height:17px; min-height:17px; line-height:17px; font-size:8px; }
-    .planner-month-calendar .mini-day-spacer { height:17px; }
-    @media(max-width:360px){.planner-head,.planner-month-row{grid-template-columns:minmax(0,47%) minmax(0,53%)}.planner-head>div,.planner-month-calendar,.planner-month-events{padding:5px}.planner-event{grid-template-columns:1fr;gap:1px}}
-    .events-new { min-width:30px; min-height:28px; border-color:var(--accent); background:var(--accent); color:#fff; padding:2px 8px; }
-    .events-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
-    .event-form-view { display:none; }
-    .events-dialog.form-mode .event-list-view { display:none; }
-    .events-dialog.form-mode .event-form-view { display:block; }
-    .event-form-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
-    .event-form-heading strong { font-size:13px; }
-    .event-cancel { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 4px; font-size:11px; }
-    .event-entry { display:grid; gap:7px; margin-top:7px; }
-    .event-field { display:grid; gap:3px; min-width:0; }
-    .event-field label { color:var(--muted); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
-    .event-field input,.event-field select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line); border-radius:7px; padding:5px 7px; background:#fff; color:var(--text); font:inherit; }
-    .event-datetime-row { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:6px; }
-    .event-form-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px; }
-    .event-range-hint { color:var(--muted); font-size:9px; }
-    .event-add { min-height:34px; padding:4px 12px; border-color:var(--accent); background:var(--accent); color:#fff; }
-    .events-list { display:grid; gap:5px; margin-top:8px; overflow:auto; }
-    .events-section { display:grid; gap:5px; }
-    .events-section + .events-section { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
-    .events-section-title { color:var(--muted); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; }
-    .event-edit { min-height:28px; border:0; background:transparent; color:var(--muted); padding:2px 5px; font-size:10px; }
-    .event-item { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:3px 8px; padding:7px; border:1px solid var(--line); border-radius:8px; }
-    .event-actions { grid-column:2; grid-row:2; display:flex; align-items:center; justify-content:flex-end; gap:5px; min-width:0; }
-    .event-link { min-height:28px; padding:3px 6px; border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); font-size:10px; white-space:nowrap; }
-    .event-link:disabled { visibility:visible; opacity:.7; }
-    .event-item.today { border-color:#e5b8b4; background:#fff7f6; }
-    .event-when { grid-column:1; grid-row:2; min-width:0; color:var(--accent); font-size:11px; font-weight:760; }
-    .event-title { grid-column:1 / -1; grid-row:1; min-width:0; overflow-wrap:anywhere; font-size:16px; font-weight:760; line-height:1.3; letter-spacing:-0.15px; text-transform:uppercase; }
-    .event-delete { min-height:28px; border:0; background:transparent; color:var(--danger); padding:2px 4px; }
-    .events-empty { padding:16px 8px; color:var(--muted); text-align:center; font-size:12px; }
-    @media (max-width:360px) {
-      .event-entry { grid-template-columns:1fr; }
-      #eventTitle, .event-add { grid-column:1; }
-    }
+    .dialog-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
     .recovery-dialog { width:min(92vw,460px); max-height:80dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .recovery-dialog::backdrop { background:rgba(29,35,42,.28); }
     .recovery-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -861,7 +766,6 @@
           <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
         </div>
       </div>
-      <button type="button" class="event-button" id="eventsButton" aria-label="Open events">📅 <span id="eventCount">0</span></button>
       <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
     </header>
 
@@ -874,7 +778,6 @@
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
         <button type="button" id="recoveryButton">Recovery</button>
-        <button type="button" id="footerCalendarButton">Calendar</button>
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
       </div>
@@ -885,44 +788,13 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
-    <dialog id="eventsDialog" class="events-dialog">
-      <div class="events-header">
-        <h2 id="eventsHeading">Events</h2>
-        <div class="events-header-actions">
-          <button type="button" class="events-view-switch" id="calendarSwitch">Calendar</button>
-          <button type="button" class="events-new" id="newEvent" aria-label="Add event" title="Add event">+</button>
-          <button type="button" class="events-close" id="closeEvents" aria-label="Close events">✕</button>
-        </div>
-      </div>
-      <div class="event-list-view">
-        <div class="events-list" id="eventsList"></div>
-      </div>
-      <div class="calendar-view">
-        <div class="calendar-toolbar">
-          <button type="button" class="calendar-year-button" id="previousCalendarYear" aria-label="Previous year">‹</button>
-          <div class="calendar-year" id="calendarYear"></div>
-          <button type="button" class="calendar-year-button" id="nextCalendarYear" aria-label="Next year">›</button>
-        </div>
-        <div class="year-calendar" id="yearCalendar"></div>
-        <div class="calendar-date-events" id="calendarDateEvents"></div>
-      </div>
-      <div class="event-form-view">
-        <div class="event-form-heading"><strong id="eventFormTitle">New Event</strong><button type="button" class="event-cancel" id="cancelEventEdit">Cancel</button></div>
-        <div class="event-entry">
-          <div class="event-field"><label for="eventTitle">Event title</label><input type="text" id="eventTitle" maxlength="200" placeholder="What is the event?"></div>
-          <div class="event-datetime-row"><div class="event-field"><label for="eventStartDate">Start date</label><input type="date" id="eventStartDate"></div><div class="event-field"><label for="eventStartTime">Start time · optional</label><select id="eventStartTime"><option value="">No start time</option></select></div></div>
-          <div class="event-datetime-row"><div class="event-field"><label for="eventEndDate">End date</label><input type="date" id="eventEndDate"></div><div class="event-field"><label for="eventEndTime">End time · optional</label><select id="eventEndTime"><option value="">No end time</option></select></div></div>
-          <div class="event-form-actions"><span class="event-range-hint">All dates from start through end are highlighted.</span><button type="button" class="event-add" id="addEvent">Add Event</button></div>
-        </div>
-      </div>
-    </dialog>
     <dialog id="recoveryDialog" class="recovery-dialog">
-      <div class="recovery-header"><h2>Data Recovery</h2><button type="button" class="events-close" id="closeRecovery" aria-label="Close recovery">✕</button></div>
+      <div class="recovery-header"><h2>Data Recovery</h2><button type="button" class="dialog-close" id="closeRecovery" aria-label="Close recovery">✕</button></div>
       <div class="recovery-summary" id="recoverySummary"></div>
       <div class="recovery-list" id="recoveryList"></div>
     </dialog>
     <dialog id="snapshotPreviewDialog" class="snapshot-preview-dialog">
-      <div class="recovery-header"><h2>Snapshot Preview</h2><button type="button" class="events-close" id="closeSnapshotPreview" aria-label="Close snapshot preview">✕</button></div>
+      <div class="recovery-header"><h2>Snapshot Preview</h2><button type="button" class="dialog-close" id="closeSnapshotPreview" aria-label="Close snapshot preview">✕</button></div>
       <div class="snapshot-preview-body" id="snapshotPreviewBody"></div>
     </dialog>
   </main>
@@ -933,9 +805,8 @@
 
       const STORAGE_KEY = 'fiveTasks.v1';
       const MAX_TASKS = 5;
-      const EVENTS_KEY = 'fiveEvents.v1';
       const ENVELOPE_KEY = 'five.dataEnvelope.v1';
-      const ENVELOPE_SCHEMA_VERSION = 1;
+      const ENVELOPE_SCHEMA_VERSION = 2;
       const LAST_BACKUP_KEY = 'five.lastExportAt';
       const BACKUP_REMINDER_DAYS = 14;
       const TAB_CHANNEL = 'five.dataChanges.v1';
@@ -948,7 +819,6 @@
       const RECOVERY_STORE = 'snapshots';
       const MAX_SNAPSHOTS = 20;
       const ROUTINE_SNAPSHOT_MS = 30000;
-      const EVENTS_DISMISSED_KEY = 'five.eventsDismissedDate';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const countElement = document.getElementById('taskCount');
@@ -960,24 +830,6 @@
       const archiveTab = document.getElementById('archiveTab');
       const toggleActionsButton = document.getElementById('toggleActions');
       const activeTimeSummary = document.getElementById('activeTimeSummary');
-      const eventsButton = document.getElementById('eventsButton');
-      const eventCountElement = document.getElementById('eventCount');
-      const eventsDialog = document.getElementById('eventsDialog');
-      const eventsList = document.getElementById('eventsList');
-      const eventsHeading = document.getElementById('eventsHeading');
-      const calendarSwitch = document.getElementById('calendarSwitch');
-      const calendarYearElement = document.getElementById('calendarYear');
-      const yearCalendar = document.getElementById('yearCalendar');
-      const calendarDateEvents = document.getElementById('calendarDateEvents');
-      const newEventButton = document.getElementById('newEvent');
-      const eventFormTitle = document.getElementById('eventFormTitle');
-      const cancelEventEditButton = document.getElementById('cancelEventEdit');
-      const eventTitleInput = document.getElementById('eventTitle');
-      const eventStartDateInput=document.getElementById('eventStartDate');
-      const eventEndDateInput=document.getElementById('eventEndDate');
-      const eventStartTimeInput=document.getElementById('eventStartTime');
-      const eventEndTimeInput=document.getElementById('eventEndTime');
-      const addEventButton = document.getElementById('addEvent');
       const addTaskButton = document.getElementById('addTask');
       const quickBackupButton = document.getElementById('quickBackup');
       const exportButton = document.getElementById('exportData');
@@ -989,7 +841,6 @@
       const shortcutHelp = document.getElementById('shortcutHelp');
       const shortcutDialog = document.getElementById('shortcutDialog');
       const recoveryButton = document.getElementById('recoveryButton');
-      const footerCalendarButton = document.getElementById('footerCalendarButton');
       const recoveryDialog = document.getElementById('recoveryDialog');
       const recoverySummary = document.getElementById('recoverySummary');
       const recoveryList = document.getElementById('recoveryList');
@@ -1001,9 +852,6 @@
       let actionDragState = null;
       let editSnapshot = null;
       let newDraftId = null;
-      let editingEventId = null;
-      let calendarYearValue = new Date().getFullYear();
-      let selectedCalendarDate = '';
       let recoveryDbPromise = null;
       let lastSnapshotAt = 0;
       let snapshotTimer = null;
@@ -1018,8 +866,6 @@
       let remoteUpdatePending = false;
       let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
       let tasks = [];
-      let events = [];
-      populateEventTimes();
 
       function openPrimaryDb() {
         if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB unavailable'));
@@ -1051,17 +897,15 @@
         await transactionDone(tx);
         const verified = await readPrimaryEnvelope();
         const integrity=await verifyEnvelopeIntegrity(verified);
-        if (!integrity.valid || verified.revision !== envelope.revision || verified.checksum !== envelope.checksum || JSON.stringify(verified.tasks) !== JSON.stringify(envelope.tasks) || JSON.stringify(verified.events) !== JSON.stringify(envelope.events)) throw new Error('IndexedDB read-back verification failed');
+        if (!integrity.valid || verified.revision !== envelope.revision || verified.checksum !== envelope.checksum || JSON.stringify(verified.tasks) !== JSON.stringify(envelope.tasks)) throw new Error('IndexedDB read-back verification failed');
         return verified;
       }
       function writeLocalStorageMirror(envelope) {
         const encodedEnvelope = JSON.stringify(envelope);
         const encodedTasks = JSON.stringify(envelope.tasks);
-        const encodedEvents = JSON.stringify(envelope.events);
         localStorage.setItem(ENVELOPE_KEY, encodedEnvelope);
         localStorage.setItem(STORAGE_KEY, encodedTasks);
-        localStorage.setItem(EVENTS_KEY, encodedEvents);
-        if (localStorage.getItem(ENVELOPE_KEY) !== encodedEnvelope || localStorage.getItem(STORAGE_KEY) !== encodedTasks || localStorage.getItem(EVENTS_KEY) !== encodedEvents) throw new Error('Mirror read-back verification failed');
+        if (localStorage.getItem(ENVELOPE_KEY) !== encodedEnvelope || localStorage.getItem(STORAGE_KEY) !== encodedTasks) throw new Error('Mirror read-back verification failed');
         const mirror = JSON.parse(localStorage.getItem(ENVELOPE_KEY));
         if (mirror.revision !== envelope.revision || mirror.checksum !== envelope.checksum) throw new Error('Mirror validation failed');
       }
@@ -1071,24 +915,30 @@
         try { primary = await readPrimaryEnvelope(); } catch (error) { startupValidationMessage = 'Primary storage unavailable; verified local mirror loaded'; }
         if (primary) {
           try {
-            let integrity=await verifyEnvelopeIntegrity(primary);
-            if (!integrity.valid && !primary.checksum && primary.schemaVersion===ENVELOPE_SCHEMA_VERSION) {
-              primary.writerId=primary.writerId||'release-3-migration';
-              primary.checksum=await envelopeChecksum(primary);
-              await writePrimaryEnvelope(primary,true);
-              integrity=await verifyEnvelopeIntegrity(primary);
+            if (primary.schemaVersion === 1) {
+              const legacyValid = await verifyLegacyEnvelopeIntegrity(primary);
+              if (!legacyValid) throw new Error('Legacy checksum mismatch');
+              tasks = normaliseValidatedTasks(primary.tasks);
+              currentRevision = Number.isInteger(primary.revision) && primary.revision >= 0 ? primary.revision : 0;
+              const migrated = await finaliseEnvelope(currentRevision);
+              await writePrimaryEnvelope(migrated,true);
+              writeLocalStorageMirror(migrated);
+              localStorage.removeItem('fiveEvents.v1');
+              setSaveHealth('saved',`Migrated · r${currentRevision}`);
+              return;
             }
+            const integrity=await verifyEnvelopeIntegrity(primary);
             if (!integrity.valid) throw new Error(integrity.reason);
-            const safe = normaliseValidatedPayload(primary);
-            tasks = safe.tasks; events = safe.events;
+            tasks = normaliseValidatedTasks(primary.tasks);
             currentRevision = Number.isInteger(primary.revision) && primary.revision >= 0 ? primary.revision : 0;
             writeLocalStorageMirror(primary);
+            localStorage.removeItem('fiveEvents.v1');
             setSaveHealth('saved',`Saved · r${currentRevision}`);
             return;
           } catch (error) { startupValidationMessage = 'Primary data failed validation; verified local mirror restored'; }
         }
         const fallback = await loadValidatedStartupData();
-        tasks = fallback.tasks; events = fallback.events; currentRevision = fallback.revision;
+        tasks = fallback.tasks; currentRevision = fallback.revision;
         const migrated = await finaliseEnvelope(Math.max(1,currentRevision));
         try {
           await writePrimaryEnvelope(migrated,true);
@@ -1104,39 +954,24 @@
         const issues = [];
         if (!candidate || typeof candidate !== 'object') return { valid:false, issues:['Data payload is missing'] };
         if (!Array.isArray(candidate.tasks)) issues.push('Tasks collection is invalid');
-        if (!Array.isArray(candidate.events)) issues.push('Events collection is invalid');
-        const sourceTasks = Array.isArray(candidate.tasks) ? candidate.tasks : [];
-        const sourceEvents = Array.isArray(candidate.events) ? candidate.events : [];
         const taskIds = new Set();
-        sourceTasks.forEach((task,index) => {
+        (Array.isArray(candidate.tasks) ? candidate.tasks : []).forEach((task,index) => {
           if (!task || typeof task !== 'object') issues.push(`Task ${index + 1} is invalid`);
           else if (typeof task.id === 'string' && task.id) {
             if (taskIds.has(task.id)) issues.push(`Duplicate task ID at task ${index + 1}`);
             taskIds.add(task.id);
           }
         });
-        const eventIds = new Set();
-        sourceEvents.forEach((event,index) => {
-          if (!event || typeof event !== 'object') issues.push(`Event ${index + 1} is invalid`);
-          else if (typeof event.id === 'string' && event.id) {
-            if (eventIds.has(event.id)) issues.push(`Duplicate event ID at event ${index + 1}`);
-            eventIds.add(event.id);
-          }
-        });
         return { valid:issues.length === 0, issues };
       }
-      function normaliseValidatedPayload(candidate) {
-        const check = validateDataPayload(candidate);
+      function normaliseValidatedTasks(source) {
+        const check = validateDataPayload({tasks:source});
         if (!check.valid) throw new Error(check.issues.join('; '));
         let activeSeen = 0;
-        const safeTasks = candidate.tasks.map(normaliseTask).map(task => {
-          if (!task.archived && !task.waiting && task.list === 'active') {
-            activeSeen += 1;
-            if (activeSeen > MAX_TASKS) task.list = 'all';
-          }
+        return source.map(normaliseTask).map(task => {
+          if (!task.archived && !task.waiting && task.list === 'active' && ++activeSeen > MAX_TASKS) task.list = 'all';
           return task;
         });
-        return { tasks:safeTasks, events:normaliseEvents(candidate.events) };
       }
       async function loadValidatedStartupData() {
         let envelopeError = '';
@@ -1144,31 +979,40 @@
         if (envelopeText) {
           try {
             const envelope = JSON.parse(envelopeText);
+            if (envelope.schemaVersion === 1) {
+              if (!(await verifyLegacyEnvelopeIntegrity(envelope))) throw new Error('Legacy checksum mismatch');
+              return { tasks:normaliseValidatedTasks(envelope.tasks), revision:Number.isInteger(envelope.revision) ? envelope.revision : 0 };
+            }
             const integrity=await verifyEnvelopeIntegrity(envelope);
             if (!integrity.valid) throw new Error(integrity.reason);
-            const safe = normaliseValidatedPayload(envelope);
-            return { ...safe, revision:Number.isInteger(envelope.revision) && envelope.revision >= 0 ? envelope.revision : 0 };
+            return { tasks:normaliseValidatedTasks(envelope.tasks), revision:Number.isInteger(envelope.revision) ? envelope.revision : 0 };
           } catch (error) { envelopeError = error.message || 'Invalid data envelope'; }
         }
         try {
           const legacyTasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-          const legacyEvents = JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');
-          const safe = normaliseValidatedPayload({ tasks:legacyTasks, events:legacyEvents });
-          if (envelopeError) startupValidationMessage = 'Primary data needed repair; verified legacy data loaded';
-          return { ...safe, revision:0 };
-        } catch (error) {
+          const tasks = normaliseValidatedTasks(legacyTasks);
+          if (envelopeError) startupValidationMessage = 'Primary data needed repair; verified task mirror loaded';
+          return { tasks, revision:0 };
+        } catch {
           startupValidationMessage = 'Data validation failed. Open Recovery or import a backup.';
-          return { tasks:[], events:[], revision:0 };
+          return { tasks:[], revision:0 };
         }
       }
       function canonicalDataText(payload) {
-        return JSON.stringify({schemaVersion:payload.schemaVersion,revision:payload.revision,tasks:payload.tasks,events:payload.events});
+        return JSON.stringify({schemaVersion:payload.schemaVersion,revision:payload.revision,tasks:payload.tasks});
       }
       async function envelopeChecksum(payload) {
         const text=canonicalDataText(payload);
         if (!crypto?.subtle) return `fallback-${text.length}`;
         const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
         return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+      }
+      async function verifyLegacyEnvelopeIntegrity(payload) {
+        if (!payload || payload.schemaVersion !== 1 || !Array.isArray(payload.tasks) || !Array.isArray(payload.events) || typeof payload.checksum !== 'string') return false;
+        const text=JSON.stringify({schemaVersion:1,revision:payload.revision,tasks:payload.tasks,events:payload.events});
+        const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+        const checksum=[...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+        return checksum===payload.checksum;
       }
       async function verifyEnvelopeIntegrity(payload) {
         const shape=validateDataPayload(payload);
@@ -1183,8 +1027,7 @@
           savedAt: new Date().toISOString(),
           writerId,
           checksum:'',
-          tasks: JSON.parse(JSON.stringify(tasks)),
-          events: JSON.parse(JSON.stringify(events))
+          tasks: JSON.parse(JSON.stringify(tasks))
         };
       }
       async function finaliseEnvelope(nextRevision=currentRevision) {
@@ -1232,16 +1075,15 @@
         try {
           const latest=await readPrimaryEnvelope(),integrity=await verifyEnvelopeIntegrity(latest);
           if (!integrity.valid || latest.revision<=currentRevision) return;
-          const safe=normaliseValidatedPayload(latest);
-          tasks=safe.tasks;events=safe.events;currentRevision=latest.revision;writeLocalStorageMirror(latest);
-          editingId=null;editingEventId=null;editSnapshot=null;newDraftId=null;
-          render();renderEvents();updateEventButton();remoteUpdatePending=false;setSaveHealth('saved',`Updated · r${currentRevision}`);showStatus('Latest changes loaded from another tab');
+          tasks=normaliseValidatedTasks(latest.tasks);currentRevision=latest.revision;writeLocalStorageMirror(latest);
+          editingId=null;editSnapshot=null;newDraftId=null;
+          render();remoteUpdatePending=false;setSaveHealth('saved',`Updated · r${currentRevision}`);showStatus('Latest changes loaded from another tab');
         } catch { setSaveHealth('failed','Integrity check failed');showStatus('Could not load data from another tab. Open Recovery.'); }
       }
       async function handleRemoteRevision(message) {
         if (!message || message.writerId===writerId || !Number.isInteger(message.revision) || message.revision<=currentRevision) return;
         remoteUpdatePending=true;
-        if (editingId || editingEventId) {
+        if (editingId) {
           setSaveHealth('failed','Newer data in another tab');
           showStatus('Another tab saved newer data. Finish or cancel editing, then reload.');
           return;
@@ -1259,8 +1101,8 @@
             return true;
           }
           if (mirrorIntegrity.valid) {
-            const safe=normaliseValidatedPayload(mirror);tasks=safe.tasks;events=safe.events;currentRevision=mirror.revision;
-            await writePrimaryEnvelope(mirror,true);render();renderEvents();setSaveHealth('saved',`Recovered · r${currentRevision}`);showStatus('Primary data recovered from verified mirror');return true;
+            tasks=normaliseValidatedTasks(mirror.tasks);currentRevision=mirror.revision;
+            await writePrimaryEnvelope(mirror,true);render();setSaveHealth('saved',`Recovered · r${currentRevision}`);showStatus('Primary data recovered from verified mirror');return true;
           }
           setSaveHealth('failed','Integrity check failed');showStatus('Primary and mirror checks failed. Open Recovery.');return false;
         } catch { setSaveHealth('failed','Integrity scan failed');showStatus('Integrity scan failed. Open Recovery.');return false; }
@@ -1277,7 +1119,7 @@
         const envelope = await finaliseEnvelope(currentRevision);
         const validation = validateDataPayload(envelope);
         if (!validation.valid) throw new Error(validation.issues.join('; '));
-        const data = { app:'Five', backupFormatVersion:2, exportedAt:new Date().toISOString(), sourceRevision:currentRevision, schemaVersion:ENVELOPE_SCHEMA_VERSION, checksum:envelope.checksum, tasks:envelope.tasks, events:envelope.events };
+        const data = { app:'Five', backupFormatVersion:2, exportedAt:new Date().toISOString(), sourceRevision:currentRevision, schemaVersion:ENVELOPE_SCHEMA_VERSION, checksum:envelope.checksum, tasks:envelope.tasks };
         const text = JSON.stringify(data, null, 2);
         JSON.parse(text);
         const blob = new Blob([text], { type:'application/json' });
@@ -1289,7 +1131,7 @@
         document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
         localStorage.setItem(LAST_BACKUP_KEY,new Date().toISOString());
         updateBackupReminder();
-        showStatus(`${label} generated: ${tasks.length} tasks • ${events.length} events`);
+        showStatus(`${label} generated: ${tasks.length} tasks`);
       }
       function openRecoveryDb() {
         if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB unavailable'));
@@ -1315,10 +1157,10 @@
         return new Promise((resolve,reject)=>{ transaction.oncomplete=resolve; transaction.onerror=()=>reject(transaction.error); transaction.onabort=()=>reject(transaction.error || new Error('Transaction aborted')); });
       }
       function combinedPayload() {
-        return { schemaVersion:1, savedAt:new Date().toISOString(), tasks:JSON.parse(JSON.stringify(tasks)), events:JSON.parse(JSON.stringify(events)) };
+        return { schemaVersion:2, savedAt:new Date().toISOString(), tasks:JSON.parse(JSON.stringify(tasks)) };
       }
       async function payloadChecksum(payload) {
-        const text=JSON.stringify({tasks:payload.tasks,events:payload.events});
+        const text=JSON.stringify({tasks:payload.tasks});
         if (!crypto?.subtle) return String(text.length);
         const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
         return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
@@ -1331,7 +1173,6 @@
         payload.reason=reason;
         payload.revision=currentRevision;
         payload.taskCount=payload.tasks.length;
-        payload.eventCount=payload.events.length;
         payload.activeCount=payload.tasks.filter(task=>!task.archived&&!task.waiting&&task.list==='active').length;
         payload.waitingCount=payload.tasks.filter(task=>task.waiting&&!task.archived).length;
         payload.archiveCount=payload.tasks.filter(task=>task.archived).length;
@@ -1368,7 +1209,7 @@
         return Number.isNaN(date.getTime())?value:date.toLocaleString(undefined,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
       }
       async function verifySnapshot(snapshot) {
-        if (!snapshot || !Array.isArray(snapshot.tasks) || !Array.isArray(snapshot.events) || !snapshot.checksum) return false;
+        if (!snapshot || !Array.isArray(snapshot.tasks) || !snapshot.checksum) return false;
         return (await payloadChecksum(snapshot))===snapshot.checksum;
       }
       function downloadSnapshot(snapshot) {
@@ -1392,10 +1233,7 @@
         const taskHeading=document.createElement('strong'); taskHeading.textContent=`Tasks ${snapshot.tasks?.length||0}`; taskSection.appendChild(taskHeading);
         (snapshot.tasks||[]).slice(0,20).forEach(task=>{const line=document.createElement('div');line.className='snapshot-preview-line';line.textContent=`• ${task.title||'Untitled task'}`;taskSection.appendChild(line);});
         if((snapshot.tasks?.length||0)>20){const line=document.createElement('div');line.className='snapshot-preview-line';line.textContent=`…and ${snapshot.tasks.length-20} more`;taskSection.appendChild(line);}
-        const eventSection=document.createElement('section'); eventSection.className='snapshot-preview-section';
-        const eventHeading=document.createElement('strong'); eventHeading.textContent=`Events ${snapshot.events?.length||0}`; eventSection.appendChild(eventHeading);
-        (snapshot.events||[]).slice(0,20).forEach(event=>{const line=document.createElement('div');line.className='snapshot-preview-line';line.textContent=`• ${event.title||'Untitled event'} · ${event.startDate||''}`;eventSection.appendChild(line);});
-        snapshotPreviewBody.append(summary,taskSection,eventSection); snapshotPreviewDialog.showModal();
+        snapshotPreviewBody.append(summary,taskSection); snapshotPreviewDialog.showModal();
       }
       async function restoreSnapshot(snapshot) {
         if (!(await verifySnapshot(snapshot))) { showStatus('Snapshot integrity check failed'); return; }
@@ -1404,11 +1242,10 @@
 Current data will be preserved first.`)) return;
         try {
           await createRecoverySnapshot('before restore',true);
-          const safe=normaliseValidatedPayload(snapshot);
-          tasks=safe.tasks; events=safe.events;
+          tasks=normaliseValidatedTasks(snapshot.tasks);
           await persistEnvelope({strict:true});
-          editingId=null; editingEventId=null; currentView='all';
-          render(); renderEvents(); updateEventButton();
+          editingId=null; currentView='all';
+          render();
           await createRecoverySnapshot('after restore',true);
           showStatus('Recovery snapshot restored'); await renderRecovery();
         } catch { showStatus('Could not restore snapshot'); }
@@ -1422,7 +1259,7 @@ Current data will be preserved first.`)) return;
           if (info?.usage!=null && info?.quota) estimate=` • Storage ${Math.round(info.usage/1024)} KB of ${Math.round(info.quota/1024/1024)} MB`;
         } catch {}
         const lastExport=localStorage.getItem('five.lastExportAt');
-        recoverySummary.textContent=`Current: ${tasks.length} tasks • ${events.length} events • Browser storage: ${storagePersistent?'Persistent':'Best effort'}${estimate}${lastExport?` • Last export ${formatRecoveryDate(lastExport)}`:' • No recorded external backup'}`;
+        recoverySummary.textContent=`Current: ${tasks.length} tasks • Browser storage: ${storagePersistent?'Persistent':'Best effort'}${estimate}${lastExport?` • Last export ${formatRecoveryDate(lastExport)}`:' • No recorded external backup'}`;
         if (!snapshots.length) {
           const empty=document.createElement('div'); empty.className='recovery-empty'; empty.textContent='No automatic snapshots yet'; recoveryList.appendChild(empty); return;
         }
@@ -1431,7 +1268,7 @@ Current data will be preserved first.`)) return;
           const row=document.createElement('div'); row.className='recovery-item';
           const meta=document.createElement('div'); meta.className='recovery-meta';
           const time=document.createElement('div'); time.className='recovery-time'; time.textContent=formatRecoveryDate(snapshot.savedAt);
-          const counts=document.createElement('div'); counts.className='recovery-counts'; counts.textContent=`${snapshot.tasks?.length||0} tasks • ${snapshot.activeCount??0} active • ${snapshot.waitingCount??0} waiting • ${snapshot.events?.length||0} events • ${snapshot.reason||'automatic'}`;
+          const counts=document.createElement('div'); counts.className='recovery-counts'; counts.textContent=`${snapshot.tasks?.length||0} tasks • ${snapshot.activeCount??0} active • ${snapshot.waitingCount??0} waiting • ${snapshot.reason||'automatic'}`;
           const integrity=document.createElement('div'); integrity.className=`recovery-integrity${healthy?'':' invalid'}`; integrity.textContent=healthy?'Verified snapshot':'Integrity check failed';
           meta.append(time,counts,integrity);
           const actions=document.createElement('div'); actions.className='recovery-actions';
@@ -1442,11 +1279,27 @@ Current data will be preserved first.`)) return;
           actions.append(preview,exportSnapshot,restore,remove); row.append(meta,actions); recoveryList.appendChild(row);
         }
       }
+      async function migrateLegacyRecoverySnapshots() {
+        const snapshots=await getRecoverySnapshots();
+        const legacy=snapshots.filter(snapshot=>snapshot.schemaVersion===1 && Array.isArray(snapshot.tasks));
+        if (!legacy.length) return;
+        const db=await openRecoveryDb(),tx=db.transaction(RECOVERY_STORE,'readwrite');
+        const store=tx.objectStore(RECOVERY_STORE);
+        for (const snapshot of legacy) {
+          const upgraded={...snapshot,schemaVersion:2,tasks:normaliseValidatedTasks(snapshot.tasks)};
+          delete upgraded.events;
+          delete upgraded.eventCount;
+          upgraded.checksum=await payloadChecksum(upgraded);
+          store.put(upgraded);
+        }
+        await transactionDone(tx);
+      }
       async function initRecovery() {
         try {
           storagePersistent=Boolean(await navigator.storage?.persisted?.());
           if (!storagePersistent && navigator.storage?.persist) storagePersistent=Boolean(await navigator.storage.persist());
           await openRecoveryDb();
+          await migrateLegacyRecoverySnapshots();
           await createRecoverySnapshot('startup',true);
         } catch { showStatus('Recovery storage unavailable; export a backup'); }
       }
@@ -1507,218 +1360,6 @@ Current data will be preserved first.`)) return;
         }
       }
 
-      function populateEventTimes() {
-        for (let hour = 0; hour < 24; hour += 1) {
-          for (const minute of [0, 15, 30, 45]) {
-            const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-            const label=new Date(`2000-01-01T${value}:00`).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
-            [eventStartTimeInput,eventEndTimeInput].forEach(select=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);});
-          }
-        }
-      }
-
-      function normaliseEvents(source) {
-        if (!Array.isArray(source)) return [];
-        return source.slice(0, 5000).map(item => ({
-          id: typeof item?.id === 'string' && item.id ? item.id : createId(),
-          title: String(item?.title || '').slice(0, 200),
-          linkedTaskId: typeof item?.linkedTaskId === 'string' ? item.linkedTaskId : '',
-          startDate: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.startDate || item?.date || '')) ? String(item.startDate || item.date) : '',
-          endDate: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.endDate || item?.startDate || item?.date || '')) ? String(item.endDate || item.startDate || item.date) : '',
-          startTime: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.startTime || item?.time || '')) ? String(item.startTime || item.time) : '',
-          endTime: /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/.test(String(item?.endTime || '')) ? String(item.endTime) : ''
-        })).filter(item=>item.title&&item.startDate).map(item=>{if(item.endDate<item.startDate)item.endDate=item.startDate;return item;});
-      }
-      function loadEvents() {
-        try {
-          return normaliseEvents(JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]'));
-        } catch { return []; }
-      }
-      function saveEvents(message = '') {
-        persistEnvelope().then(() => scheduleRecoverySnapshot(message || 'event update')).catch(() => {});
-        if (message) showStatus(message);
-        updateEventButton();
-      }
-      function todayValue() {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-      }
-      function eventDateLabel(value) {
-        const date = new Date(`${value}T00:00:00`);
-        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{day:'numeric',month:'short'});
-      }
-      function updateEventButton() {
-        const upcoming = events.filter(item => item.endDate >= todayValue()).length;
-        const todayCount = events.filter(item => item.startDate <= todayValue() && item.endDate >= todayValue()).length;
-        eventCountElement.textContent = upcoming;
-        eventsButton.classList.toggle('has-today', todayCount > 0);
-        eventsButton.title = todayCount ? `${todayCount} event${todayCount === 1 ? '' : 's'} today` : `${upcoming} upcoming events`;
-      }
-      function hasUpcomingEvents() {
-        return events.some(item => item.endDate >= todayValue());
-      }
-      function eventsDismissedToday() {
-        return localStorage.getItem(EVENTS_DISMISSED_KEY) === todayValue();
-      }
-      function dismissEventsForToday() {
-        localStorage.setItem(EVENTS_DISMISSED_KEY, todayValue());
-      }
-      function openEventsList() {
-        setEventsView('list');
-        setEventMode('list');
-        if (!eventsDialog.open) eventsDialog.showModal();
-      }
-      function openCalendarFromFooter() {
-        setEventMode('list');
-        setEventsView('calendar');
-        if (!eventsDialog.open) eventsDialog.showModal();
-      }
-      function setEventsView(mode) {
-        const calendarMode = mode === 'calendar';
-        eventsDialog.classList.toggle('calendar-mode', calendarMode);
-        eventsHeading.textContent = calendarMode ? 'Calendar' : 'Events';
-        calendarSwitch.textContent = calendarMode ? 'Events' : 'Calendar';
-        newEventButton.hidden = calendarMode;
-        if (calendarMode) renderCalendar();
-        else renderEvents();
-      }
-      function dateKey(year, month, day) {
-        return `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      }
-      function showCalendarDate(date) {
-        selectedCalendarDate = date;
-        renderCalendar();
-      }
-      function eventIncludesDate(item,date){return item.startDate<=date&&item.endDate>=date;}
-      function eachDateInRange(start,end,callback){const d=new Date(`${start}T00:00:00`),last=new Date(`${end}T00:00:00`);while(d<=last){callback(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);d.setDate(d.getDate()+1);}}
-      function eventTimeLabel(value){return value?new Date(`2000-01-01T${value}:00`).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';}
-      function eventRangeLabel(item){const st=eventTimeLabel(item.startTime),et=eventTimeLabel(item.endTime);if(item.startDate===item.endDate)return `${eventDateLabel(item.startDate)}${st?' · '+st:''}${et?' – '+et:''}`;return `${eventDateLabel(item.startDate)}${st?' '+st:''} – ${eventDateLabel(item.endDate)}${et?' '+et:''}`;}
-      function renderCalendarDateEvents() {
-        calendarDateEvents.replaceChildren();
-        const items = events.filter(item=>eventIncludesDate(item,selectedCalendarDate)).sort((a,b)=>a.startTime.localeCompare(b.startTime));
-        if (!items.length) { calendarDateEvents.classList.remove('open'); return; }
-        calendarDateEvents.classList.add('open');
-        const heading = document.createElement('div'); heading.className = 'calendar-date-heading';
-        heading.textContent = new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-        calendarDateEvents.appendChild(heading);
-        items.forEach(item => {
-          const row=document.createElement('div'); row.className='calendar-date-event';
-          const time=document.createElement('span'); time.className='calendar-date-time'; time.textContent=item.startTime?eventTimeLabel(item.startTime):'All day';
-          const title=document.createElement('span'); title.textContent=`${item.title} · ${eventRangeLabel(item)}`;
-          row.append(time,title); calendarDateEvents.appendChild(row);
-        });
-      }
-      function renderCalendar(){calendarYearElement.textContent=calendarYearValue;yearCalendar.replaceChildren();const head=document.createElement('div');head.className='planner-head';const h1=document.createElement('div');h1.textContent='Months / dates';const h2=document.createElement('div');h2.textContent='Events';head.append(h1,h2);yearCalendar.appendChild(head);const eventDates=new Set();events.forEach(item=>eachDateInRange(item.startDate,item.endDate,date=>{if(date.startsWith(`${calendarYearValue}-`))eventDates.add(date);}));const names=Array.from({length:12},(_,m)=>new Date(calendarYearValue,m,1).toLocaleDateString(undefined,{month:'long'}));const weekdays=['M','T','W','T','F','S','S'];for(let month=0;month<12;month++){const days=new Date(calendarYearValue,month+1,0).getDate(),row=document.createElement('section');row.className='planner-month-row';const cal=document.createElement('div');cal.className='planner-month-calendar';const title=document.createElement('div');title.className='planner-month-title';title.textContent=names[month];const grid=document.createElement('div');grid.className='mini-month-grid';weekdays.forEach(x=>{const d=document.createElement('div');d.className='mini-weekday';d.textContent=x;grid.appendChild(d);});const first=(new Date(calendarYearValue,month,1).getDay()+6)%7;for(let i=0;i<first;i++){const x=document.createElement('span');x.className='mini-day-spacer';grid.appendChild(x);}for(let n=1;n<=days;n++){const date=dateKey(calendarYearValue,month,n),has=eventDates.has(date),d=document.createElement(has?'button':'span');d.className=`mini-day${has?' event-date':''}${date===todayValue()?' today':''}${date===selectedCalendarDate?' selected-date':''}`;d.textContent=n;if(has){d.type='button';d.addEventListener('click',()=>showCalendarDate(date));}grid.appendChild(d);}cal.append(title,grid);const col=document.createElement('div');col.className='planner-month-events';const et=document.createElement('div');et.className='planner-events-title';et.textContent=names[month];col.appendChild(et);const ms=dateKey(calendarYearValue,month,1),me=dateKey(calendarYearValue,month,days),items=events.filter(item=>item.startDate<=me&&item.endDate>=ms).sort((a,b)=>`${a.startDate} ${a.startTime}`.localeCompare(`${b.startDate} ${b.startTime}`));if(!items.length){const e=document.createElement('div');e.className='planner-empty';e.textContent='No events';col.appendChild(e);}items.forEach(item=>{const e=document.createElement('div');e.className='planner-event';const w=document.createElement('span');w.className='planner-event-when';const same=item.startDate===item.endDate; w.textContent=same?eventDateLabel(item.startDate):`${eventDateLabel(item.startDate)} – ${eventDateLabel(item.endDate)}`;const t=document.createElement('span');t.className='planner-event-title';t.textContent=item.title;e.append(w,t);col.appendChild(e);});row.append(cal,col);yearCalendar.appendChild(row);}renderCalendarDateEvents();}
-      function autoOpenEventsIfNeeded() {
-        if (!hasUpcomingEvents() || eventsDismissedToday() || eventsDialog.open) return;
-        requestAnimationFrame(openEventsList);
-      }
-
-      function linkedTaskState(item) {
-        if (!item.linkedTaskId) return { task: null, label: 'Move to Active' };
-        const task = tasks.find(candidate => candidate.id === item.linkedTaskId);
-        if (!task) return { task: null, label: 'Move to Active', broken: true };
-        if (task.archived) return { task, label: 'Archived' };
-        if (task.waiting) return { task, label: 'In Waiting' };
-        return { task, label: task.list === 'all' ? 'In All' : 'In Active' };
-      }
-      function moveEventToActive(item) {
-        const state = linkedTaskState(item);
-        if (state.task) {
-          showStatus(`Event task is ${state.label.toLowerCase()}`);
-          return;
-        }
-        if (activeTasks().length >= MAX_TASKS) {
-          showStatus('Five active tasks already exist');
-          return;
-        }
-        const task = newTask();
-        task.list = 'active';
-        task.requestor = 'EVENT';
-        task.title = item.title.toUpperCase();
-        task.description = `📅 Event: ${item.startDate}${item.startTime?` ${item.startTime}`:''} to ${item.endDate}${item.endTime?` ${item.endTime}`:''}`;
-        task.actions[0].text = 'Attend event';
-        tasks.push(task);
-        item.linkedTaskId = task.id;
-        save();
-        saveEvents('Event moved to Active');
-        renderEvents();
-      }
-      function setEventMode(mode, item = null) {
-        const editing = mode === 'form';
-        eventsDialog.classList.toggle('form-mode', editing);
-        newEventButton.hidden = editing || eventsDialog.classList.contains('calendar-mode');
-        if (!editing) {
-          editingEventId = null;
-          eventTitleInput.value='';eventStartDateInput.value='';eventEndDateInput.value='';eventStartTimeInput.value='';eventEndTimeInput.value='';
-          renderEvents();
-          return;
-        }
-        editingEventId = item?.id || null;
-        eventFormTitle.textContent = item ? 'Edit Event' : 'New Event';
-        addEventButton.textContent = item ? 'Save Changes' : 'Add Event';
-        eventTitleInput.value = item?.title || '';
-        eventStartDateInput.value=item?.startDate||todayValue();eventEndDateInput.value=item?.endDate||item?.startDate||todayValue();eventEndDateInput.min=eventStartDateInput.value;eventStartTimeInput.value=item?.startTime||'';eventEndTimeInput.value=item?.endTime||'';
-        requestAnimationFrame(() => eventTitleInput.focus());
-      }
-      function renderEventItem(item) {
-        const row=document.createElement('div'); row.className=`event-item${eventIncludesDate(item,todayValue())?' today':''}`;
-        const when=document.createElement('div'); when.className='event-when'; when.textContent=`${eventIncludesDate(item,todayValue())?'Today · ':''}${eventRangeLabel(item)}`;
-        const title=document.createElement('div'); title.className='event-title'; title.textContent=(item.title || '').toUpperCase();
-        const state=linkedTaskState(item);
-        const link=makeButton(state.label,'event-link',()=>moveEventToActive(item));
-        link.disabled=Boolean(state.task);
-        const edit=makeButton('Edit','event-edit',()=>setEventMode('form',item));
-        const remove=makeButton('×','event-delete',async()=>{
-          if (!confirm(`Delete "${item.title}"?`)) return;
-          try { await createRecoverySnapshot('before event delete',true); } catch { showStatus('Could not secure recovery snapshot'); return; }
-          events=events.filter(event=>event.id!==item.id);
-          saveEvents('Event deleted');
-          renderEvents();
-        });
-        remove.setAttribute('aria-label',`Delete ${item.title}`);
-        const actions=document.createElement('div'); actions.className='event-actions'; actions.append(link,edit,remove);
-        row.append(title,when,actions);
-        return row;
-      }
-      function makeEventSection(label, items) {
-        const section=document.createElement('section'); section.className='events-section';
-        const heading=document.createElement('div'); heading.className='events-section-title'; heading.textContent=`${label} ${items.length}`;
-        section.appendChild(heading);
-        if (!items.length) {
-          const empty=document.createElement('div'); empty.className='events-empty'; empty.textContent=`No ${label.toLowerCase()} events`; section.appendChild(empty);
-        } else items.forEach(item=>section.appendChild(renderEventItem(item)));
-        return section;
-      }
-      function renderEvents() {
-        eventsList.replaceChildren();
-        let repairedLinks = false;
-        events.forEach(item => {
-          const state = linkedTaskState(item);
-          if (state.broken) { item.linkedTaskId = ''; repairedLinks = true; }
-        });
-        if (repairedLinks) saveEvents();
-        const today=todayValue();
-        const upcoming=events.filter(item=>item.endDate>=today).sort((a,b)=>`${a.startDate} ${a.startTime}`.localeCompare(`${b.startDate} ${b.startTime}`));
-        const past=events.filter(item=>item.endDate<today).sort((a,b)=>`${b.endDate} ${b.endTime}`.localeCompare(`${a.endDate} ${a.endTime}`));
-        eventsList.append(makeEventSection('Upcoming',upcoming),makeEventSection('Past',past));
-      }
-      function saveEventFromForm() {
-        const title=eventTitleInput.value.trim(),startDate=eventStartDateInput.value,endDate=eventEndDateInput.value||startDate,startTime=eventStartTimeInput.value,endTime=eventEndTimeInput.value;
-        if(!title||!startDate){showStatus('Event title and start date are required');return;}
-        if(endDate<startDate){showStatus('End date cannot be before start date');eventEndDateInput.focus();return;}
-        if(startDate===endDate&&startTime&&endTime&&endTime<=startTime){showStatus('End time must be after start time');eventEndTimeInput.focus();return;}
-        if (editingEventId) {
-          const item=events.find(event=>event.id===editingEventId);
-          if (!item) { showStatus('Event no longer exists'); setEventMode('list'); return; }
-          item.title=title;item.startDate=startDate;item.endDate=endDate;item.startTime=startTime;item.endTime=endTime;
-          saveEvents('Event updated');
-        } else {
-          events.push({id:createId(),title,startDate,endDate,startTime,endTime,linkedTaskId:''});
-          saveEvents('Event added');
-        }
-        setEventMode('list');
-      }
       function save(message = '') {
         persistEnvelope().then(() => scheduleRecoverySnapshot(message || 'task update')).catch(() => {});
         if (message) showStatus(message);
@@ -1849,7 +1490,6 @@ Current data will be preserved first.`)) return;
         const plannedMinutes = activeTasks().reduce((total, task) => total + task.durationMinutes, 0);
         activeTimeSummary.textContent = plannedMinutes ? `Active time · ${durationLabel(plannedMinutes)} planned` : '';
         activeTimeSummary.classList.toggle('visible', plannedMinutes > 0);
-        updateEventButton();
       }
 
       function makeButton(text, className, handler) {
@@ -2532,42 +2172,17 @@ Current data will be preserved first.`)) return;
           const parsed = JSON.parse(await file.text());
           const incomingTasks = Array.isArray(parsed) ? parsed : parsed?.tasks;
           if (!Array.isArray(incomingTasks)) throw new Error('Invalid backup');
-
-          const incomingEvents = Array.isArray(parsed) ? null : parsed?.events;
-          if (incomingEvents !== undefined && !Array.isArray(incomingEvents)) throw new Error('Invalid events');
-
-          let activeSeen = 0;
-          const nextTasks = incomingTasks.map(normaliseTask).map(task => {
-            if (!task.archived && !task.waiting && task.list === 'active') {
-              activeSeen += 1;
-              if (activeSeen > MAX_TASKS) task.list = 'all';
-            }
-            return task;
-          });
-          const hasEventsInBackup = Array.isArray(incomingEvents);
-          const nextEvents = hasEventsInBackup ? normaliseEvents(incomingEvents) : events;
-
-          const importLabel = hasEventsInBackup ? 'tasks and events' : 'tasks only';
-          if (!confirm(`Replace current ${importLabel} with this backup? Current data will be preserved in Recovery first.`)) return;
+          const nextTasks = normaliseValidatedTasks(incomingTasks);
+          if (!confirm('Replace current tasks with this backup? Current data will be preserved in Recovery first.')) return;
           try { await createRecoverySnapshot('before import',true); }
           catch { showStatus('Could not secure recovery snapshot'); return; }
-
           tasks = nextTasks;
-          events = nextEvents;
           await persistEnvelope({strict:true});
-          editingId = null;
-          editSnapshot = null;
-          newDraftId = null;
-          currentView = 'all';
+          editingId = null; editSnapshot = null; newDraftId = null; currentView = 'all';
           render();
-          renderEvents();
-          updateEventButton();
-          showStatus(hasEventsInBackup ? 'Tasks and events imported' : 'Tasks imported; existing events kept');
-        } catch {
-          showStatus('Could not import this backup');
-        }
+          showStatus('Tasks imported');
+        } catch { showStatus('Could not import this backup'); }
       });
-
       document.addEventListener('keydown', event => {
         const target = event.target;
         const isField = target instanceof HTMLElement && (
@@ -2625,19 +2240,6 @@ Current data will be preserved first.`)) return;
         event.preventDefault();
         addTaskButton.click();
       });
-      eventsButton.addEventListener('click', openEventsList);
-      footerCalendarButton.addEventListener('click', openCalendarFromFooter);
-      calendarSwitch.addEventListener('click', () => setEventsView(eventsDialog.classList.contains('calendar-mode') ? 'list' : 'calendar'));
-      document.getElementById('previousCalendarYear').addEventListener('click', () => { calendarYearValue -= 1; selectedCalendarDate = ''; renderCalendar(); });
-      document.getElementById('nextCalendarYear').addEventListener('click', () => { calendarYearValue += 1; selectedCalendarDate = ''; renderCalendar(); });
-      newEventButton.addEventListener('click', () => setEventMode('form'));
-      cancelEventEditButton.addEventListener('click', () => setEventMode('list'));
-      document.getElementById('closeEvents').addEventListener('click', () => { dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
-      eventsDialog.addEventListener('cancel', event => { event.preventDefault(); dismissEventsForToday(); setEventsView('list'); setEventMode('list'); eventsDialog.close(); });
-      eventStartDateInput.addEventListener('change',()=>{eventEndDateInput.min=eventStartDateInput.value;if(!eventEndDateInput.value||eventEndDateInput.value<eventStartDateInput.value)eventEndDateInput.value=eventStartDateInput.value;});
-      addEventButton.addEventListener('click', saveEventFromForm);
-      eventTitleInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); saveEventFromForm(); } });
-
       toggleActionsButton.addEventListener('click', () => {
         showTaskDetails = !showTaskDetails;
         localStorage.setItem('five.showTaskDetails', String(showTaskDetails));
@@ -2655,11 +2257,12 @@ Current data will be preserved first.`)) return;
       window.addEventListener('storage',event=>{if(event.key===TAB_SIGNAL_KEY&&event.newValue){try{handleRemoteRevision(JSON.parse(event.newValue));}catch{}}});
       await initialisePrimaryStorage();
       await runIntegrityScan();
+      localStorage.removeItem('fiveEvents.v1');
+      localStorage.removeItem('five.eventsDismissedDate');
       render();
       updateBackupReminder();
       if (startupValidationMessage) showStatus(startupValidationMessage);
       initRecovery();
-      autoOpenEventsIfNeeded();
     })();
   </script>
 </body>
