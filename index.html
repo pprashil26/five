@@ -2244,6 +2244,7 @@ Current data will be preserved first.`)) return;
         editor.className = 'task-editor';
 
         const requestorField=document.createElement('div');requestorField.className='context-field';const contextLabel=document.createElement('label');contextLabel.textContent='Context';const contextSelect=document.createElement('select');contextSelect.className='context-select';contextSelect.setAttribute('aria-label','Context');const empty=document.createElement('option');empty.value='';empty.textContent='Choose context';contextSelect.appendChild(empty);contexts.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;option.selected=task.requestor===value;contextSelect.appendChild(option);});if(task.requestor&&!contexts.includes(task.requestor)){const legacy=document.createElement('option');legacy.value=task.requestor;legacy.textContent=`Current: ${task.requestor}`;legacy.selected=true;contextSelect.appendChild(legacy);}contextSelect.addEventListener('change',()=>{task.requestor=contextSelect.value;save('Context saved');});requestorField.append(contextLabel,contextSelect);
+        const quickCaptureNote=document.createElement('div');quickCaptureNote.className='quick-capture-note';quickCaptureNote.textContent='Quick capture: Context, Title and Date only.';
 
         const titleField = document.createElement('div');
         titleField.className = 'field title-field';
@@ -2329,7 +2330,7 @@ Current data will be preserved first.`)) return;
 
         const tools=document.createElement('div'); tools.className='editor-tools';
         const addActionButton=makeButton('+ Action','add-action',()=>addAction(task.id));
-        const saveButton=makeButton('Save','save-task',()=>{ if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;} finishEditing();save('Saved');render(); });
+        const saveButton=makeButton('Save','save-task',()=>{ if(isQuickCapture && !task.actions.some(a=>a.text.trim())) task.actions=[{id:createId(),text:(task.title||'').trim()||'Next action',done:false}]; if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;} finishEditing();save(isQuickCapture?'Captured':'Saved');render(); });
         const cancelButton=makeButton('Cancel','cancel-task',cancelEditing);
         const deleteButton=makeButton('Delete','delete-link',async()=>{if(!confirm(`Delete "${task.title.trim()||'Untitled task'}"?`))return;try{await createRecoverySnapshot('before task delete',true);}catch{showStatus('Could not secure recovery snapshot');return;}tasks=tasks.filter(item=>item.id!==task.id);editingId=null;save('Task deleted');render();});
         const statusSelect=document.createElement('select'); statusSelect.className='task-status-select'; statusSelect.setAttribute('aria-label','Task status');
@@ -2339,9 +2340,7 @@ Current data will be preserved first.`)) return;
         const primaryRow=document.createElement('div');primaryRow.className='editor-primary-row';primaryRow.append(addActionButton,saveButton,statusSelect,cancelButton);
         const secondaryRow=document.createElement('div');secondaryRow.className='editor-secondary-row';secondaryRow.append(deleteButton);
         tools.append(primaryRow,secondaryRow);
-        editor.append(requestorField, titleField, descriptionField, taskDateField);
-        if (durationField.childElementCount) editor.append(durationField);
-        editor.append(heading, actionList, tools);
+        editor.append(requestorField,titleField); if(isQuickCapture) editor.append(quickCaptureNote,taskDateField); else { editor.append(descriptionField,taskDateField); if (durationField.childElementCount) editor.append(durationField); editor.append(heading,actionList);} editor.append(tools);
         return editor;
       }
 
