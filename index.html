@@ -713,6 +713,12 @@
       font-size: 11px;
       text-align: center;
     }
+    .reliability-row { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:4px 8px; min-height:18px; margin-top:2px; color:var(--muted); font-size:10px; }
+    .save-health.saving { color:#765b00; }
+    .save-health.saved { color:#246b3a; }
+    .save-health.failed { color:var(--danger); font-weight:750; }
+    .backup-reminder { display:none; border:0; min-height:22px !important; padding:2px 6px !important; color:#765b00 !important; background:#fff4c2 !important; border-radius:6px !important; }
+    .backup-reminder.visible { display:inline-flex; align-items:center; }
 
     .events-dialog {
       width: min(92vw, 430px);
@@ -807,12 +813,26 @@
     .recovery-header h2 { margin:0; font-size:16px; }
     .recovery-summary { margin-top:8px; padding:8px; border-radius:8px; background:#f5f6f7; color:var(--muted); font-size:11px; }
     .recovery-list { display:grid; gap:6px; margin-top:10px; overflow:auto; }
-    .recovery-item { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; padding:8px; border:1px solid var(--line); border-radius:8px; }
+    .recovery-item { display:grid; grid-template-columns:minmax(0,1fr); gap:7px; align-items:center; padding:8px; border:1px solid var(--line); border-radius:8px; }
     .recovery-meta { min-width:0; }
     .recovery-time { font-size:12px; font-weight:760; }
     .recovery-counts { color:var(--muted); font-size:10px; }
-    .recovery-restore { min-height:30px; padding:4px 8px; border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); font-size:10px; }
+    .recovery-integrity { margin-top:2px; color:#246b3a; font-size:9px; font-weight:750; }
+    .recovery-integrity.invalid { color:var(--danger); }
+    .recovery-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px; }
+    .recovery-actions button { min-height:28px; padding:3px 7px; font-size:10px; }
+    .recovery-preview { border-color:var(--line); background:#f5f6f7; color:var(--text); }
+    .recovery-export { border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); }
+    .recovery-delete { border:0; background:transparent; color:var(--danger); }
+    .recovery-restore { border-color:#d9e3fa; background:var(--accent-soft); color:var(--accent); }
     .recovery-empty { padding:18px 8px; color:var(--muted); text-align:center; font-size:12px; }
+    .snapshot-preview-dialog { width:min(92vw,430px); max-height:78dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
+    .snapshot-preview-dialog::backdrop { background:rgba(29,35,42,.28); }
+    .snapshot-preview-body { display:grid; gap:7px; margin-top:9px; overflow:auto; }
+    .snapshot-preview-section { padding:7px; border:1px solid var(--line); border-radius:8px; }
+    .snapshot-preview-section strong { display:block; margin-bottom:4px; font-size:11px; }
+    .snapshot-preview-line { font-size:11px; overflow-wrap:anywhere; }
+    .snapshot-preview-line + .snapshot-preview-line { margin-top:3px; }
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
@@ -850,6 +870,7 @@
 
     <footer class="footer">
       <div class="footer-actions">
+        <button type="button" id="quickBackup">Quick Backup</button>
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
         <button type="button" id="recoveryButton">Recovery</button>
@@ -857,6 +878,7 @@
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
       </div>
+      <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
       <div class="philosophy">
         <span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
         <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
@@ -899,18 +921,32 @@
       <div class="recovery-summary" id="recoverySummary"></div>
       <div class="recovery-list" id="recoveryList"></div>
     </dialog>
+    <dialog id="snapshotPreviewDialog" class="snapshot-preview-dialog">
+      <div class="recovery-header"><h2>Snapshot Preview</h2><button type="button" class="events-close" id="closeSnapshotPreview" aria-label="Close snapshot preview">✕</button></div>
+      <div class="snapshot-preview-body" id="snapshotPreviewBody"></div>
+    </dialog>
   </main>
 
   <script>
-    (() => {
+    (async () => {
       'use strict';
 
       const STORAGE_KEY = 'fiveTasks.v1';
       const MAX_TASKS = 5;
       const EVENTS_KEY = 'fiveEvents.v1';
+      const ENVELOPE_KEY = 'five.dataEnvelope.v1';
+      const ENVELOPE_SCHEMA_VERSION = 1;
+      const LAST_BACKUP_KEY = 'five.lastExportAt';
+      const BACKUP_REMINDER_DAYS = 14;
+      const TAB_CHANNEL = 'five.dataChanges.v1';
+      const TAB_SIGNAL_KEY = 'five.tabSignal.v1';
+      const PRIMARY_DB = 'fiveData.v2';
+      const PRIMARY_DB_VERSION = 1;
+      const PRIMARY_STORE = 'current';
+      const PRIMARY_KEY = 'main';
       const RECOVERY_DB = 'fiveRecovery.v1';
       const RECOVERY_STORE = 'snapshots';
-      const MAX_SNAPSHOTS = 10;
+      const MAX_SNAPSHOTS = 20;
       const ROUTINE_SNAPSHOT_MS = 30000;
       const EVENTS_DISMISSED_KEY = 'five.eventsDismissedDate';
       const tasksHost = document.getElementById('tasks');
@@ -943,8 +979,11 @@
       const eventEndTimeInput=document.getElementById('eventEndTime');
       const addEventButton = document.getElementById('addEvent');
       const addTaskButton = document.getElementById('addTask');
+      const quickBackupButton = document.getElementById('quickBackup');
       const exportButton = document.getElementById('exportData');
       const importButton = document.getElementById('importData');
+      const saveHealthElement = document.getElementById('saveHealth');
+      const backupReminderButton = document.getElementById('backupReminder');
       const importFile = document.getElementById('importFile');
       const statusElement = document.getElementById('status');
       const shortcutHelp = document.getElementById('shortcutHelp');
@@ -969,11 +1008,289 @@
       let lastSnapshotAt = 0;
       let snapshotTimer = null;
       let storagePersistent = false;
+      let currentRevision = 0;
+      let saveHealthTimer = null;
+      let startupValidationMessage = '';
+      let primaryDbPromise = null;
+      let primarySaveQueue = Promise.resolve();
+      const writerId = self.crypto?.randomUUID?.() || `tab-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const tabChannel = 'BroadcastChannel' in window ? new BroadcastChannel(TAB_CHANNEL) : null;
+      let remoteUpdatePending = false;
       let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
-      let tasks = loadTasks();
-      let events = loadEvents();
+      let tasks = [];
+      let events = [];
       populateEventTimes();
 
+      function openPrimaryDb() {
+        if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB unavailable'));
+        if (primaryDbPromise) return primaryDbPromise;
+        primaryDbPromise = new Promise((resolve,reject) => {
+          const request = indexedDB.open(PRIMARY_DB, PRIMARY_DB_VERSION);
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(PRIMARY_STORE)) db.createObjectStore(PRIMARY_STORE);
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error('Primary database failed'));
+          request.onblocked = () => reject(new Error('Primary database blocked'));
+        });
+        return primaryDbPromise;
+      }
+      async function readPrimaryEnvelope() {
+        const db = await openPrimaryDb();
+        const tx = db.transaction(PRIMARY_STORE,'readonly');
+        const value = await requestToPromise(tx.objectStore(PRIMARY_STORE).get(PRIMARY_KEY));
+        return value || null;
+      }
+      async function writePrimaryEnvelope(envelope, strict = false) {
+        const db = await openPrimaryDb();
+        let tx;
+        try { tx = db.transaction(PRIMARY_STORE,'readwrite',{durability:strict?'strict':'default'}); }
+        catch { tx = db.transaction(PRIMARY_STORE,'readwrite'); }
+        tx.objectStore(PRIMARY_STORE).put(envelope,PRIMARY_KEY);
+        await transactionDone(tx);
+        const verified = await readPrimaryEnvelope();
+        const integrity=await verifyEnvelopeIntegrity(verified);
+        if (!integrity.valid || verified.revision !== envelope.revision || verified.checksum !== envelope.checksum || JSON.stringify(verified.tasks) !== JSON.stringify(envelope.tasks) || JSON.stringify(verified.events) !== JSON.stringify(envelope.events)) throw new Error('IndexedDB read-back verification failed');
+        return verified;
+      }
+      function writeLocalStorageMirror(envelope) {
+        const encodedEnvelope = JSON.stringify(envelope);
+        const encodedTasks = JSON.stringify(envelope.tasks);
+        const encodedEvents = JSON.stringify(envelope.events);
+        localStorage.setItem(ENVELOPE_KEY, encodedEnvelope);
+        localStorage.setItem(STORAGE_KEY, encodedTasks);
+        localStorage.setItem(EVENTS_KEY, encodedEvents);
+        if (localStorage.getItem(ENVELOPE_KEY) !== encodedEnvelope || localStorage.getItem(STORAGE_KEY) !== encodedTasks || localStorage.getItem(EVENTS_KEY) !== encodedEvents) throw new Error('Mirror read-back verification failed');
+        const mirror = JSON.parse(localStorage.getItem(ENVELOPE_KEY));
+        if (mirror.revision !== envelope.revision || mirror.checksum !== envelope.checksum) throw new Error('Mirror validation failed');
+      }
+      async function initialisePrimaryStorage() {
+        setSaveHealth('saving','Checking storage…');
+        let primary = null;
+        try { primary = await readPrimaryEnvelope(); } catch (error) { startupValidationMessage = 'Primary storage unavailable; verified local mirror loaded'; }
+        if (primary) {
+          try {
+            let integrity=await verifyEnvelopeIntegrity(primary);
+            if (!integrity.valid && !primary.checksum && primary.schemaVersion===ENVELOPE_SCHEMA_VERSION) {
+              primary.writerId=primary.writerId||'release-3-migration';
+              primary.checksum=await envelopeChecksum(primary);
+              await writePrimaryEnvelope(primary,true);
+              integrity=await verifyEnvelopeIntegrity(primary);
+            }
+            if (!integrity.valid) throw new Error(integrity.reason);
+            const safe = normaliseValidatedPayload(primary);
+            tasks = safe.tasks; events = safe.events;
+            currentRevision = Number.isInteger(primary.revision) && primary.revision >= 0 ? primary.revision : 0;
+            writeLocalStorageMirror(primary);
+            setSaveHealth('saved',`Saved · r${currentRevision}`);
+            return;
+          } catch (error) { startupValidationMessage = 'Primary data failed validation; verified local mirror restored'; }
+        }
+        const fallback = await loadValidatedStartupData();
+        tasks = fallback.tasks; events = fallback.events; currentRevision = fallback.revision;
+        const migrated = await finaliseEnvelope(Math.max(1,currentRevision));
+        try {
+          await writePrimaryEnvelope(migrated,true);
+          currentRevision = migrated.revision;
+          writeLocalStorageMirror(migrated);
+          setSaveHealth('saved',`Saved · r${currentRevision}`);
+        } catch (error) {
+          setSaveHealth('failed','Primary storage failed');
+          if (!startupValidationMessage) startupValidationMessage = 'IndexedDB could not be initialised; local mirror remains available';
+        }
+      }
+      function validateDataPayload(candidate) {
+        const issues = [];
+        if (!candidate || typeof candidate !== 'object') return { valid:false, issues:['Data payload is missing'] };
+        if (!Array.isArray(candidate.tasks)) issues.push('Tasks collection is invalid');
+        if (!Array.isArray(candidate.events)) issues.push('Events collection is invalid');
+        const sourceTasks = Array.isArray(candidate.tasks) ? candidate.tasks : [];
+        const sourceEvents = Array.isArray(candidate.events) ? candidate.events : [];
+        const taskIds = new Set();
+        sourceTasks.forEach((task,index) => {
+          if (!task || typeof task !== 'object') issues.push(`Task ${index + 1} is invalid`);
+          else if (typeof task.id === 'string' && task.id) {
+            if (taskIds.has(task.id)) issues.push(`Duplicate task ID at task ${index + 1}`);
+            taskIds.add(task.id);
+          }
+        });
+        const eventIds = new Set();
+        sourceEvents.forEach((event,index) => {
+          if (!event || typeof event !== 'object') issues.push(`Event ${index + 1} is invalid`);
+          else if (typeof event.id === 'string' && event.id) {
+            if (eventIds.has(event.id)) issues.push(`Duplicate event ID at event ${index + 1}`);
+            eventIds.add(event.id);
+          }
+        });
+        return { valid:issues.length === 0, issues };
+      }
+      function normaliseValidatedPayload(candidate) {
+        const check = validateDataPayload(candidate);
+        if (!check.valid) throw new Error(check.issues.join('; '));
+        let activeSeen = 0;
+        const safeTasks = candidate.tasks.map(normaliseTask).map(task => {
+          if (!task.archived && !task.waiting && task.list === 'active') {
+            activeSeen += 1;
+            if (activeSeen > MAX_TASKS) task.list = 'all';
+          }
+          return task;
+        });
+        return { tasks:safeTasks, events:normaliseEvents(candidate.events) };
+      }
+      async function loadValidatedStartupData() {
+        let envelopeError = '';
+        const envelopeText = localStorage.getItem(ENVELOPE_KEY);
+        if (envelopeText) {
+          try {
+            const envelope = JSON.parse(envelopeText);
+            const integrity=await verifyEnvelopeIntegrity(envelope);
+            if (!integrity.valid) throw new Error(integrity.reason);
+            const safe = normaliseValidatedPayload(envelope);
+            return { ...safe, revision:Number.isInteger(envelope.revision) && envelope.revision >= 0 ? envelope.revision : 0 };
+          } catch (error) { envelopeError = error.message || 'Invalid data envelope'; }
+        }
+        try {
+          const legacyTasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          const legacyEvents = JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');
+          const safe = normaliseValidatedPayload({ tasks:legacyTasks, events:legacyEvents });
+          if (envelopeError) startupValidationMessage = 'Primary data needed repair; verified legacy data loaded';
+          return { ...safe, revision:0 };
+        } catch (error) {
+          startupValidationMessage = 'Data validation failed. Open Recovery or import a backup.';
+          return { tasks:[], events:[], revision:0 };
+        }
+      }
+      function canonicalDataText(payload) {
+        return JSON.stringify({schemaVersion:payload.schemaVersion,revision:payload.revision,tasks:payload.tasks,events:payload.events});
+      }
+      async function envelopeChecksum(payload) {
+        const text=canonicalDataText(payload);
+        if (!crypto?.subtle) return `fallback-${text.length}`;
+        const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+        return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+      }
+      async function verifyEnvelopeIntegrity(payload) {
+        const shape=validateDataPayload(payload);
+        if (!shape.valid || payload.schemaVersion!==ENVELOPE_SCHEMA_VERSION || !Number.isInteger(payload.revision) || payload.revision<0 || typeof payload.checksum!=='string' || !payload.checksum) return {valid:false,reason:shape.issues.join('; ')||'Envelope metadata is invalid'};
+        const expected=await envelopeChecksum(payload);
+        return expected===payload.checksum ? {valid:true} : {valid:false,reason:'Checksum mismatch'};
+      }
+      function buildEnvelope(nextRevision = currentRevision) {
+        return {
+          schemaVersion: ENVELOPE_SCHEMA_VERSION,
+          revision: nextRevision,
+          savedAt: new Date().toISOString(),
+          writerId,
+          checksum:'',
+          tasks: JSON.parse(JSON.stringify(tasks)),
+          events: JSON.parse(JSON.stringify(events))
+        };
+      }
+      async function finaliseEnvelope(nextRevision=currentRevision) {
+        const envelope=buildEnvelope(nextRevision);
+        envelope.checksum=await envelopeChecksum(envelope);
+        return envelope;
+      }
+      function setSaveHealth(state, label) {
+        clearTimeout(saveHealthTimer);
+        saveHealthElement.className = `save-health ${state}`;
+        saveHealthElement.textContent = label;
+        if (state === 'saved') saveHealthTimer = setTimeout(() => {
+          saveHealthElement.textContent = `Saved · ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+        }, 500);
+      }
+      function persistEnvelope(options = {}) {
+        const strict = Boolean(options.strict);
+        setSaveHealth('saving','Saving…');
+        primarySaveQueue = primarySaveQueue.catch(() => {}).then(async () => {
+          const latest=await readPrimaryEnvelope();
+          if (latest && latest.revision>currentRevision && latest.writerId!==writerId) throw new Error('STALE_REVISION');
+          const nextRevision = currentRevision + 1;
+          const envelope = await finaliseEnvelope(nextRevision);
+          await writePrimaryEnvelope(envelope,strict);
+          writeLocalStorageMirror(envelope);
+          currentRevision = nextRevision;
+          remoteUpdatePending=false;
+          announceCommittedRevision(envelope);
+          setSaveHealth('saved',`Saved · r${currentRevision}`);
+          return envelope;
+        }).catch(error => {
+          setSaveHealth('failed',error?.message==='STALE_REVISION'?'Newer data detected':'Save failed');
+          showStatus(error?.message==='STALE_REVISION'?'Five changed in another tab. Reloading latest data.':'Unable to verify primary storage save');
+          if (error?.message==='STALE_REVISION') setTimeout(()=>reloadLatestFromPrimary(),100);
+          throw error;
+        });
+        return primarySaveQueue;
+      }
+      function announceCommittedRevision(envelope) {
+        const message={writerId,revision:envelope.revision,checksum:envelope.checksum,savedAt:envelope.savedAt};
+        try { tabChannel?.postMessage(message); } catch {}
+        try { localStorage.setItem(TAB_SIGNAL_KEY,JSON.stringify({...message,signalAt:Date.now()})); } catch {}
+      }
+      async function reloadLatestFromPrimary() {
+        try {
+          const latest=await readPrimaryEnvelope(),integrity=await verifyEnvelopeIntegrity(latest);
+          if (!integrity.valid || latest.revision<=currentRevision) return;
+          const safe=normaliseValidatedPayload(latest);
+          tasks=safe.tasks;events=safe.events;currentRevision=latest.revision;writeLocalStorageMirror(latest);
+          editingId=null;editingEventId=null;editSnapshot=null;newDraftId=null;
+          render();renderEvents();updateEventButton();remoteUpdatePending=false;setSaveHealth('saved',`Updated · r${currentRevision}`);showStatus('Latest changes loaded from another tab');
+        } catch { setSaveHealth('failed','Integrity check failed');showStatus('Could not load data from another tab. Open Recovery.'); }
+      }
+      async function handleRemoteRevision(message) {
+        if (!message || message.writerId===writerId || !Number.isInteger(message.revision) || message.revision<=currentRevision) return;
+        remoteUpdatePending=true;
+        if (editingId || editingEventId) {
+          setSaveHealth('failed','Newer data in another tab');
+          showStatus('Another tab saved newer data. Finish or cancel editing, then reload.');
+          return;
+        }
+        await reloadLatestFromPrimary();
+      }
+      async function runIntegrityScan() {
+        try {
+          const primary=await readPrimaryEnvelope(),primaryIntegrity=await verifyEnvelopeIntegrity(primary);
+          let mirror=null,mirrorIntegrity={valid:false};
+          try { mirror=JSON.parse(localStorage.getItem(ENVELOPE_KEY)||'null'); mirrorIntegrity=await verifyEnvelopeIntegrity(mirror); } catch {}
+          if (primaryIntegrity.valid) {
+            if (!mirrorIntegrity.valid || mirror.revision!==primary.revision || mirror.checksum!==primary.checksum) writeLocalStorageMirror(primary);
+            setSaveHealth('saved',`Verified · r${primary.revision}`);
+            return true;
+          }
+          if (mirrorIntegrity.valid) {
+            const safe=normaliseValidatedPayload(mirror);tasks=safe.tasks;events=safe.events;currentRevision=mirror.revision;
+            await writePrimaryEnvelope(mirror,true);render();renderEvents();setSaveHealth('saved',`Recovered · r${currentRevision}`);showStatus('Primary data recovered from verified mirror');return true;
+          }
+          setSaveHealth('failed','Integrity check failed');showStatus('Primary and mirror checks failed. Open Recovery.');return false;
+        } catch { setSaveHealth('failed','Integrity scan failed');showStatus('Integrity scan failed. Open Recovery.');return false; }
+      }
+      function updateBackupReminder() {
+        const last = localStorage.getItem(LAST_BACKUP_KEY);
+        const ageDays = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : null;
+        const due = ageDays === null || !Number.isFinite(ageDays) || ageDays >= BACKUP_REMINDER_DAYS;
+        backupReminderButton.classList.toggle('visible', due);
+        backupReminderButton.textContent = ageDays === null || !Number.isFinite(ageDays) ? 'Backup recommended' : `Backup ${ageDays}d old`;
+        backupReminderButton.title = due ? 'Create a verified external backup now' : '';
+      }
+      async function createExternalBackup(label = 'Backup') {
+        const envelope = await finaliseEnvelope(currentRevision);
+        const validation = validateDataPayload(envelope);
+        if (!validation.valid) throw new Error(validation.issues.join('; '));
+        const data = { app:'Five', backupFormatVersion:2, exportedAt:new Date().toISOString(), sourceRevision:currentRevision, schemaVersion:ENVELOPE_SCHEMA_VERSION, checksum:envelope.checksum, tasks:envelope.tasks, events:envelope.events };
+        const text = JSON.stringify(data, null, 2);
+        JSON.parse(text);
+        const blob = new Blob([text], { type:'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const stamp = new Date().toISOString().replace(/[:T]/g,'-').slice(0,16);
+        link.download = `five-backup-${stamp}-r${currentRevision}.json`;
+        document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+        localStorage.setItem(LAST_BACKUP_KEY,new Date().toISOString());
+        updateBackupReminder();
+        showStatus(`${label} generated: ${tasks.length} tasks • ${events.length} events`);
+      }
       function openRecoveryDb() {
         if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB unavailable'));
         if (recoveryDbPromise) return recoveryDbPromise;
@@ -1012,12 +1329,19 @@
         const db=await openRecoveryDb();
         const payload=combinedPayload();
         payload.reason=reason;
+        payload.revision=currentRevision;
+        payload.taskCount=payload.tasks.length;
+        payload.eventCount=payload.events.length;
+        payload.activeCount=payload.tasks.filter(task=>!task.archived&&!task.waiting&&task.list==='active').length;
+        payload.waitingCount=payload.tasks.filter(task=>task.waiting&&!task.archived).length;
+        payload.archiveCount=payload.tasks.filter(task=>task.archived).length;
         payload.checksum=await payloadChecksum(payload);
+        const existing=await getRecoverySnapshots();
+        if (!force && existing[0]?.checksum===payload.checksum) return false;
         let transaction;
         try { transaction=db.transaction(RECOVERY_STORE,'readwrite',{durability:force?'strict':'default'}); }
         catch { transaction=db.transaction(RECOVERY_STORE,'readwrite'); }
-        const store=transaction.objectStore(RECOVERY_STORE);
-        store.add(payload);
+        transaction.objectStore(RECOVERY_STORE).add(payload);
         await transactionDone(transaction);
         lastSnapshotAt=now;
         const snapshots=await getRecoverySnapshots();
@@ -1043,6 +1367,52 @@
         const date=new Date(value);
         return Number.isNaN(date.getTime())?value:date.toLocaleString(undefined,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
       }
+      async function verifySnapshot(snapshot) {
+        if (!snapshot || !Array.isArray(snapshot.tasks) || !Array.isArray(snapshot.events) || !snapshot.checksum) return false;
+        return (await payloadChecksum(snapshot))===snapshot.checksum;
+      }
+      function downloadSnapshot(snapshot) {
+        const text=JSON.stringify({app:'Five',backupFormatVersion:1,exportedAt:new Date().toISOString(),source:'Recovery snapshot',snapshot},null,2);
+        JSON.parse(text);
+        const blob=new Blob([text],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+        link.href=url; link.download=`five-snapshot-${String(snapshot.savedAt).replace(/[:T]/g,'-').slice(0,16)}-r${snapshot.revision||0}.json`;
+        document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+        showStatus('Recovery snapshot exported');
+      }
+      async function deleteSnapshot(snapshot) {
+        if (!confirm(`Delete recovery snapshot from ${formatRecoveryDate(snapshot.savedAt)}?`)) return;
+        const db=await openRecoveryDb(),tx=db.transaction(RECOVERY_STORE,'readwrite');
+        tx.objectStore(RECOVERY_STORE).delete(snapshot.id); await transactionDone(tx); await renderRecovery(); showStatus('Snapshot deleted');
+      }
+      function previewSnapshot(snapshot,healthy) {
+        snapshotPreviewBody.replaceChildren();
+        const summary=document.createElement('section'); summary.className='snapshot-preview-section';
+        summary.innerHTML=`<strong>${formatRecoveryDate(snapshot.savedAt)}</strong><div class="snapshot-preview-line">Reason: ${snapshot.reason||'automatic'}</div><div class="snapshot-preview-line">Revision: ${snapshot.revision||0}</div><div class="snapshot-preview-line">Integrity: ${healthy?'Verified':'Failed'}</div>`;
+        const taskSection=document.createElement('section'); taskSection.className='snapshot-preview-section';
+        const taskHeading=document.createElement('strong'); taskHeading.textContent=`Tasks ${snapshot.tasks?.length||0}`; taskSection.appendChild(taskHeading);
+        (snapshot.tasks||[]).slice(0,20).forEach(task=>{const line=document.createElement('div');line.className='snapshot-preview-line';line.textContent=`• ${task.title||'Untitled task'}`;taskSection.appendChild(line);});
+        if((snapshot.tasks?.length||0)>20){const line=document.createElement('div');line.className='snapshot-preview-line';line.textContent=`…and ${snapshot.tasks.length-20} more`;taskSection.appendChild(line);}
+        const eventSection=document.createElement('section'); eventSection.className='snapshot-preview-section';
+        const eventHeading=document.createElement('strong'); eventHeading.textContent=`Events ${snapshot.events?.length||0}`; eventSection.appendChild(eventHeading);
+        (snapshot.events||[]).slice(0,20).forEach(event=>{const line=document.createElement('div');line.className='snapshot-preview-line';line.textContent=`• ${event.title||'Untitled event'} · ${event.startDate||''}`;eventSection.appendChild(line);});
+        snapshotPreviewBody.append(summary,taskSection,eventSection); snapshotPreviewDialog.showModal();
+      }
+      async function restoreSnapshot(snapshot) {
+        if (!(await verifySnapshot(snapshot))) { showStatus('Snapshot integrity check failed'); return; }
+        if (!confirm(`Restore snapshot from ${formatRecoveryDate(snapshot.savedAt)}?
+
+Current data will be preserved first.`)) return;
+        try {
+          await createRecoverySnapshot('before restore',true);
+          const safe=normaliseValidatedPayload(snapshot);
+          tasks=safe.tasks; events=safe.events;
+          await persistEnvelope({strict:true});
+          editingId=null; editingEventId=null; currentView='all';
+          render(); renderEvents(); updateEventButton();
+          await createRecoverySnapshot('after restore',true);
+          showStatus('Recovery snapshot restored'); await renderRecovery();
+        } catch { showStatus('Could not restore snapshot'); }
+      }
       async function renderRecovery() {
         recoveryList.replaceChildren();
         const snapshots=await getRecoverySnapshots();
@@ -1056,32 +1426,21 @@
         if (!snapshots.length) {
           const empty=document.createElement('div'); empty.className='recovery-empty'; empty.textContent='No automatic snapshots yet'; recoveryList.appendChild(empty); return;
         }
-        snapshots.forEach(snapshot=>{
+        for (const snapshot of snapshots) {
+          const healthy=await verifySnapshot(snapshot);
           const row=document.createElement('div'); row.className='recovery-item';
           const meta=document.createElement('div'); meta.className='recovery-meta';
           const time=document.createElement('div'); time.className='recovery-time'; time.textContent=formatRecoveryDate(snapshot.savedAt);
-          const counts=document.createElement('div'); counts.className='recovery-counts'; counts.textContent=`${snapshot.tasks?.length||0} tasks • ${snapshot.events?.length||0} events • ${snapshot.reason||'automatic'}`;
-          meta.append(time,counts);
-          const restore=makeButton('Restore','recovery-restore',async()=>{
-            if (!confirm(`Restore snapshot from ${formatRecoveryDate(snapshot.savedAt)}?
-
-Current data will be preserved first.`)) return;
-            try {
-              await createRecoverySnapshot('before restore',true);
-              const nextTasks=Array.isArray(snapshot.tasks)?snapshot.tasks.map(normaliseTask):[];
-              const nextEvents=normaliseEvents(snapshot.events);
-              tasks=nextTasks; events=nextEvents;
-              localStorage.setItem(STORAGE_KEY,JSON.stringify(tasks));
-              localStorage.setItem(EVENTS_KEY,JSON.stringify(events));
-              editingId=null; editingEventId=null; currentView='all';
-              render(); renderEvents(); updateEventButton();
-              await createRecoverySnapshot('after restore',true);
-              showStatus('Recovery snapshot restored');
-              await renderRecovery();
-            } catch { showStatus('Could not restore snapshot'); }
-          });
-          row.append(meta,restore); recoveryList.appendChild(row);
-        });
+          const counts=document.createElement('div'); counts.className='recovery-counts'; counts.textContent=`${snapshot.tasks?.length||0} tasks • ${snapshot.activeCount??0} active • ${snapshot.waitingCount??0} waiting • ${snapshot.events?.length||0} events • ${snapshot.reason||'automatic'}`;
+          const integrity=document.createElement('div'); integrity.className=`recovery-integrity${healthy?'':' invalid'}`; integrity.textContent=healthy?'Verified snapshot':'Integrity check failed';
+          meta.append(time,counts,integrity);
+          const actions=document.createElement('div'); actions.className='recovery-actions';
+          const preview=makeButton('Preview','recovery-preview',()=>previewSnapshot(snapshot,healthy));
+          const exportSnapshot=makeButton('Export','recovery-export',()=>downloadSnapshot(snapshot));
+          const restore=makeButton('Restore','recovery-restore',()=>restoreSnapshot(snapshot)); restore.disabled=!healthy;
+          const remove=makeButton('Delete','recovery-delete',()=>deleteSnapshot(snapshot));
+          actions.append(preview,exportSnapshot,restore,remove); row.append(meta,actions); recoveryList.appendChild(row);
+        }
       }
       async function initRecovery() {
         try {
@@ -1176,13 +1535,7 @@ Current data will be preserved first.`)) return;
         } catch { return []; }
       }
       function saveEvents(message = '') {
-        try {
-          const encoded=JSON.stringify(events);
-          localStorage.setItem(EVENTS_KEY, encoded);
-          if (localStorage.getItem(EVENTS_KEY) !== encoded) throw new Error('Event verification failed');
-          scheduleRecoverySnapshot(message || 'event update');
-        }
-        catch { showStatus('Unable to save events'); return; }
+        persistEnvelope().then(() => scheduleRecoverySnapshot(message || 'event update')).catch(() => {});
         if (message) showStatus(message);
         updateEventButton();
       }
@@ -1367,15 +1720,8 @@ Current data will be preserved first.`)) return;
         setEventMode('list');
       }
       function save(message = '') {
-        try {
-          const encoded=JSON.stringify(tasks);
-          localStorage.setItem(STORAGE_KEY, encoded);
-          if (localStorage.getItem(STORAGE_KEY) !== encoded) throw new Error('Task verification failed');
-          scheduleRecoverySnapshot(message || 'task update');
-          if (message) showStatus(message);
-        } catch {
-          showStatus('Unable to save in browser storage');
-        }
+        persistEnvelope().then(() => scheduleRecoverySnapshot(message || 'task update')).catch(() => {});
+        if (message) showStatus(message);
         updateHeader();
       }
 
@@ -2172,26 +2518,9 @@ Current data will be preserved first.`)) return;
         });
       });
 
-      exportButton.addEventListener('click', () => {
-        const data = {
-          app: 'Five',
-          version: 2.48,
-          exportedAt: new Date().toISOString(),
-          tasks,
-          events
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `five-backup-${new Date().toISOString().slice(0, 10)}.json`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
-        localStorage.setItem('five.lastExportAt',new Date().toISOString());
-        showStatus(`Backup exported: ${tasks.length} tasks • ${events.length} events`);
-      });
+      quickBackupButton.addEventListener('click', () => createExternalBackup('Quick Backup').catch(() => { setSaveHealth('failed','Backup failed'); showStatus('Could not create backup'); }));
+      exportButton.addEventListener('click', () => createExternalBackup('Backup').catch(() => { setSaveHealth('failed','Backup failed'); showStatus('Could not create backup'); }));
+      backupReminderButton.addEventListener('click', () => createExternalBackup('Quick Backup').catch(() => showStatus('Could not create backup')));
 
       importButton.addEventListener('click', () => importFile.click());
 
@@ -2225,8 +2554,7 @@ Current data will be preserved first.`)) return;
 
           tasks = nextTasks;
           events = nextEvents;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-          if (hasEventsInBackup) localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+          await persistEnvelope({strict:true});
           editingId = null;
           editSnapshot = null;
           newDraftId = null;
@@ -2320,9 +2648,16 @@ Current data will be preserved first.`)) return;
         catch { showStatus('Recovery storage unavailable'); }
       });
       document.getElementById('closeRecovery').addEventListener('click',()=>recoveryDialog.close());
+      document.getElementById('closeSnapshotPreview').addEventListener('click',()=>snapshotPreviewDialog.close());
       shortcutHelp?.addEventListener('click',()=>shortcutDialog.showModal());
       document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
+      tabChannel?.addEventListener('message',event=>handleRemoteRevision(event.data));
+      window.addEventListener('storage',event=>{if(event.key===TAB_SIGNAL_KEY&&event.newValue){try{handleRemoteRevision(JSON.parse(event.newValue));}catch{}}});
+      await initialisePrimaryStorage();
+      await runIntegrityScan();
       render();
+      updateBackupReminder();
+      if (startupValidationMessage) showStatus(startupValidationMessage);
       initRecovery();
       autoOpenEventsIfNeeded();
     })();
