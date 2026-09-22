@@ -335,7 +335,9 @@
     .project-filter-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .project-filter-header h2 { margin:0; font-size:16px; }
     .project-filter-list { display:grid; gap:5px; margin-top:9px; overflow:auto; }
-    .project-filter-option { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; min-height:38px; width:100%; text-align:left; }
+    .project-filter-option { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; gap:8px; min-height:38px; width:100%; text-align:left; }
+    .project-filter-option.all-option{grid-template-columns:minmax(0,1fr) auto;}
+    .project-order-handle{color:#9aa0a8;font-size:16px;cursor:grab;user-select:none;}
     .project-filter-option.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
     .project-filter-option span:last-child { color:var(--muted); font-size:10px; }
     .duration-field { display:grid; gap:3px; margin-bottom:6px; }
@@ -948,6 +950,7 @@
       let currentView = 'all';
       let selectedProjectFilter = '';
       let datedFilterActive = false;
+      let projectChipOrder=JSON.parse(localStorage.getItem('five.projectChipOrder')||'[]');
       let dragState = null;
       let actionDragState = null;
       let editSnapshot = null;
@@ -1617,11 +1620,7 @@ Current data will be preserved first.`)) return;
         const date=new Date(`${value}T00:00:00`);
         return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{day:'numeric',month:'short'});
       }
-      function allProjectCounts() {
-        const counts=new Map();
-        allTasks().forEach(task=>{const value=(task.requestor||'').trim();if(value) counts.set(value,(counts.get(value)||0)+1);});
-        return [...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
-      }
+      function allProjectCounts() { const counts=new Map(); allTasks().forEach(task=>{const value=(task.requestor||'').trim();if(value) counts.set(value,(counts.get(value)||0)+1);}); projectChipOrder=projectChipOrder.filter(x=>counts.has(x)); [...counts.keys()].forEach(x=>{if(!projectChipOrder.includes(x))projectChipOrder.push(x);}); localStorage.setItem('five.projectChipOrder',JSON.stringify(projectChipOrder)); return projectChipOrder.map(x=>[x,counts.get(x)]).filter(x=>x[1]); }
       function setProjectFilter(value) {
         selectedProjectFilter=value||'';
         datedFilterActive=false;
@@ -1637,7 +1636,8 @@ Current data will be preserved first.`)) return;
       }
       function renderProjectFilterDialog(projects=allProjectCounts()) {
         projectFilterList.replaceChildren();
-        [['All','',allTasks().length],...projects.map(([name,count])=>[name,name,count])].forEach(([label,value,count])=>{const button=document.createElement('button');button.type='button';button.className=`project-filter-option${selectedProjectFilter===value?' active':''}`;const name=document.createElement('span');name.textContent=label;const badge=document.createElement('span');badge.textContent=count;button.append(name,badge);button.addEventListener('click',()=>setProjectFilter(value));projectFilterList.appendChild(button);});
+        const allBtn=document.createElement('button');allBtn.type='button';allBtn.className=`project-filter-option all-option${!selectedProjectFilter?' active':''}`;const n1=document.createElement('span');n1.textContent='All';const b1=document.createElement('span');b1.textContent=allTasks().length;allBtn.append(n1,b1);allBtn.addEventListener('click',()=>setProjectFilter(''));projectFilterList.appendChild(allBtn);
+        projects.forEach(([label,count])=>{const button=document.createElement('button');button.type='button';button.className=`project-filter-option${selectedProjectFilter===label?' active':''}`;button.draggable=true;button.dataset.project=label;const drag=document.createElement('span');drag.className='project-order-handle';drag.textContent='≡';const name=document.createElement('span');name.textContent=label;const badge=document.createElement('span');badge.textContent=count;button.append(drag,name,badge);button.addEventListener('dragstart',()=>button.classList.add('dragging'));button.addEventListener('dragend',()=>button.classList.remove('dragging'));button.addEventListener('dragover',e=>e.preventDefault());button.addEventListener('drop',e=>{e.preventDefault();const src=projectFilterList.querySelector('.dragging');if(!src||src===button)return;const a=src.dataset.project,b=button.dataset.project;projectChipOrder=projectChipOrder.filter(x=>x!==a);projectChipOrder.splice(projectChipOrder.indexOf(b),0,a);localStorage.setItem('five.projectChipOrder',JSON.stringify(projectChipOrder));renderProjectFilterDialog();renderProjectFilter();});button.addEventListener('click',e=>{if(e.target.classList.contains('project-order-handle'))return;setProjectFilter(label);});projectFilterList.appendChild(button);});
       }
       function renderProjectFilter() {
         projectFilterBar.replaceChildren();const projects=allProjectCounts();const visible=currentView==='all'&&!editingId&&projects.length>0;projectFilterBar.classList.toggle('visible',visible);if(!visible)return;
