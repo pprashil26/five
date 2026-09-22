@@ -721,9 +721,11 @@
     .backup-sheet-copy span { display:block; margin-top:1px; color:var(--muted); font-size:10px; font-weight:500; }
     .backup-sheet-meta { margin-top:9px; padding-top:8px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; text-align:center; }
     #backupMenuButton { display:none; }
-    @media (max-width:470px) {
-      #quickBackup,#exportData,#importData { display:none; }
-      #backupMenuButton { display:inline-flex; align-items:center; }
+    @media (max-width:600px), (hover:none) and (pointer:coarse) {
+      #quickBackup,#exportData,#importData { display:none !important; }
+      #backupMenuButton { display:inline-flex !important; align-items:center; }
+      .footer-actions { gap:2px; }
+      .footer button { padding-inline:7px; }
     }
 
 #eventTitle, .event-add { grid-column:1; }
