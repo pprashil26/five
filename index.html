@@ -209,18 +209,18 @@
     }
 
     .task-view {
-      display: grid;
-      grid-template-columns: 24px minmax(0, 1fr);
-      gap: 6px;
-      padding: 10px 10px 10px 6px;
+      display:grid;
+      grid-template-columns:22px minmax(0,1fr);
+      gap:5px;
+      padding:7px 8px 7px 4px;
     }
 
     .task-content { min-width: 0; }
 
     .drag-handle {
       align-self: stretch;
-      min-width: 24px;
-      min-height: 42px;
+      min-width: 22px;
+      min-height: 36px;
       border: 0;
       border-radius: 6px;
       background: transparent;
@@ -303,17 +303,10 @@
       letter-spacing: -0.15px;
     }
 
-    .edit-button {
-      min-height: 28px;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      padding: 2px 4px;
-      font-size: 12px;
-    }
+    .edit-button{width:26px;min-width:26px;min-height:26px;border:0;border-radius:6px;background:transparent;color:var(--muted);padding:0;font-size:14px;font-weight:600;}
 
     .description {
-      margin: 6px 0 0;
+      margin: 4px 0 0;
       overflow-wrap: anywhere;
       color: #4f5863;
       font-size: 14px;
@@ -342,6 +335,25 @@
     .project-filter-option.project-drop-before { box-shadow:inset 0 3px 0 var(--accent); }
     .project-filter-option.project-drop-after { box-shadow:inset 0 -3px 0 var(--accent); }
     .project-order-hint { margin-top:7px; color:var(--muted); font-size:10px; text-align:center; }
+    .context-manage-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);}
+    .context-name-input{min-width:0;min-height:36px;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#fff;color:var(--text);font:inherit;text-transform:uppercase;}
+    .add-context-button{min-height:36px;border-color:#d9e3fa;background:var(--accent-soft);color:var(--accent);}
+    .context-row-tools{display:flex;align-items:center;gap:3px;}
+    .context-rename{min-width:42px;min-height:28px;border:0;background:transparent;color:var(--muted);padding:2px;font-size:10px;}
+    .context-rename-input{width:100%;min-width:0;min-height:32px;border:1px solid #9bb2e8;border-radius:6px;padding:4px 6px;background:#fff;color:var(--text);font:inherit;font-weight:680;text-transform:uppercase;}
+    .context-field{display:grid;gap:3px;margin-bottom:6px;}
+    .context-field label{color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.35px;}
+    .context-select{width:100%;min-height:36px;border:1px solid var(--line);border-radius:7px;padding:5px 30px 5px 8px;background:#fff;color:var(--text);font:inherit;font-weight:680;}
+    .task-heading-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px;min-width:0;}
+    .task-heading-main{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:5px;row-gap:1px;min-width:0;}
+    .task-context-badge{flex:0 0 auto;border-radius:5px;background:var(--accent-soft);color:var(--accent);padding:1px 5px;font-size:9px;font-weight:820;line-height:1.5;white-space:nowrap;}
+    .task-heading-title{min-width:0;overflow-wrap:anywhere;font-size:15px;font-weight:760;line-height:1.28;letter-spacing:-.1px;}
+    .task-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:1px;}
+    body.compact-card-mode .task-view{padding-top:6px;padding-bottom:6px;}
+    body.compact-card-mode .description{display:none;}
+    body.compact-card-mode .task-context-badge{font-size:8.5px;}
+    body.compact-card-mode .task-heading-title{font-size:14px;}
+    body.compact-card-mode .task-metadata-row{margin-top:4px;}
     .project-picker-chip { border-color:#cbd8f4; color:var(--accent); font-size:13px; font-weight:850; }
     .project-filter-option.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
     .project-filter-option span:last-child { color:var(--muted); font-size:10px; }
@@ -847,7 +859,7 @@
     </header>
 
     <div class="active-time-summary" id="activeTimeSummary" aria-live="polite"></div>
-    <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter All tasks by Requestor or Project"></div>
+    <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter All tasks by context"></div>
     <section class="tasks" id="tasks" aria-live="polite"></section>
 
     <footer class="footer">
@@ -868,9 +880,10 @@
     </footer>
     <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
     <dialog id="projectFilterDialog" class="project-filter-dialog" aria-labelledby="projectFilterTitle">
-      <div class="project-filter-header"><h2 id="projectFilterTitle">Requestor / Project</h2><button type="button" class="dialog-close" id="closeProjectFilter" aria-label="Close project filter">✕</button></div>
+      <div class="project-filter-header"><h2 id="projectFilterTitle">Manage Contexts</h2><button type="button" class="dialog-close" id="closeProjectFilter" aria-label="Close project filter">✕</button></div>
       <div class="project-filter-list" id="projectFilterList"></div>
-      <div class="project-order-hint">Hold and drag projects to set the chip order.</div>
+      <div class="context-manage-actions"><input id="newContextName" class="context-name-input" type="text" maxlength="30" placeholder="@NEW CONTEXT" aria-label="New context name"><button type="button" id="addContextButton" class="add-context-button">Add</button></div>
+      <div class="project-order-hint">Hold and drag to reorder. Rename safely updates matching tasks.</div>
     </dialog>
     <dialog id="backupSheet" class="backup-sheet" aria-labelledby="backupSheetTitle">
       <div class="backup-sheet-handle" aria-hidden="true"></div>
@@ -914,6 +927,9 @@
       const RECOVERY_STORE = 'snapshots';
       const MAX_SNAPSHOTS = 20;
       const ROUTINE_SNAPSHOT_MS = 30000;
+      const DEFAULT_CONTEXTS=['@COMPUTER','@CALL','@ONLINE','@ERRANDS','@HOME','@AGENDA'];
+      const CONTEXTS_KEY='five.contexts';
+      const CONTEXT_ORDER_KEY='five.contextChipOrder';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const countElement = document.getElementById('taskCount');
@@ -928,6 +944,8 @@
       const projectFilterBar=document.getElementById('projectFilterBar');
       const projectFilterDialog=document.getElementById('projectFilterDialog');
       const projectFilterList=document.getElementById('projectFilterList');
+      const newContextName=document.getElementById('newContextName');
+      const addContextButton=document.getElementById('addContextButton');
       const addTaskButton = document.getElementById('addTask');
       const applyMobileFooterMode = () => document.documentElement.classList.toggle('mobile-footer', matchMedia('(max-width: 700px)').matches || matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
       window.addEventListener('resize',applyMobileFooterMode,{passive:true});
@@ -956,8 +974,12 @@
       let currentView = 'all';
       let selectedProjectFilter = '';
       let datedFilterActive = false;
+      let contexts=[...DEFAULT_CONTEXTS];
+      try{const saved=JSON.parse(localStorage.getItem(CONTEXTS_KEY)||'[]');if(Array.isArray(saved)&&saved.length)contexts=saved.filter(value=>typeof value==='string'&&value.startsWith('@'));}catch{}
+      DEFAULT_CONTEXTS.forEach(value=>{if(!contexts.includes(value))contexts.push(value);});
       let projectChipOrder=[];
-      try { const savedProjectOrder=JSON.parse(localStorage.getItem('five.projectChipOrder')||'[]'); if(Array.isArray(savedProjectOrder)) projectChipOrder=savedProjectOrder.filter(value=>typeof value==='string'); } catch {}
+      try{const saved=JSON.parse(localStorage.getItem(CONTEXT_ORDER_KEY)||'[]');if(Array.isArray(saved))projectChipOrder=saved.filter(value=>contexts.includes(value));}catch{}
+      contexts.forEach(value=>{if(!projectChipOrder.includes(value))projectChipOrder.push(value);});
       let projectOrderDragState=null;
       let dragState = null;
       let actionDragState = null;
@@ -1628,18 +1650,12 @@ Current data will be preserved first.`)) return;
         const date=new Date(`${value}T00:00:00`);
         return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{day:'numeric',month:'short'});
       }
-      function saveProjectChipOrder() {
-        try { localStorage.setItem('five.projectChipOrder',JSON.stringify(projectChipOrder)); } catch {}
-      }
-      function allProjectCounts() {
-        const counts=new Map();
-        allTasks().forEach(task=>{const value=(task.requestor||'').trim();if(value) counts.set(value,(counts.get(value)||0)+1);});
-        const incoming=[...counts.keys()].sort((a,b)=>a.localeCompare(b));
-        projectChipOrder=projectChipOrder.filter(name=>counts.has(name));
-        incoming.forEach(name=>{if(!projectChipOrder.includes(name)) projectChipOrder.push(name);});
-        saveProjectChipOrder();
-        return projectChipOrder.map(name=>[name,counts.get(name)]);
-      }
+      function normaliseContextName(value){let name=String(value||'').trim().toUpperCase().replace(/\s+/g,' ');if(!name)return '';if(!name.startsWith('@'))name=`@${name}`;return name.slice(0,30);}
+      function saveContexts(){try{localStorage.setItem(CONTEXTS_KEY,JSON.stringify(contexts));}catch{}}
+      function saveProjectChipOrder(){try{localStorage.setItem(CONTEXT_ORDER_KEY,JSON.stringify(projectChipOrder));}catch{}}
+      function addContext(){const name=normaliseContextName(newContextName.value);if(!name){showStatus('Enter a context name');newContextName.focus();return;}if(contexts.includes(name)){showStatus('Context already exists');newContextName.focus();return;}contexts.push(name);projectChipOrder.push(name);saveContexts();saveProjectChipOrder();newContextName.value='';renderProjectFilterDialog();renderProjectFilter();showStatus('Context added');}
+      async function renameContext(oldName,row){const label=row.querySelector('[data-context-label]');const input=document.createElement('input');input.type='text';input.className='context-rename-input';input.value=oldName;input.maxLength=30;label.replaceWith(input);input.focus();input.select();let committed=false;const commit=async()=>{if(committed)return;committed=true;const name=normaliseContextName(input.value);if(!name||name===oldName){renderProjectFilterDialog();return;}if(contexts.includes(name)){showStatus('Context already exists');renderProjectFilterDialog();return;}const affected=tasks.filter(task=>task.requestor===oldName).length;if(affected&&!confirm(`Rename ${oldName} to ${name}? ${affected} task${affected===1?'':'s'} will be updated.`)){renderProjectFilterDialog();return;}contexts=contexts.map(value=>value===oldName?name:value);projectChipOrder=projectChipOrder.map(value=>value===oldName?name:value);tasks.forEach(task=>{if(task.requestor===oldName)task.requestor=name;});if(selectedProjectFilter===oldName)selectedProjectFilter=name;saveContexts();saveProjectChipOrder();if(affected)await persistEnvelope({strict:true});render();renderProjectFilterDialog();showStatus('Context renamed safely');};input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();commit();}else if(event.key==='Escape'){committed=true;renderProjectFilterDialog();}});input.addEventListener('blur',commit,{once:true});}
+      function allProjectCounts(){const counts=new Map(contexts.map(value=>[value,0]));allTasks().forEach(task=>{const value=(task.requestor||'').trim();if(counts.has(value))counts.set(value,counts.get(value)+1);});projectChipOrder=projectChipOrder.filter(value=>contexts.includes(value));contexts.forEach(value=>{if(!projectChipOrder.includes(value))projectChipOrder.push(value);});saveContexts();saveProjectChipOrder();return projectChipOrder.map(name=>[name,counts.get(name)||0]);}
       function clearProjectOrderMarkers() {
         projectFilterList.querySelectorAll('.project-drop-before,.project-drop-after').forEach(row=>row.classList.remove('project-drop-before','project-drop-after'));
       }
@@ -1666,7 +1682,7 @@ Current data will be preserved first.`)) return;
         if(!targetName||targetName===name)return;
         projectChipOrder=projectChipOrder.filter(item=>item!==name);
         let index=projectChipOrder.indexOf(targetName); if(index<0)index=projectChipOrder.length; if(after)index+=1;
-        projectChipOrder.splice(index,0,name); saveProjectChipOrder(); renderProjectFilterDialog(); renderProjectFilter(); showStatus('Project chip order saved');
+        projectChipOrder.splice(index,0,name); saveProjectChipOrder(); renderProjectFilterDialog(); renderProjectFilter(); showStatus('Context order saved');
       }
       function cancelProjectOrder(event){if(projectOrderDragState&&event.pointerId===projectOrderDragState.pointerId)cleanupProjectOrder();}
       function cleanupProjectOrder(){if(!projectOrderDragState)return;projectOrderDragState.row.classList.remove('project-dragging');projectOrderDragState.handle.releasePointerCapture?.(projectOrderDragState.pointerId);clearProjectOrderMarkers();document.body.classList.remove('reordering');document.removeEventListener('pointermove',moveProjectOrder);document.removeEventListener('pointerup',finishProjectOrder);document.removeEventListener('pointercancel',cancelProjectOrder);projectOrderDragState=null;}
@@ -1687,9 +1703,10 @@ Current data will be preserved first.`)) return;
         projectFilterList.replaceChildren();
         projects.forEach(([name,count])=>{
           const button=document.createElement('button');button.type='button';button.className=`project-filter-option${selectedProjectFilter===name?' active':''}`;button.dataset.projectName=name;
-          const handle=document.createElement('span');handle.className='project-order-handle';handle.textContent='≡';handle.setAttribute('aria-label',`Reorder ${name}`);handle.title='Hold and drag to reorder';handle.addEventListener('pointerdown',event=>startProjectOrder(event,name));
-          const label=document.createElement('span');label.textContent=name;const badge=document.createElement('span');badge.textContent=count;
-          button.append(handle,label,badge);button.addEventListener('click',event=>{if(event.target.closest('.project-order-handle'))return;setProjectFilter(name);});projectFilterList.appendChild(button);
+          const handle=document.createElement('span');handle.className='project-order-handle';handle.textContent='≡';handle.setAttribute('aria-label',`Reorder context ${name}`);handle.title='Hold and drag to reorder';handle.addEventListener('pointerdown',event=>startProjectOrder(event,name));
+          const label=document.createElement('span');label.textContent=name;label.dataset.contextLabel='1';
+          const tools=document.createElement('span');tools.className='context-row-tools';const badge=document.createElement('span');badge.textContent=count;const rename=document.createElement('button');rename.type='button';rename.className='context-rename';rename.textContent='Rename';rename.setAttribute('aria-label',`Rename ${name}`);rename.addEventListener('click',event=>{event.stopPropagation();renameContext(name,button);});tools.append(badge,rename);
+          button.append(handle,label,tools);button.addEventListener('click',event=>{if(event.target.closest('.project-order-handle,.context-rename,.context-rename-input'))return;setProjectFilter(name);});projectFilterList.appendChild(button);
         });
       }
       function renderProjectFilter() {
@@ -1702,9 +1719,10 @@ Current data will be preserved first.`)) return;
         const datedCount=allTasks().filter(task=>task.taskDate).length;
         if(datedCount){const dated=document.createElement('button');dated.type='button';dated.className=`project-chip dated-chip${datedFilterActive?' active':''}`;dated.setAttribute('aria-pressed',String(datedFilterActive));const text=document.createElement('span');text.textContent='Dated';const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=datedCount;dated.append(text,badge);dated.addEventListener('click',()=>{datedFilterActive=!datedFilterActive;if(datedFilterActive)selectedProjectFilter='';render();});projectFilterBar.appendChild(dated);}
         projects.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
-        const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent='+';picker.setAttribute('aria-label','Open project picker and reorder projects');picker.title='Projects and chip order';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
+        const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent='+';picker.setAttribute('aria-label','Open context manager');picker.title='Manage contexts';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
       }
       function updateHeader() {
+        document.body.classList.toggle('compact-card-mode',!showTaskDetails);
         const allCount = allTasks().length;
         if(selectedProjectFilter&&!allProjectCounts().some(([name])=>name===selectedProjectFilter))selectedProjectFilter="";
         const activeCount = activeTasks().length;
@@ -1818,31 +1836,7 @@ Current data will be preserved first.`)) return;
         const content = document.createElement('div');
         content.className = 'task-content';
 
-        const requestorRow = document.createElement('div');
-        requestorRow.className = 'requestor-row';
-        const requestor = document.createElement('div');
-        requestor.className = 'requestor';
-        requestor.textContent = task.requestor.trim() || `TASK ${index + 1}`;
-        const pin = makeButton('📌', `pin-task${task.pinned ? ' pinned' : ''}`, () => toggleTaskPin(task.id));
-        pin.setAttribute('aria-label', task.pinned ? 'Unpin task' : 'Pin task');
-        pin.title = task.pinned ? 'Unpin task' : 'Pin task';
-        requestorRow.append(requestor, pin);
-        const titleRow = document.createElement('div');
-        titleRow.className = 'title-row';
-
-        const title = document.createElement('div');
-        title.className = 'task-title';
-        title.textContent = task.title.trim() || 'Untitled task';
-
-        const openEditor = () => beginEditing(task);
-        const edit = makeButton('Edit', 'edit-button', openEditor);
-        view.addEventListener('click', event => {
-          if (event.target.closest('input, button, .drag-handle')) return;
-          openEditor();
-        });
-
-        titleRow.append(title, edit);
-        content.append(requestorRow, titleRow);
+        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const contextBadge=document.createElement('span');contextBadge.className='task-context-badge';contextBadge.textContent=task.requestor.trim()||'@CONTEXT';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(contextBadge,title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
         if (currentView === 'active' && task.durationMinutes) {
           const duration = document.createElement('div');
           duration.className = 'task-duration';
@@ -1871,13 +1865,7 @@ Current data will be preserved first.`)) return;
           }
         } else if (taskDateLabel) {
           const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata);
-        } else if (showTaskDetails) {
-          const noActions = document.createElement('div');
-          noActions.className = 'no-actions';
-          noActions.textContent = 'No next actions';
-          content.appendChild(noActions);
         }
-
         view.append(handle, content);
         return view;
       }
@@ -2234,12 +2222,7 @@ Current data will be preserved first.`)) return;
         const editor = document.createElement('div');
         editor.className = 'task-editor';
 
-        const requestorField = document.createElement('div');
-        requestorField.className = 'field';
-        requestorField.appendChild(makeInput(task.requestor, 'Requestor / Project', 200, value => {
-          task.requestor = value.toUpperCase();
-          save();
-        }));
+        const requestorField=document.createElement('div');requestorField.className='context-field';const contextLabel=document.createElement('label');contextLabel.textContent='Context';const contextSelect=document.createElement('select');contextSelect.className='context-select';contextSelect.setAttribute('aria-label','Context');const empty=document.createElement('option');empty.value='';empty.textContent='Choose context';contextSelect.appendChild(empty);contexts.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;option.selected=task.requestor===value;contextSelect.appendChild(option);});if(task.requestor&&!contexts.includes(task.requestor)){const legacy=document.createElement('option');legacy.value=task.requestor;legacy.textContent=`Current: ${task.requestor}`;legacy.selected=true;contextSelect.appendChild(legacy);}contextSelect.addEventListener('change',()=>{task.requestor=contextSelect.value;save('Context saved');});requestorField.append(contextLabel,contextSelect);
 
         const titleField = document.createElement('div');
         titleField.className = 'field title-field';
@@ -2487,6 +2470,7 @@ Current data will be preserved first.`)) return;
         event.preventDefault();
         addTaskButton.click();
       });
+      addContextButton.addEventListener('click',addContext);newContextName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addContext();}});
       document.getElementById('closeProjectFilter').addEventListener('click',()=>projectFilterDialog.close());
       projectFilterDialog.addEventListener('cancel',event=>{event.preventDefault();projectFilterDialog.close();});
       toggleActionsButton.addEventListener('click', () => {
