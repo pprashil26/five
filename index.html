@@ -361,15 +361,12 @@
     body.compact-card-mode .task-heading-title{font-size:14px;}
     body.compact-card-mode .task-metadata-row{margin-top:4px;}
     .project-picker-chip { border-color:#cbd8f4; color:var(--accent); font-size:13px; font-weight:850; }
-    .capture-shortcuts { display:none; flex:0 0 auto; align-items:center; gap:4px; min-height:28px; margin:-1px 0 6px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
-    .capture-shortcuts.visible { display:none; }
-    .capture-context-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:4px 0 6px;}
-    .capture-context-choice{min-height:28px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);padding:2px 6px;font-size:10px;font-weight:760;}
-    .capture-context-choice.active{border-color:#cbd8f4;background:var(--accent-soft);color:var(--accent);}
-    .capture-shortcuts::-webkit-scrollbar { display:none; }
-    .capture-shortcut { flex:0 0 auto; min-height:24px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:2px 7px; font-size:9.5px; font-weight:760; letter-spacing:.1px; white-space:nowrap; }
-    .capture-shortcut:hover { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
-    .inbox-review-button { border-color:#d9e3fa; color:var(--accent); }
+    .capture-context-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin:1px 0 6px; }
+    .capture-context-choice { min-width:0; min-height:30px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:3px 6px; font-size:9.5px; font-weight:760; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .capture-context-choice.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
+    .capture-other-context { margin-bottom:0; }
+    .capture-other-context label { display:block; margin-bottom:3px; }
+    .inbox-review-chip { border-color:#d9e3fa; color:var(--accent); }
     .inbox-review-tools { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px; margin-top:7px; padding-top:7px; border-top:1px solid var(--line); }
     .inbox-review-next { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
     .inbox-review-done { background:#f3f4f6; color:var(--muted); }
@@ -885,7 +882,6 @@
 
     <div class="active-time-summary" id="activeTimeSummary" aria-live="polite"></div>
     <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter All tasks by context"></div>
-    <div class="capture-shortcuts" id="captureShortcuts" aria-label="Quick capture by context"></div>
     <section class="tasks" id="tasks" aria-live="polite"></section>
 
     <footer class="footer">
@@ -971,7 +967,6 @@
       const projectFilterBar=document.getElementById('projectFilterBar');
       const projectFilterDialog=document.getElementById('projectFilterDialog');
       const projectFilterList=document.getElementById('projectFilterList');
-      const captureShortcuts=document.getElementById('captureShortcuts');
       const newContextName=document.getElementById('newContextName');
       const addContextButton=document.getElementById('addContextButton');
       const addTaskButton = document.getElementById('addTask');
@@ -1564,11 +1559,6 @@ Current data will be preserved first.`)) return;
           card?.querySelector('input')?.focus();
         });
       }
-      function startContextCapture(context) {
-        if(editingId)return;
-        currentView='all';systemFilter='';selectedProjectFilter='';
-        const task=newTask();task.requestor=context;tasks.push(task);save();beginEditing(task,true);
-      }
       function currentInboxQueue(){return inboxTasks();}
       function startInboxReview(){
         if(editingId)return;
@@ -1582,14 +1572,6 @@ Current data will be preserved first.`)) return;
         editingId=queue[0].id;editSnapshot=cloneTask(queue[0]);newDraftId=null;render();
       }
       function finishInboxReview(){inboxReviewMode=false;editingId=null;editSnapshot=null;newDraftId=null;systemFilter='inbox';render();showStatus('Inbox review paused');}
-      function renderCaptureShortcuts(){
-        captureShortcuts.replaceChildren();
-        const visible=currentView==='all'&&!editingId;
-        captureShortcuts.classList.toggle('visible',visible);
-        if(!visible)return;
-        projectChipOrder.filter(value=>contexts.includes(value)).slice(0,6).forEach(context=>{const button=document.createElement('button');button.type='button';button.className='capture-shortcut';button.textContent=context.replace(/^@/,'');button.title=`Capture in ${context}`;button.setAttribute('aria-label',`Quick capture in ${context}`);button.addEventListener('click',()=>startContextCapture(context));captureShortcuts.appendChild(button);});
-        const review=document.createElement('button');review.type='button';review.className='capture-shortcut inbox-review-button';review.textContent=`Review Inbox${inboxTasks().length?` ${inboxTasks().length}`:''}`;review.disabled=!inboxTasks().length;review.addEventListener('click',startInboxReview);captureShortcuts.appendChild(review);
-      }
       function cancelEditing() {
         if (!editingId) return;
         if(inboxReviewMode){finishInboxReview();return;}
@@ -1777,6 +1759,7 @@ Current data will be preserved first.`)) return;
         if(!visible)return;
         const allChip=createProjectChip('All','',allTasks().length);if(systemFilter)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
         projectFilterBar.appendChild(createSystemChip('Inbox','inbox',inboxTasks().length,'inbox-chip'));
+        if(inboxTasks().length){const review=document.createElement('button');review.type='button';review.className='project-chip inbox-review-chip';review.textContent='Review';review.setAttribute('aria-label',`Review ${inboxTasks().length} Inbox task${inboxTasks().length===1?'':'s'}`);review.addEventListener('click',startInboxReview);projectFilterBar.appendChild(review);}
         projectFilterBar.appendChild(createSystemChip('Today','today',todayTasks().length,'today-chip'));
         projectFilterBar.appendChild(createSystemChip('Dated','dated',allTasks().filter(task=>task.taskDate).length,'dated-chip'));
         projects.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
@@ -1812,7 +1795,6 @@ Current data will be preserved first.`)) return;
         activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
         activeTimeSummary.classList.toggle('visible',currentView==='active'&&plannedMinutes>0);
         renderProjectFilter();
-        renderCaptureShortcuts();
       }
 
       function makeButton(text, className, handler) {
@@ -2292,17 +2274,31 @@ Current data will be preserved first.`)) return;
       function createQuickCaptureEditor(task) {
         const editor=document.createElement('div');editor.className='task-editor quick-capture';
         const note=document.createElement('p');note.className='quick-capture-note';note.textContent='Quick capture';
-        const contextField=document.createElement('div');contextField.className='context-field';const contextLabel=document.createElement('label');contextLabel.textContent='Context';const contextSelect=document.createElement('select');contextSelect.className='context-select';contextSelect.setAttribute('aria-label','Context');
-        const empty=document.createElement('option');empty.value='';empty.textContent='Choose context';contextSelect.appendChild(empty);contexts.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;contextSelect.appendChild(option);});
-        const rememberedContext=localStorage.getItem(LAST_CAPTURE_CONTEXT_KEY)||'';const initialContext=contexts.includes(task.requestor)?task.requestor:(contexts.includes(rememberedContext)?rememberedContext:'');contextSelect.value=initialContext;task.requestor=initialContext;contextSelect.addEventListener('change',()=>{task.requestor=contextSelect.value;updateButtons();});const buttonGrid=document.createElement('div');buttonGrid.className='capture-context-grid';const quickContexts=['@CALL','@COMPUTER','@ONLINE','@ERRANDS','@HOME','@AGENDA'];const buttons=[];const updateButtons=()=>buttons.forEach(b=>b.classList.toggle('active',b.dataset.context===task.requestor));quickContexts.forEach(ctx=>{const b=document.createElement('button');b.type='button';b.className='capture-context-choice';b.dataset.context=ctx;b.textContent=ctx.replace('@','');b.addEventListener('click',()=>{task.requestor=ctx;contextSelect.value=ctx;updateButtons();});buttons.append?None:None;buttons.append if False else None;buttons.append if False else None;buttons.append if False else None});quickContexts.forEach(ctx=>{});buttonGrid.replaceChildren(...quickContexts.map(ctx=>{const b=document.createElement('button');b.type='button';b.className='capture-context-choice';b.dataset.context=ctx;b.textContent=ctx.replace('@','');b.addEventListener('click',()=>{task.requestor=ctx;contextSelect.value=ctx;updateButtons();});buttons.push(b);return b;}));updateButtons();contextField.append(contextLabel,buttonGrid,contextSelect);
+        const contextField=document.createElement('div');contextField.className='context-field';
+        const contextLabel=document.createElement('label');contextLabel.textContent='Context';
+        const rememberedContext=localStorage.getItem(LAST_CAPTURE_CONTEXT_KEY)||'';
+        const initialContext=contexts.includes(task.requestor)?task.requestor:(contexts.includes(rememberedContext)?rememberedContext:'');
+        task.requestor=initialContext;
+        const quickContexts=projectChipOrder.filter(value=>contexts.includes(value)).slice(0,6);
+        const contextGrid=document.createElement('div');contextGrid.className='capture-context-grid';
+        const contextButtons=[];
+        const contextSelect=document.createElement('select');contextSelect.className='context-select';contextSelect.setAttribute('aria-label','Other context');
+        const empty=document.createElement('option');empty.value='';empty.textContent='Other context';contextSelect.appendChild(empty);
+        contexts.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;contextSelect.appendChild(option);});
+        const syncContextUi=()=>{contextSelect.value=task.requestor||'';contextButtons.forEach(button=>button.classList.toggle('active',button.dataset.context===task.requestor));};
+        quickContexts.forEach(context=>{const button=document.createElement('button');button.type='button';button.className='capture-context-choice';button.dataset.context=context;button.textContent=context.replace(/^@/,'');button.title=context;button.setAttribute('aria-pressed',String(context===task.requestor));button.addEventListener('click',()=>{task.requestor=context;contextButtons.forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.context===context)));syncContextUi();titleInput.focus();});contextButtons.push(button);contextGrid.appendChild(button);});
+        contextSelect.addEventListener('change',()=>{task.requestor=contextSelect.value;contextButtons.forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.context===task.requestor)));syncContextUi();titleInput.focus();});
+        const otherWrap=document.createElement('div');otherWrap.className='context-field capture-other-context';const otherLabel=document.createElement('label');otherLabel.textContent='Other context';otherWrap.append(otherLabel,contextSelect);
         const titleField=document.createElement('div');titleField.className='field title-field';const titleInput=makeInput(task.title,'Task title',300,value=>{task.title=value.toUpperCase();});titleInput.setAttribute('enterkeyhint','done');titleField.appendChild(titleInput);
+        syncContextUi();
         const dateField=document.createElement('div');dateField.className='task-date-field';const dateLabel=document.createElement('label');dateLabel.textContent='Task date · optional';const dateInput=document.createElement('input');dateInput.type='date';dateInput.className='task-date-input';dateInput.value=task.taskDate||'';dateInput.addEventListener('change',()=>{task.taskDate=dateInput.value;});dateField.append(dateLabel,dateInput);
-        const validateCapture=()=>{if(!contexts.includes(task.requestor)){showStatus('Choose a context');contextSelect.focus();return false;}if(!task.title.trim()){showStatus('Add a task title');titleInput.focus();return false;}return true;};
+        const validateCapture=()=>{if(!contexts.includes(task.requestor)){showStatus('Choose a context');(quickContexts.length?contextButtons[0]:contextSelect).focus();return false;}if(!task.title.trim()){showStatus('Add a task title');titleInput.focus();return false;}return true;};
         const prepareCapturedTask=()=>{task.actions=[{id:createId(),text:task.title.trim(),done:false}];localStorage.setItem(LAST_CAPTURE_CONTEXT_KEY,task.requestor);};
         const saveAndClose=()=>{if(!validateCapture())return;prepareCapturedTask();finishEditing();save('Captured');render();};
         const saveAndNext=async()=>{if(!validateCapture())return;prepareCapturedTask();await persistEnvelope({strict:true});scheduleRecoverySnapshot('Captured');showStatus('Captured · ready for next');const next=newTask();next.requestor=task.requestor;tasks.push(next);editingId=next.id;editSnapshot=null;newDraftId=next.id;render();requestAnimationFrame(()=>{const card=tasksHost.querySelector(`[data-task-id="${CSS.escape(next.id)}"]`);card?.querySelector('.title-field input')?.focus();});};
         const actions=document.createElement('div');actions.className='quick-capture-actions';const nextButton=makeButton('Save + Next','quick-capture-next',saveAndNext);const doneButton=makeButton('Done','quick-capture-save',saveAndClose);const cancelButton=makeButton('Cancel','quick-capture-cancel',cancelEditing);actions.append(nextButton,doneButton,cancelButton);
         titleInput.addEventListener('keydown',event=>{if(event.key!=='Enter'||event.isComposing)return;event.preventDefault();if(event.ctrlKey||event.metaKey)saveAndNext();else saveAndClose();});
+        contextField.append(contextLabel,contextGrid,otherWrap);
         editor.append(note,contextField,titleField,dateField,actions);return editor;
       }
       function createEditor(task) {
