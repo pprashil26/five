@@ -849,6 +849,18 @@
     .snapshot-preview-section strong { display:block; margin-bottom:4px; font-size:11px; }
     .snapshot-preview-line { font-size:11px; overflow-wrap:anywhere; }
     .snapshot-preview-line + .snapshot-preview-line { margin-top:3px; }
+    .help-dialog { width:min(92vw,460px); max-height:82dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
+    .help-dialog::backdrop { background:rgba(29,35,42,.28); }
+    .help-header { display:flex; align-items:center; justify-content:space-between; gap:8px; position:sticky; top:-12px; z-index:1; margin:-12px -12px 0; padding:12px; border-bottom:1px solid var(--line); background:var(--surface); }
+    .help-header h2 { margin:0; font-size:16px; }
+    .help-body { display:grid; gap:8px; margin-top:10px; overflow:auto; }
+    .help-section { padding:8px; border:1px solid var(--line); border-radius:9px; background:#fff; }
+    .help-section h3 { margin:0 0 4px; font-size:12px; }
+    .help-section p { margin:0; color:#4f5863; font-size:11px; line-height:1.45; }
+    .help-section p + p { margin-top:4px; }
+    .help-key { display:inline-block; border:1px solid var(--line); border-radius:5px; background:#f5f6f7; padding:1px 5px; color:var(--text); font-size:10px; font-weight:750; white-space:nowrap; }
+    .help-philosophy { border-color:#d9e3fa; background:var(--accent-soft); text-align:center; }
+    .help-philosophy p { color:#38558d; font-weight:680; }
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
@@ -891,6 +903,7 @@
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
         <button type="button" id="recoveryButton">Recovery</button>
+        <button type="button" id="helpButton">Help</button>
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
         <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
@@ -900,7 +913,22 @@
         <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
       </div>
     </footer>
-    <div class="status" id="status" role="status"></div><dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <div class="status" id="status" role="status"></div>
+    <dialog id="helpDialog" class="help-dialog" aria-labelledby="helpTitle">
+      <div class="help-header"><h2 id="helpTitle">How to Use Five</h2><button type="button" class="dialog-close" id="closeHelp" aria-label="Close help">✕</button></div>
+      <div class="help-body">
+        <section class="help-section"><h3>1. Capture quickly</h3><p>Tap <span class="help-key">+ Task</span>, choose a context, enter the task title, and add a date only when the task genuinely belongs to a day.</p><p>Use <span class="help-key">Save + Next</span> for batch capture. Five remembers the last context and automatically creates the first action from the task title.</p></section>
+        <section class="help-section"><h3>2. Process Inbox</h3><p><span class="help-key">Inbox</span> contains unpinned, undated tasks in All. Tap <span class="help-key">Review</span> to process one task at a time, then add a date, change its context, activate it, move it to Waiting, archive it, or continue to the next task.</p></section>
+        <section class="help-section"><h3>3. Activate only a few tasks</h3><p>Tap <span class="help-key">⚡</span> on an All task to move it directly to Active. Active is deliberately limited to five tasks. Duration estimates show the workload beside the Active count.</p></section>
+        <section class="help-section"><h3>4. Use dates sparingly</h3><p><span class="help-key">Today</span> shows overdue and due-today tasks. <span class="help-key">Dated</span> shows every dated All task. Leave flexible work undated so the lists stay meaningful.</p></section>
+        <section class="help-section"><h3>5. Work by context</h3><p>Contexts group tasks by where or how they can be done, such as @CALL, @COMPUTER, @ONLINE, @ERRANDS, @HOME, and @AGENDA. Use the <span class="help-key">+</span> context manager to add, rename, or reorder contexts.</p></section>
+        <section class="help-section"><h3>6. Complete and organise</h3><p>Open a task with <span class="help-key">✎</span> to add descriptions, actions, dates, duration, or change status. Use Waiting for delegated or blocked work, and Archive for completed or retained tasks.</p></section>
+        <section class="help-section"><h3>7. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
+        <section class="help-section"><h3>Keyboard</h3><p><span class="help-key">T</span> new task · <span class="help-key">Enter</span> capture and close · <span class="help-key">Ctrl/Cmd + Enter</span> capture and continue · <span class="help-key">Esc</span> cancel.</p></section>
+        <section class="help-section help-philosophy"><h3>Five Philosophy</h3><p>Capture quickly. Process intentionally. Activate only a few tasks. Focus deeply.</p></section>
+      </div>
+    </dialog>
+    <dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
     <dialog id="projectFilterDialog" class="project-filter-dialog" aria-labelledby="projectFilterTitle">
       <div class="project-filter-header"><h2 id="projectFilterTitle">Manage Contexts</h2><button type="button" class="dialog-close" id="closeProjectFilter" aria-label="Close project filter">✕</button></div>
       <div class="project-filter-list" id="projectFilterList"></div>
@@ -986,6 +1014,8 @@
       const importFile = document.getElementById('importFile');
       const statusElement = document.getElementById('status');
       const shortcutHelp = document.getElementById('shortcutHelp');
+      const helpButton = document.getElementById('helpButton');
+      const helpDialog = document.getElementById('helpDialog');
       const shortcutDialog = document.getElementById('shortcutDialog');
       const recoveryButton = document.getElementById('recoveryButton');
       const recoveryDialog = document.getElementById('recoveryDialog');
@@ -2570,6 +2600,10 @@ Current data will be preserved first.`)) return;
       });
       document.getElementById('closeRecovery').addEventListener('click',()=>recoveryDialog.close());
       document.getElementById('closeSnapshotPreview').addEventListener('click',()=>snapshotPreviewDialog.close());
+      helpButton.addEventListener('click',()=>helpDialog.showModal());
+      document.getElementById('closeHelp').addEventListener('click',()=>helpDialog.close());
+      helpDialog.addEventListener('cancel',event=>{event.preventDefault();helpDialog.close();});
+      helpDialog.addEventListener('click',event=>{if(event.target===helpDialog)helpDialog.close();});
       shortcutHelp?.addEventListener('click',()=>shortcutDialog.showModal());
       document.getElementById('closeShortcutDialog')?.addEventListener('click',()=>shortcutDialog.close());
       tabChannel?.addEventListener('message',event=>handleRemoteRevision(event.data));
