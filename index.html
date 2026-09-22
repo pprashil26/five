@@ -721,11 +721,15 @@
     .backup-sheet-copy span { display:block; margin-top:1px; color:var(--muted); font-size:10px; font-weight:500; }
     .backup-sheet-meta { margin-top:9px; padding-top:8px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; text-align:center; }
     #backupMenuButton { display:none; }
-    @media (max-width:600px), (hover:none) and (pointer:coarse) {
+    html.mobile-footer #quickBackup,
+    html.mobile-footer #exportData,
+    html.mobile-footer #importData { display:none !important; }
+    html.mobile-footer #backupMenuButton { display:inline-flex !important; align-items:center; }
+    html.mobile-footer .footer-actions { gap:2px; }
+    html.mobile-footer .footer button { padding-inline:7px; }
+    @media (max-width:700px) {
       #quickBackup,#exportData,#importData { display:none !important; }
       #backupMenuButton { display:inline-flex !important; align-items:center; }
-      .footer-actions { gap:2px; }
-      .footer button { padding-inline:7px; }
     }
 
 #eventTitle, .event-add { grid-column:1; }
@@ -831,6 +835,8 @@
   <script>
     (async () => {
       'use strict';
+      const mobileFooterMode = matchMedia('(max-width: 700px)').matches || matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+      document.documentElement.classList.toggle('mobile-footer', mobileFooterMode);
 
       const STORAGE_KEY = 'fiveTasks.v1';
       const MAX_TASKS = 5;
@@ -860,6 +866,9 @@
       const toggleActionsButton = document.getElementById('toggleActions');
       const activeTimeSummary = document.getElementById('activeTimeSummary');
       const addTaskButton = document.getElementById('addTask');
+      const applyMobileFooterMode = () => document.documentElement.classList.toggle('mobile-footer', matchMedia('(max-width: 700px)').matches || matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
+      window.addEventListener('resize',applyMobileFooterMode,{passive:true});
+      window.addEventListener('orientationchange',applyMobileFooterMode,{passive:true});
       const backupMenuButton = document.getElementById('backupMenuButton');
       const backupSheet = document.getElementById('backupSheet');
       const backupSheetMeta = document.getElementById('backupSheetMeta');
