@@ -341,12 +341,6 @@
     .context-row-tools{display:flex;align-items:center;gap:3px;}
     .context-rename{min-width:42px;min-height:28px;border:0;background:transparent;color:var(--muted);padding:2px;font-size:10px;}
     .context-rename-input{width:100%;min-width:0;min-height:32px;border:1px solid #9bb2e8;border-radius:6px;padding:4px 6px;background:#fff;color:var(--text);font:inherit;font-weight:680;text-transform:uppercase;}
-    .quick-capture{display:grid;gap:7px;padding:9px;}
-    .quick-capture-note{margin:0;color:var(--muted);font-size:10px;}
-    .quick-capture-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;margin-top:2px;}
-    .quick-capture-save{border-color:var(--accent);background:var(--accent);color:#fff;}
-    .quick-capture-next{border-color:#cbd8f4;background:var(--accent-soft);color:var(--accent);}
-    .quick-capture-cancel{background:#f3f4f6;color:var(--muted);}
     .context-field{display:grid;gap:3px;margin-bottom:6px;}
     .context-field label{color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.35px;}
     .context-select{width:100%;min-height:36px;border:1px solid var(--line);border-radius:7px;padding:5px 30px 5px 8px;background:#fff;color:var(--text);font:inherit;font-weight:680;}
@@ -361,6 +355,7 @@
     body.compact-card-mode .task-heading-title{font-size:14px;}
     body.compact-card-mode .task-metadata-row{margin-top:4px;}
     .project-picker-chip { border-color:#cbd8f4; color:var(--accent); font-size:13px; font-weight:850; }
+.capture-contexts{display:flex;gap:4px;overflow-x:auto;margin:0 0 6px}.capture-context-btn{min-height:24px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);padding:2px 7px;font-size:10px;font-weight:700}.inbox-review{border-color:#cbd8f4;background:var(--accent-soft);color:var(--accent);} 
     .project-filter-option.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
     .project-filter-option span:last-child { color:var(--muted); font-size:10px; }
     .duration-field { display:grid; gap:3px; margin-bottom:6px; }
@@ -392,13 +387,6 @@
     .clear-task-date { min-height:34px; border:0; background:#f3f4f6; color:var(--muted); padding:4px 8px; font-size:11px; }
     .dated-chip { border-color:#eadfab; color:#765b00; }
     .dated-chip.active { border-color:#d8c873; background:#fff4c2; color:#654f00; }
-    .inbox-chip { border-color:#dfe3e8; color:#536170; }
-    .inbox-chip.active { border-color:#cbd8f4; background:#eef3ff; color:var(--accent); }
-    .today-chip { border-color:#eadfab; color:#765b00; }
-    .today-chip.active { border-color:#d8c873; background:#fff4c2; color:#654f00; }
-    .quick-activate { width:26px; min-width:26px; min-height:26px; border:0; border-radius:6px; background:transparent; color:#7b8490; padding:0; font-size:13px; line-height:1; }
-    .quick-activate:hover { background:var(--accent-soft); color:var(--accent); }
-    .quick-activate:disabled { opacity:.28; }
     .actions {
       display: grid;
       gap: 2px;
@@ -873,6 +861,7 @@
 
     <div class="active-time-summary" id="activeTimeSummary" aria-live="polite"></div>
     <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter All tasks by context"></div>
+    <div class="capture-contexts" id="captureContexts"></div>
     <section class="tasks" id="tasks" aria-live="polite"></section>
 
     <footer class="footer">
@@ -943,7 +932,6 @@
       const DEFAULT_CONTEXTS=['@COMPUTER','@CALL','@ONLINE','@ERRANDS','@HOME','@AGENDA'];
       const CONTEXTS_KEY='five.contexts';
       const CONTEXT_ORDER_KEY='five.contextChipOrder';
-      const LAST_CAPTURE_CONTEXT_KEY='five.lastCaptureContext';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const countElement = document.getElementById('taskCount');
@@ -958,6 +946,7 @@
       const projectFilterBar=document.getElementById('projectFilterBar');
       const projectFilterDialog=document.getElementById('projectFilterDialog');
       const projectFilterList=document.getElementById('projectFilterList');
+      const captureContexts=document.getElementById('captureContexts');
       const newContextName=document.getElementById('newContextName');
       const addContextButton=document.getElementById('addContextButton');
       const addTaskButton = document.getElementById('addTask');
@@ -987,7 +976,7 @@
       let editingId = null;
       let currentView = 'all';
       let selectedProjectFilter = '';
-      let systemFilter = '';
+      let datedFilterActive = false;
       let contexts=[...DEFAULT_CONTEXTS];
       try{const saved=JSON.parse(localStorage.getItem(CONTEXTS_KEY)||'[]');if(Array.isArray(saved)&&saved.length)contexts=saved.filter(value=>typeof value==='string'&&value.startsWith('@'));}catch{}
       DEFAULT_CONTEXTS.forEach(value=>{if(!contexts.includes(value))contexts.push(value);});
@@ -1667,8 +1656,8 @@ Current data will be preserved first.`)) return;
       function normaliseContextName(value){let name=String(value||'').trim().toUpperCase().replace(/\s+/g,' ');if(!name)return '';if(!name.startsWith('@'))name=`@${name}`;return name.slice(0,30);}
       function saveContexts(){try{localStorage.setItem(CONTEXTS_KEY,JSON.stringify(contexts));}catch{}}
       function saveProjectChipOrder(){try{localStorage.setItem(CONTEXT_ORDER_KEY,JSON.stringify(projectChipOrder));}catch{}}
-      function addContext(){const name=normaliseContextName(newContextName.value);if(!name){showStatus('Enter a context name');newContextName.focus();return;}if(contexts.includes(name)){showStatus('Context already exists');newContextName.focus();return;}contexts.push(name);projectChipOrder.push(name);saveContexts();saveProjectChipOrder();newContextName.value='';renderProjectFilterDialog();renderProjectFilter();showStatus('Context added');}
-      async function renameContext(oldName,row){const label=row.querySelector('[data-context-label]');const input=document.createElement('input');input.type='text';input.className='context-rename-input';input.value=oldName;input.maxLength=30;label.replaceWith(input);input.focus();input.select();let committed=false;const commit=async()=>{if(committed)return;committed=true;const name=normaliseContextName(input.value);if(!name||name===oldName){renderProjectFilterDialog();return;}if(contexts.includes(name)){showStatus('Context already exists');renderProjectFilterDialog();return;}const affected=tasks.filter(task=>task.requestor===oldName).length;if(affected&&!confirm(`Rename ${oldName} to ${name}? ${affected} task${affected===1?'':'s'} will be updated.`)){renderProjectFilterDialog();return;}contexts=contexts.map(value=>value===oldName?name:value);projectChipOrder=projectChipOrder.map(value=>value===oldName?name:value);tasks.forEach(task=>{if(task.requestor===oldName)task.requestor=name;});if(selectedProjectFilter===oldName)selectedProjectFilter=name;if(localStorage.getItem(LAST_CAPTURE_CONTEXT_KEY)===oldName)localStorage.setItem(LAST_CAPTURE_CONTEXT_KEY,name);saveContexts();saveProjectChipOrder();if(affected)await persistEnvelope({strict:true});render();renderProjectFilterDialog();showStatus('Context renamed safely');};input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();commit();}else if(event.key==='Escape'){committed=true;renderProjectFilterDialog();}});input.addEventListener('blur',commit,{once:true});}
+      function addContext(){const name=normaliseContextName(newContextName.value);if(!name){showStatus('Enter a context name');newContextName.focus();return;}if(contexts.includes(name)){showStatus('Context already exists');newContextName.focus();return;}contexts.push(name);projectChipOrder.push(name);saveContexts();saveProjectChipOrder();newContextName.value='';renderProjectFilterDialog();renderProjectFilter(); renderCaptureContexts();showStatus('Context added');}
+      async function renameContext(oldName,row){const label=row.querySelector('[data-context-label]');const input=document.createElement('input');input.type='text';input.className='context-rename-input';input.value=oldName;input.maxLength=30;label.replaceWith(input);input.focus();input.select();let committed=false;const commit=async()=>{if(committed)return;committed=true;const name=normaliseContextName(input.value);if(!name||name===oldName){renderProjectFilterDialog();return;}if(contexts.includes(name)){showStatus('Context already exists');renderProjectFilterDialog();return;}const affected=tasks.filter(task=>task.requestor===oldName).length;if(affected&&!confirm(`Rename ${oldName} to ${name}? ${affected} task${affected===1?'':'s'} will be updated.`)){renderProjectFilterDialog();return;}contexts=contexts.map(value=>value===oldName?name:value);projectChipOrder=projectChipOrder.map(value=>value===oldName?name:value);tasks.forEach(task=>{if(task.requestor===oldName)task.requestor=name;});if(selectedProjectFilter===oldName)selectedProjectFilter=name;saveContexts();saveProjectChipOrder();if(affected)await persistEnvelope({strict:true});render();renderProjectFilterDialog();showStatus('Context renamed safely');};input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();commit();}else if(event.key==='Escape'){committed=true;renderProjectFilterDialog();}});input.addEventListener('blur',commit,{once:true});}
       function allProjectCounts(){const counts=new Map(contexts.map(value=>[value,0]));allTasks().forEach(task=>{const value=(task.requestor||'').trim();if(counts.has(value))counts.set(value,counts.get(value)+1);});projectChipOrder=projectChipOrder.filter(value=>contexts.includes(value));contexts.forEach(value=>{if(!projectChipOrder.includes(value))projectChipOrder.push(value);});saveContexts();saveProjectChipOrder();return projectChipOrder.map(name=>[name,counts.get(name)||0]);}
       function clearProjectOrderMarkers() {
         projectFilterList.querySelectorAll('.project-drop-before,.project-drop-after').forEach(row=>row.classList.remove('project-drop-before','project-drop-after'));
@@ -1702,7 +1691,7 @@ Current data will be preserved first.`)) return;
       function cleanupProjectOrder(){if(!projectOrderDragState)return;projectOrderDragState.row.classList.remove('project-dragging');projectOrderDragState.handle.releasePointerCapture?.(projectOrderDragState.pointerId);clearProjectOrderMarkers();document.body.classList.remove('reordering');document.removeEventListener('pointermove',moveProjectOrder);document.removeEventListener('pointerup',finishProjectOrder);document.removeEventListener('pointercancel',cancelProjectOrder);projectOrderDragState=null;}
       function setProjectFilter(value) {
         selectedProjectFilter=value||'';
-        systemFilter='';
+        datedFilterActive=false;
         if (editingId) { editingId=null; editSnapshot=null; newDraftId=null; }
         if (projectFilterDialog.open) projectFilterDialog.close();
         render();
@@ -1723,23 +1712,20 @@ Current data will be preserved first.`)) return;
           button.append(handle,label,tools);button.addEventListener('click',event=>{if(event.target.closest('.project-order-handle,.context-rename,.context-rename-input'))return;setProjectFilter(name);});projectFilterList.appendChild(button);
         });
       }
-      function setSystemFilter(value){systemFilter=systemFilter===value?'':value;if(systemFilter)selectedProjectFilter='';if(editingId){editingId=null;editSnapshot=null;newDraftId=null;}render();}
-      function createSystemChip(label,value,count,className){const button=document.createElement('button');button.type='button';button.className=`project-chip ${className}${systemFilter===value?' active':''}`;button.setAttribute('aria-pressed',String(systemFilter===value));const text=document.createElement('span');text.textContent=label;button.appendChild(text);if(count!=null){const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=count;button.appendChild(badge);}button.addEventListener('click',()=>setSystemFilter(value));return button;}
-      function inboxTasks(){return allTasks().filter(task=>!task.taskDate&&!task.pinned);}
-      function todayTasks(){const today=todayLocal();return allTasks().filter(task=>task.taskDate&&task.taskDate<=today);}
       function renderProjectFilter() {
         projectFilterBar.replaceChildren();
         const projects=allProjectCounts();
         const visible=currentView==='all'&&!editingId;
         projectFilterBar.classList.toggle('visible',visible);
         if(!visible)return;
-        const allChip=createProjectChip('All','',allTasks().length);if(systemFilter)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
-        projectFilterBar.appendChild(createSystemChip('Inbox','inbox',inboxTasks().length,'inbox-chip'));
-        projectFilterBar.appendChild(createSystemChip('Today','today',todayTasks().length,'today-chip'));
-        projectFilterBar.appendChild(createSystemChip('Dated','dated',allTasks().filter(task=>task.taskDate).length,'dated-chip'));
+        const allChip=createProjectChip('All','',allTasks().length);if(datedFilterActive)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
+        const datedCount=allTasks().filter(task=>task.taskDate).length;
+        if(datedCount){const dated=document.createElement('button');dated.type='button';dated.className=`project-chip dated-chip${datedFilterActive?' active':''}`;dated.setAttribute('aria-pressed',String(datedFilterActive));const text=document.createElement('span');text.textContent='Dated';const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=datedCount;dated.append(text,badge);dated.addEventListener('click',()=>{datedFilterActive=!datedFilterActive;if(datedFilterActive)selectedProjectFilter='';render();});projectFilterBar.appendChild(dated);}
         projects.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
         const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent='+';picker.setAttribute('aria-label','Open context manager');picker.title='Manage contexts';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
       }
+      function startQuickCaptureWithContext(ctx){currentView='all';const task=newTask();task.requestor=ctx;tasks.push(task);save();beginEditing(task,True);}
+      function renderCaptureContexts(){captureContexts.replaceChildren();contexts.slice(0,6).forEach(c=>{const b=document.createElement('button');b.type='button';b.className='capture-context-btn';b.textContent=c.replace('@','');b.addEventListener('click',()=>{currentView='all';const task=newTask();task.requestor=c;tasks.push(task);save();beginEditing(task,true);});captureContexts.appendChild(b);});const r=document.createElement('button');r.type='button';r.className='capture-context-btn inbox-review';r.textContent='Review Inbox';r.addEventListener('click',()=>{systemFilter='inbox';render();const first=tasksHost.querySelector('.task .edit-button');first?.click();});captureContexts.appendChild(r);}
       function updateHeader() {
         document.body.classList.toggle('compact-card-mode',!showTaskDetails);
         const allCount = allTasks().length;
@@ -1748,8 +1734,7 @@ Current data will be preserved first.`)) return;
         const waitingCount = waitingTasks().length;
         const archiveCount = archivedTasks().length;
         allCountElement.textContent = allCount;
-        const plannedMinutes=activeTasks().reduce((total,task)=>total+task.durationMinutes,0);
-        countElement.textContent=`${activeCount}/${MAX_TASKS}${plannedMinutes?` · ${durationLabel(plannedMinutes)}`:''}`;
+        countElement.textContent = `${activeCount}/${MAX_TASKS}`;
         waitingCountElement.textContent = waitingCount;
         archiveCountElement.textContent = archiveCount;
         allTab.classList.toggle('active', currentView === 'all');
@@ -1767,8 +1752,9 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
         exportButton.disabled = tasks.length === 0;
-        activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
-        activeTimeSummary.classList.toggle('visible',currentView==='active'&&plannedMinutes>0);
+        const plannedMinutes = activeTasks().reduce((total, task) => total + task.durationMinutes, 0);
+        activeTimeSummary.textContent = plannedMinutes ? `Active time · ${durationLabel(plannedMinutes)} planned` : '';
+        activeTimeSummary.classList.toggle('visible', plannedMinutes > 0);
         renderProjectFilter();
       }
 
@@ -1801,11 +1787,7 @@ Current data will be preserved first.`)) return;
               ? waitingTasks()
               : archivedTasks();
         const filteredTasks=currentView==='all'
-          ? systemFilter==='inbox' ? allVisibleTasks.filter(task=>!task.taskDate&&!task.pinned)
-            : systemFilter==='today' ? allVisibleTasks.filter(task=>task.taskDate&&task.taskDate<=todayLocal())
-            : systemFilter==='dated' ? allVisibleTasks.filter(task=>Boolean(task.taskDate))
-            : selectedProjectFilter ? allVisibleTasks.filter(task=>(task.requestor||'').trim()===selectedProjectFilter)
-            : allVisibleTasks
+          ? datedFilterActive ? allVisibleTasks.filter(task=>Boolean(task.taskDate)) : selectedProjectFilter ? allVisibleTasks.filter(task=>(task.requestor||'').trim()===selectedProjectFilter) : allVisibleTasks
           : allVisibleTasks;
         const visibleTasks = editingId
           ? filteredTasks.filter(task => task.id === editingId)
@@ -1815,7 +1797,7 @@ Current data will be preserved first.`)) return;
           const empty = document.createElement('div');
           empty.className = 'empty';
           empty.innerHTML = currentView === 'all'
-            ? systemFilter==='inbox' ? '<strong>Inbox is clear</strong>No unpinned, undated All tasks.' : systemFilter==='today' ? '<strong>Nothing due</strong>No overdue or due-today All tasks.' : systemFilter==='dated' ? '<strong>No dated tasks</strong>Assign a date to an All task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No All tasks remain for ${selectedProjectFilter}.` : '<strong>No tasks</strong>Add an unlimited number of tasks here.'
+            ? datedFilterActive ? '<strong>No dated tasks</strong>Assign a date to an All task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No All tasks remain for ${selectedProjectFilter}.` : '<strong>No tasks</strong>Add an unlimited number of tasks here.'
             : currentView === 'active'
               ? '<strong>No active tasks</strong>Move up to five tasks here from All.'
               : currentView === 'waiting'
@@ -1859,7 +1841,7 @@ Current data will be preserved first.`)) return;
         const content = document.createElement('div');
         content.className = 'task-content';
 
-        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const contextBadge=document.createElement('span');contextBadge.className='task-context-badge';contextBadge.textContent=task.requestor.trim()||'@CONTEXT';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(contextBadge,title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';if(currentView==='all'){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title=activeTasks().length>=MAX_TASKS?'Active is full':'Quick Activate';quick.disabled=activeTasks().length>=MAX_TASKS;headingActions.appendChild(quick);}const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
+        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const contextBadge=document.createElement('span');contextBadge.className='task-context-badge';contextBadge.textContent=task.requestor.trim()||'@CONTEXT';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(contextBadge,title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
         if (currentView === 'active' && task.durationMinutes) {
           const duration = document.createElement('div');
           duration.className = 'task-duration';
@@ -2132,11 +2114,6 @@ Current data will be preserved first.`)) return;
         render();
       }
 
-      function quickActivateTask(taskId){
-        if(activeTasks().length>=MAX_TASKS){showStatus('Five active tasks already exist');return;}
-        const task=tasks.find(item=>item.id===taskId);if(!task||task.list!=='all'||task.waiting||task.archived)return;
-        task.list='active';save('Moved to Active');render();
-      }
       function moveAllTaskToActive(taskId) {
         if (activeTasks().length >= MAX_TASKS) {
           showStatus('Five active tasks already exist');
@@ -2246,24 +2223,7 @@ Current data will be preserved first.`)) return;
         render();
       }
 
-      function createQuickCaptureEditor(task) {
-        const editor=document.createElement('div');editor.className='task-editor quick-capture';
-        const note=document.createElement('p');note.className='quick-capture-note';note.textContent='Quick capture';
-        const contextField=document.createElement('div');contextField.className='context-field';const contextLabel=document.createElement('label');contextLabel.textContent='Context';const contextSelect=document.createElement('select');contextSelect.className='context-select';contextSelect.setAttribute('aria-label','Context');
-        const empty=document.createElement('option');empty.value='';empty.textContent='Choose context';contextSelect.appendChild(empty);contexts.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;contextSelect.appendChild(option);});
-        const rememberedContext=localStorage.getItem(LAST_CAPTURE_CONTEXT_KEY)||'';contextSelect.value=contexts.includes(rememberedContext)?rememberedContext:'';task.requestor=contextSelect.value;contextSelect.addEventListener('change',()=>{task.requestor=contextSelect.value;});contextField.append(contextLabel,contextSelect);
-        const titleField=document.createElement('div');titleField.className='field title-field';const titleInput=makeInput(task.title,'Task title',300,value=>{task.title=value.toUpperCase();});titleInput.setAttribute('enterkeyhint','done');titleField.appendChild(titleInput);
-        const dateField=document.createElement('div');dateField.className='task-date-field';const dateLabel=document.createElement('label');dateLabel.textContent='Task date · optional';const dateInput=document.createElement('input');dateInput.type='date';dateInput.className='task-date-input';dateInput.value=task.taskDate||'';dateInput.addEventListener('change',()=>{task.taskDate=dateInput.value;});dateField.append(dateLabel,dateInput);
-        const validateCapture=()=>{if(!contexts.includes(task.requestor)){showStatus('Choose a context');contextSelect.focus();return false;}if(!task.title.trim()){showStatus('Add a task title');titleInput.focus();return false;}return true;};
-        const prepareCapturedTask=()=>{task.actions=[{id:createId(),text:task.title.trim(),done:false}];localStorage.setItem(LAST_CAPTURE_CONTEXT_KEY,task.requestor);};
-        const saveAndClose=()=>{if(!validateCapture())return;prepareCapturedTask();finishEditing();save('Captured');render();};
-        const saveAndNext=async()=>{if(!validateCapture())return;prepareCapturedTask();await persistEnvelope({strict:true});scheduleRecoverySnapshot('Captured');showStatus('Captured · ready for next');const next=newTask();next.requestor=task.requestor;tasks.push(next);editingId=next.id;editSnapshot=null;newDraftId=next.id;render();requestAnimationFrame(()=>{const card=tasksHost.querySelector(`[data-task-id="${CSS.escape(next.id)}"]`);card?.querySelector('.title-field input')?.focus();});};
-        const actions=document.createElement('div');actions.className='quick-capture-actions';const nextButton=makeButton('Save + Next','quick-capture-next',saveAndNext);const doneButton=makeButton('Done','quick-capture-save',saveAndClose);const cancelButton=makeButton('Cancel','quick-capture-cancel',cancelEditing);actions.append(nextButton,doneButton,cancelButton);
-        titleInput.addEventListener('keydown',event=>{if(event.key!=='Enter'||event.isComposing)return;event.preventDefault();if(event.ctrlKey||event.metaKey)saveAndNext();else saveAndClose();});
-        editor.append(note,contextField,titleField,dateField,actions);return editor;
-      }
       function createEditor(task) {
-        if(newDraftId===task.id)return createQuickCaptureEditor(task);
         const editor = document.createElement('div');
         editor.className = 'task-editor';
 
@@ -2393,7 +2353,6 @@ Current data will be preserved first.`)) return;
       allTab.addEventListener('click', () => {
         if (editingId) cancelEditing();
         currentView = 'all';
-        systemFilter='';selectedProjectFilter='';
         render();
       });
 
