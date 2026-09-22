@@ -725,8 +725,16 @@
     html.mobile-footer #exportData,
     html.mobile-footer #importData { display:none !important; }
     html.mobile-footer #backupMenuButton { display:inline-flex !important; align-items:center; }
-    html.mobile-footer .footer-actions { gap:2px; }
+    html.mobile-footer .footer { padding-top:4px; }
+    html.mobile-footer .footer-actions { gap:2px; align-items:center; }
     html.mobile-footer .footer button { padding-inline:7px; }
+    html.mobile-footer .reliability-row { display:contents; }
+    html.mobile-footer .save-health { order:-1; display:inline-flex; align-items:center; min-height:30px; padding:4px 7px; border-radius:7px; font-size:10px; white-space:nowrap; }
+    html.mobile-footer .save-health.saving::before { content:'↻'; margin-right:4px; }
+    html.mobile-footer .save-health.saved::before { content:'✓'; margin-right:4px; font-weight:900; }
+    html.mobile-footer .save-health.failed::before { content:'!'; margin-right:4px; font-weight:900; }
+    html.mobile-footer .backup-reminder { order:4; }
+    html.mobile-footer .philosophy { margin-top:3px; }
     @media (max-width:700px) {
       #quickBackup,#exportData,#importData { display:none !important; }
       #backupMenuButton { display:inline-flex !important; align-items:center; }
@@ -804,8 +812,8 @@
         <button type="button" id="recoveryButton">Recovery</button>
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
+        <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
       </div>
-      <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
       <div class="philosophy">
         <span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
         <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
