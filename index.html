@@ -335,9 +335,14 @@
     .project-filter-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .project-filter-header h2 { margin:0; font-size:16px; }
     .project-filter-list { display:grid; gap:5px; margin-top:9px; overflow:auto; }
-    .project-filter-option { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; gap:8px; min-height:38px; width:100%; text-align:left; }
-    .project-filter-option.all-option{grid-template-columns:minmax(0,1fr) auto;}
-    .project-order-handle{color:#9aa0a8;font-size:16px;cursor:grab;user-select:none;}
+    .project-filter-option { display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:6px; min-height:40px; width:100%; text-align:left; touch-action:none; }
+    .project-order-handle { display:grid; place-items:center; align-self:stretch; border-radius:6px; color:#9aa0a8; font-size:18px; cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; }
+    .project-order-handle:active { cursor:grabbing; }
+    .project-filter-option.project-dragging { position:relative; z-index:3; opacity:.94; border-color:#9bb2e8; background:var(--accent-soft); box-shadow:0 4px 14px rgba(29,35,42,.14); }
+    .project-filter-option.project-drop-before { box-shadow:inset 0 3px 0 var(--accent); }
+    .project-filter-option.project-drop-after { box-shadow:inset 0 -3px 0 var(--accent); }
+    .project-order-hint { margin-top:7px; color:var(--muted); font-size:10px; text-align:center; }
+    .project-picker-chip { border-color:#cbd8f4; color:var(--accent); font-size:13px; font-weight:850; }
     .project-filter-option.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
     .project-filter-option span:last-child { color:var(--muted); font-size:10px; }
     .duration-field { display:grid; gap:3px; margin-bottom:6px; }
@@ -865,6 +870,7 @@
     <dialog id="projectFilterDialog" class="project-filter-dialog" aria-labelledby="projectFilterTitle">
       <div class="project-filter-header"><h2 id="projectFilterTitle">Requestor / Project</h2><button type="button" class="dialog-close" id="closeProjectFilter" aria-label="Close project filter">✕</button></div>
       <div class="project-filter-list" id="projectFilterList"></div>
+      <div class="project-order-hint">Hold and drag projects to set the chip order.</div>
     </dialog>
     <dialog id="backupSheet" class="backup-sheet" aria-labelledby="backupSheetTitle">
       <div class="backup-sheet-handle" aria-hidden="true"></div>
@@ -950,7 +956,9 @@
       let currentView = 'all';
       let selectedProjectFilter = '';
       let datedFilterActive = false;
-      let projectChipOrder=JSON.parse(localStorage.getItem('five.projectChipOrder')||'[]');
+      let projectChipOrder=[];
+      try { const savedProjectOrder=JSON.parse(localStorage.getItem('five.projectChipOrder')||'[]'); if(Array.isArray(savedProjectOrder)) projectChipOrder=savedProjectOrder.filter(value=>typeof value==='string'); } catch {}
+      let projectOrderDragState=null;
       let dragState = null;
       let actionDragState = null;
       let editSnapshot = null;
@@ -1620,7 +1628,48 @@ Current data will be preserved first.`)) return;
         const date=new Date(`${value}T00:00:00`);
         return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{day:'numeric',month:'short'});
       }
-      function allProjectCounts() { const counts=new Map(); allTasks().forEach(task=>{const value=(task.requestor||'').trim();if(value) counts.set(value,(counts.get(value)||0)+1);}); projectChipOrder=projectChipOrder.filter(x=>counts.has(x)); [...counts.keys()].forEach(x=>{if(!projectChipOrder.includes(x))projectChipOrder.push(x);}); localStorage.setItem('five.projectChipOrder',JSON.stringify(projectChipOrder)); return projectChipOrder.map(x=>[x,counts.get(x)]).filter(x=>x[1]); }
+      function saveProjectChipOrder() {
+        try { localStorage.setItem('five.projectChipOrder',JSON.stringify(projectChipOrder)); } catch {}
+      }
+      function allProjectCounts() {
+        const counts=new Map();
+        allTasks().forEach(task=>{const value=(task.requestor||'').trim();if(value) counts.set(value,(counts.get(value)||0)+1);});
+        const incoming=[...counts.keys()].sort((a,b)=>a.localeCompare(b));
+        projectChipOrder=projectChipOrder.filter(name=>counts.has(name));
+        incoming.forEach(name=>{if(!projectChipOrder.includes(name)) projectChipOrder.push(name);});
+        saveProjectChipOrder();
+        return projectChipOrder.map(name=>[name,counts.get(name)]);
+      }
+      function clearProjectOrderMarkers() {
+        projectFilterList.querySelectorAll('.project-drop-before,.project-drop-after').forEach(row=>row.classList.remove('project-drop-before','project-drop-after'));
+      }
+      function startProjectOrder(event,name) {
+        if(event.button!==undefined&&event.button!==0)return;
+        const row=event.currentTarget.closest('.project-filter-option'); if(!row)return;
+        event.preventDefault(); event.currentTarget.setPointerCapture?.(event.pointerId);
+        projectOrderDragState={pointerId:event.pointerId,name,row,handle:event.currentTarget,targetName:name,after:false};
+        row.classList.add('project-dragging'); document.body.classList.add('reordering');
+        document.addEventListener('pointermove',moveProjectOrder,{passive:false}); document.addEventListener('pointerup',finishProjectOrder); document.addEventListener('pointercancel',cancelProjectOrder);
+      }
+      function moveProjectOrder(event) {
+        if(!projectOrderDragState||event.pointerId!==projectOrderDragState.pointerId)return;
+        event.preventDefault(); clearProjectOrderMarkers();
+        for(const row of projectFilterList.querySelectorAll('.project-filter-option[data-project-name]')) {
+          if(row===projectOrderDragState.row)continue;
+          const rect=row.getBoundingClientRect();
+          if(event.clientY>=rect.top&&event.clientY<=rect.bottom){projectOrderDragState.targetName=row.dataset.projectName;projectOrderDragState.after=event.clientY>rect.top+rect.height/2;row.classList.add(projectOrderDragState.after?'project-drop-after':'project-drop-before');break;}
+        }
+      }
+      function finishProjectOrder(event) {
+        if(!projectOrderDragState||event.pointerId!==projectOrderDragState.pointerId)return;
+        const {name,targetName,after}=projectOrderDragState; cleanupProjectOrder();
+        if(!targetName||targetName===name)return;
+        projectChipOrder=projectChipOrder.filter(item=>item!==name);
+        let index=projectChipOrder.indexOf(targetName); if(index<0)index=projectChipOrder.length; if(after)index+=1;
+        projectChipOrder.splice(index,0,name); saveProjectChipOrder(); renderProjectFilterDialog(); renderProjectFilter(); showStatus('Project chip order saved');
+      }
+      function cancelProjectOrder(event){if(projectOrderDragState&&event.pointerId===projectOrderDragState.pointerId)cleanupProjectOrder();}
+      function cleanupProjectOrder(){if(!projectOrderDragState)return;projectOrderDragState.row.classList.remove('project-dragging');projectOrderDragState.handle.releasePointerCapture?.(projectOrderDragState.pointerId);clearProjectOrderMarkers();document.body.classList.remove('reordering');document.removeEventListener('pointermove',moveProjectOrder);document.removeEventListener('pointerup',finishProjectOrder);document.removeEventListener('pointercancel',cancelProjectOrder);projectOrderDragState=null;}
       function setProjectFilter(value) {
         selectedProjectFilter=value||'';
         datedFilterActive=false;
@@ -1636,25 +1685,24 @@ Current data will be preserved first.`)) return;
       }
       function renderProjectFilterDialog(projects=allProjectCounts()) {
         projectFilterList.replaceChildren();
-        const allBtn=document.createElement('button');allBtn.type='button';allBtn.className=`project-filter-option all-option${!selectedProjectFilter?' active':''}`;const n1=document.createElement('span');n1.textContent='All';const b1=document.createElement('span');b1.textContent=allTasks().length;allBtn.append(n1,b1);allBtn.addEventListener('click',()=>setProjectFilter(''));projectFilterList.appendChild(allBtn);
-        projects.forEach(([label,count])=>{const button=document.createElement('button');button.type='button';button.className=`project-filter-option${selectedProjectFilter===label?' active':''}`;button.draggable=true;button.dataset.project=label;const drag=document.createElement('span');drag.className='project-order-handle';drag.textContent='≡';const name=document.createElement('span');name.textContent=label;const badge=document.createElement('span');badge.textContent=count;button.append(drag,name,badge);button.addEventListener('dragstart',()=>button.classList.add('dragging'));button.addEventListener('dragend',()=>button.classList.remove('dragging'));button.addEventListener('dragover',e=>e.preventDefault());button.addEventListener('drop',e=>{e.preventDefault();const src=projectFilterList.querySelector('.dragging');if(!src||src===button)return;const a=src.dataset.project,b=button.dataset.project;projectChipOrder=projectChipOrder.filter(x=>x!==a);projectChipOrder.splice(projectChipOrder.indexOf(b),0,a);localStorage.setItem('five.projectChipOrder',JSON.stringify(projectChipOrder));renderProjectFilterDialog();renderProjectFilter();});button.addEventListener('click',e=>{if(e.target.classList.contains('project-order-handle'))return;setProjectFilter(label);});projectFilterList.appendChild(button);});
+        projects.forEach(([name,count])=>{
+          const button=document.createElement('button');button.type='button';button.className=`project-filter-option${selectedProjectFilter===name?' active':''}`;button.dataset.projectName=name;
+          const handle=document.createElement('span');handle.className='project-order-handle';handle.textContent='≡';handle.setAttribute('aria-label',`Reorder ${name}`);handle.title='Hold and drag to reorder';handle.addEventListener('pointerdown',event=>startProjectOrder(event,name));
+          const label=document.createElement('span');label.textContent=name;const badge=document.createElement('span');badge.textContent=count;
+          button.append(handle,label,badge);button.addEventListener('click',event=>{if(event.target.closest('.project-order-handle'))return;setProjectFilter(name);});projectFilterList.appendChild(button);
+        });
       }
       function renderProjectFilter() {
-        projectFilterBar.replaceChildren();const projects=allProjectCounts();const visible=currentView==='all'&&!editingId&&projects.length>0;projectFilterBar.classList.toggle('visible',visible);if(!visible)return;
-        const allChip=createProjectChip('All','',allTasks().length);
-        if (datedFilterActive) allChip.classList.remove('active');
-        projectFilterBar.appendChild(allChip);
+        projectFilterBar.replaceChildren();
+        const projects=allProjectCounts();
+        const visible=currentView==='all'&&!editingId;
+        projectFilterBar.classList.toggle('visible',visible);
+        if(!visible)return;
+        const allChip=createProjectChip('All','',allTasks().length);if(datedFilterActive)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
         const datedCount=allTasks().filter(task=>task.taskDate).length;
-        if (datedCount) {
-          const dated=document.createElement('button');dated.type='button';dated.className=`project-chip dated-chip${datedFilterActive?' active':''}`;dated.setAttribute('aria-pressed',String(datedFilterActive));
-          const datedText=document.createElement('span');datedText.textContent='Dated';const datedBadge=document.createElement('span');datedBadge.className='project-chip-count';datedBadge.textContent=datedCount;dated.append(datedText,datedBadge);
-          dated.addEventListener('click',()=>{datedFilterActive=!datedFilterActive;if(datedFilterActive)selectedProjectFilter='';render();});
-          projectFilterBar.appendChild(dated);
-        }
-        let direct=projects.slice(0,5);const selectedIndex=projects.findIndex(([name])=>name===selectedProjectFilter);if(selectedProjectFilter&&selectedIndex>=5)direct=[...projects.slice(0,4),projects[selectedIndex]];
-        direct.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
-        const names=new Set(direct.map(([name])=>name));const remaining=projects.filter(([name])=>!names.has(name));
-        if(remaining.length){const more=createProjectChip(`+${remaining.length}`,null,null);more.setAttribute('aria-label',`Show ${remaining.length} more Requestor or Project filters`);more.addEventListener('click',event=>{event.stopImmediatePropagation();renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(more);}
+        if(datedCount){const dated=document.createElement('button');dated.type='button';dated.className=`project-chip dated-chip${datedFilterActive?' active':''}`;dated.setAttribute('aria-pressed',String(datedFilterActive));const text=document.createElement('span');text.textContent='Dated';const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=datedCount;dated.append(text,badge);dated.addEventListener('click',()=>{datedFilterActive=!datedFilterActive;if(datedFilterActive)selectedProjectFilter='';render();});projectFilterBar.appendChild(dated);}
+        projects.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
+        const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent='+';picker.setAttribute('aria-label','Open project picker and reorder projects');picker.title='Projects and chip order';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
       }
       function updateHeader() {
         const allCount = allTasks().length;
