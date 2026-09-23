@@ -320,6 +320,11 @@
     .project-filter-bar { display:none; flex:0 0 auto; align-items:center; gap:4px; min-height:30px; margin:-1px 0 6px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
     .project-filter-bar.visible { display:flex; }
     .project-filter-bar::-webkit-scrollbar { display:none; }
+    @media (min-width:701px) {
+      .project-filter-bar.desktop-overflow-end { -webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 22px),transparent 100%); mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 22px),transparent 100%); }
+      .project-filter-bar.desktop-overflow-start { -webkit-mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 100%); mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 100%); }
+      .project-filter-bar.desktop-overflow-start.desktop-overflow-end { -webkit-mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%); mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%); }
+    }
     .project-chip { flex:0 0 auto; min-height:26px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:3px 8px; font-size:10px; font-weight:720; white-space:nowrap; }
     .project-chip.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
     .project-chip-count { margin-left:3px; opacity:.75; font-size:9px; }
@@ -1778,6 +1783,18 @@ Current data will be preserved first.`)) return;
         });
       }
       function setSystemFilter(value){systemFilter=systemFilter===value?'':value;if(systemFilter)selectedProjectFilter='';if(editingId){editingId=null;editSnapshot=null;newDraftId=null;}render();}
+      function updateContextBarOverflow(){
+        const desktop=matchMedia('(min-width: 701px)').matches;
+        const overflowing=desktop&&projectFilterBar.scrollWidth>projectFilterBar.clientWidth+1;
+        projectFilterBar.classList.toggle('desktop-overflow-start',overflowing&&projectFilterBar.scrollLeft>2);
+        projectFilterBar.classList.toggle('desktop-overflow-end',overflowing&&projectFilterBar.scrollLeft<projectFilterBar.scrollWidth-projectFilterBar.clientWidth-2);
+      }
+      function revealSelectedContextChip(){
+        if(!matchMedia('(min-width: 701px)').matches)return;
+        const selected=projectFilterBar.querySelector('.project-chip.active');
+        if(selected)selected.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
+        requestAnimationFrame(updateContextBarOverflow);
+      }
       function createSystemChip(label,value,count,className){const button=document.createElement('button');button.type='button';button.className=`project-chip ${className}${systemFilter===value?' active':''}`;button.setAttribute('aria-pressed',String(systemFilter===value));const text=document.createElement('span');text.textContent=label;button.appendChild(text);if(count!=null){const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=count;button.appendChild(badge);}button.addEventListener('click',()=>setSystemFilter(value));return button;}
       function inboxTasks(){return allTasks().filter(task=>!task.taskDate&&!task.pinned);}
       function todayTasks(){const today=todayLocal();return allTasks().filter(task=>task.taskDate&&task.taskDate<=today);}
@@ -1794,6 +1811,7 @@ Current data will be preserved first.`)) return;
         projectFilterBar.appendChild(createSystemChip('Dated','dated',allTasks().filter(task=>task.taskDate).length,'dated-chip'));
         const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent=matchMedia('(min-width: 701px)').matches?'+ Contexts':'+';picker.setAttribute('aria-label','Manage contexts');picker.title='Add, rename, or reorder contexts';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
         projects.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
+        requestAnimationFrame(()=>{updateContextBarOverflow();revealSelectedContextChip();});
       }
       function updateHeader() {
         document.body.classList.toggle('compact-card-mode',!showTaskDetails);
@@ -2586,6 +2604,8 @@ Current data will be preserved first.`)) return;
         event.preventDefault();
         addTaskButton.click();
       });
+      projectFilterBar.addEventListener('scroll',updateContextBarOverflow,{passive:true});
+      window.addEventListener('resize',()=>requestAnimationFrame(updateContextBarOverflow),{passive:true});
       addContextButton.addEventListener('click',addContext);newContextName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addContext();}});
       document.getElementById('closeProjectFilter').addEventListener('click',()=>projectFilterDialog.close());
       projectFilterDialog.addEventListener('cancel',event=>{event.preventDefault();projectFilterDialog.close();});
