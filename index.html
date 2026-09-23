@@ -323,9 +323,7 @@
     .project-filter-bar::-webkit-scrollbar { display:none; }
     .context-scroll-button { display:none; flex:0 0 24px; width:24px; min-width:24px; min-height:26px; border:1px solid var(--line); border-radius:7px; background:var(--surface); color:var(--accent); padding:0; font-size:14px; line-height:1; }
     .context-scroll-button:disabled { opacity:.25; }
-    @media (min-width:701px) {
-      .project-filter-shell.desktop-overflow .context-scroll-button { display:inline-grid; place-items:center; }
-    }
+    @media (min-width:701px) { .project-filter-shell.desktop-overflow .context-scroll-button { display:inline-grid; place-items:center; } }
     .project-chip { flex:0 0 auto; min-height:26px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:3px 8px; font-size:10px; font-weight:720; white-space:nowrap; }
     .project-chip.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
     .project-chip-count { margin-left:3px; opacity:.75; font-size:9px; }
@@ -829,6 +827,20 @@
     }
 
     .dialog-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
+    .search-dialog { width:min(92vw,460px); max-height:78dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
+    .search-dialog::backdrop { background:rgba(29,35,42,.28); }
+    .search-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .search-header h2 { margin:0; font-size:16px; }
+    .search-input { width:100%; min-height:38px; margin-top:9px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--text); padding:7px 9px; font-size:16px; }
+    .search-summary { min-height:18px; margin-top:6px; color:var(--muted); font-size:10px; }
+    .search-results { display:grid; gap:5px; max-height:52dvh; margin-top:5px; overflow:auto; }
+    .search-result { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; width:100%; min-height:44px; padding:7px 8px; text-align:left; }
+    .search-result-main { min-width:0; }
+    .search-result-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:760; }
+    .search-result-match { margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:10px; font-weight:500; }
+    .search-result-meta { color:var(--accent); font-size:9px; font-weight:760; white-space:nowrap; }
+    .search-empty { padding:18px 8px; color:var(--muted); text-align:center; font-size:12px; }
+    #searchButton { min-width:30px; padding-inline:7px; font-size:14px; }
     .recovery-dialog { width:min(92vw,460px); max-height:80dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .recovery-dialog::backdrop { background:rgba(29,35,42,.28); }
     .recovery-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -913,6 +925,7 @@
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
         <button type="button" id="recoveryButton">Recovery</button>
+        <button type="button" id="searchButton" aria-label="Search tasks" title="Search tasks">⌕</button>
         <button type="button" id="helpButton">Help</button>
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
@@ -924,6 +937,12 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div>
+    <dialog id="searchDialog" class="search-dialog" aria-labelledby="searchTitle">
+      <div class="search-header"><h2 id="searchTitle">Search tasks</h2><button type="button" class="dialog-close" id="closeSearch" aria-label="Close search">✕</button></div>
+      <input type="search" id="searchInput" class="search-input" placeholder="Title, action, description or context" autocomplete="off" spellcheck="false">
+      <div class="search-summary" id="searchSummary">Type to search all tasks</div>
+      <div class="search-results" id="searchResults"></div>
+    </dialog>
     <dialog id="helpDialog" class="help-dialog" aria-labelledby="helpTitle">
       <div class="help-header"><h2 id="helpTitle">How to Use Five</h2><button type="button" class="dialog-close" id="closeHelp" aria-label="Close help">✕</button></div>
       <div class="help-body">
@@ -1027,6 +1046,11 @@
       const importFile = document.getElementById('importFile');
       const statusElement = document.getElementById('status');
       const shortcutHelp = document.getElementById('shortcutHelp');
+      const searchButton = document.getElementById('searchButton');
+      const searchDialog = document.getElementById('searchDialog');
+      const searchInput = document.getElementById('searchInput');
+      const searchSummary = document.getElementById('searchSummary');
+      const searchResults = document.getElementById('searchResults');
       const helpButton = document.getElementById('helpButton');
       const helpDialog = document.getElementById('helpDialog');
       const shortcutDialog = document.getElementById('shortcutDialog');
@@ -1791,23 +1815,9 @@ Current data will be preserved first.`)) return;
         });
       }
       function setSystemFilter(value){systemFilter=systemFilter===value?'':value;if(systemFilter)selectedProjectFilter='';if(editingId){editingId=null;editSnapshot=null;newDraftId=null;}render();}
-      function updateContextScrollControls(){
-        const desktop=matchMedia('(min-width: 701px)').matches;
-        const overflowing=desktop&&projectFilterBar.scrollWidth>projectFilterBar.clientWidth+2;
-        projectFilterShell.classList.toggle('desktop-overflow',overflowing);
-        contextScrollLeft.disabled=!overflowing||projectFilterBar.scrollLeft<=2;
-        contextScrollRight.disabled=!overflowing||projectFilterBar.scrollLeft>=projectFilterBar.scrollWidth-projectFilterBar.clientWidth-2;
-      }
-      function scrollContexts(direction){
-        const distance=Math.max(180,Math.round(projectFilterBar.clientWidth*.65));
-        projectFilterBar.scrollBy({left:direction*distance,behavior:'smooth'});
-      }
-      function revealSelectedContextChip(){
-        if(!matchMedia('(min-width: 701px)').matches)return;
-        const selected=projectFilterBar.querySelector('.project-chip.active');
-        selected?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
-        requestAnimationFrame(updateContextScrollControls);
-      }
+      function updateContextScrollControls(){const desktop=matchMedia('(min-width: 701px)').matches;const overflowing=desktop&&projectFilterBar.scrollWidth>projectFilterBar.clientWidth+2;projectFilterShell.classList.toggle('desktop-overflow',overflowing);contextScrollLeft.disabled=!overflowing||projectFilterBar.scrollLeft<=2;contextScrollRight.disabled=!overflowing||projectFilterBar.scrollLeft>=projectFilterBar.scrollWidth-projectFilterBar.clientWidth-2;}
+      function scrollContexts(direction){const distance=Math.max(180,Math.round(projectFilterBar.clientWidth*.65));projectFilterBar.scrollBy({left:direction*distance,behavior:'smooth'});}
+      function revealSelectedContextChip(){if(!matchMedia('(min-width: 701px)').matches)return;const selected=projectFilterBar.querySelector('.project-chip.active');selected?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});requestAnimationFrame(updateContextScrollControls);}
       function createSystemChip(label,value,count,className){const button=document.createElement('button');button.type='button';button.className=`project-chip ${className}${systemFilter===value?' active':''}`;button.setAttribute('aria-pressed',String(systemFilter===value));const text=document.createElement('span');text.textContent=label;button.appendChild(text);if(count!=null){const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=count;button.appendChild(badge);}button.addEventListener('click',()=>setSystemFilter(value));return button;}
       function inboxTasks(){return allTasks().filter(task=>!task.taskDate&&!task.pinned);}
       function todayTasks(){const today=todayLocal();return allTasks().filter(task=>task.taskDate&&task.taskDate<=today);}
@@ -1858,6 +1868,12 @@ Current data will be preserved first.`)) return;
         renderProjectFilter();
       }
 
+      function taskSearchStatus(task){return task.archived?'Archive':task.waiting?'Waiting':task.list==='active'?'Active':'All';}
+      function taskSearchText(task){return [task.title,task.description,task.requestor,...task.actions.map(action=>action.text)].join(' ').toLocaleLowerCase();}
+      function searchMatchHint(task,query){const fields=[[task.requestor,'Context'],[task.title,'Title'],[task.description,'Description'],...task.actions.map(action=>[action.text,'Action'])];const found=fields.find(([value])=>String(value||'').toLocaleLowerCase().includes(query));if(!found)return '';const compact=String(found[0]||'').replace(/\s+/g,' ').trim();return `${found[1]}: ${compact}`;}
+      function openSearchResult(task){searchDialog.close();editingId=null;editSnapshot=null;newDraftId=null;inboxReviewMode=false;systemFilter='';selectedProjectFilter='';currentView=task.archived?'archive':task.waiting?'waiting':task.list==='active'?'active':'all';render();requestAnimationFrame(()=>tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}));}
+      function renderSearchResults(){const query=searchInput.value.trim().toLocaleLowerCase();searchResults.replaceChildren();if(!query){searchSummary.textContent='Type to search all tasks';return;}const matches=tasks.filter(task=>taskSearchText(task).includes(query));searchSummary.textContent=`${matches.length} match${matches.length===1?'':'es'} across All, Active, Waiting and Archive`;if(!matches.length){const empty=document.createElement('div');empty.className='search-empty';empty.textContent='No matching tasks';searchResults.appendChild(empty);return;}matches.forEach(task=>{const button=document.createElement('button');button.type='button';button.className='search-result';const main=document.createElement('span');main.className='search-result-main';const title=document.createElement('span');title.className='search-result-title';title.textContent=task.title.trim()||'Untitled task';const hint=document.createElement('span');hint.className='search-result-match';hint.textContent=searchMatchHint(task,query);main.append(title,hint);const meta=document.createElement('span');meta.className='search-result-meta';meta.textContent=`${taskSearchStatus(task)} · ${task.requestor||'@CONTEXT'}`;button.append(main,meta);button.addEventListener('click',()=>openSearchResult(task));searchResults.appendChild(button);});}
+      function openSearch(){searchInput.value='';renderSearchResults();searchDialog.showModal();requestAnimationFrame(()=>searchInput.focus());}
       function makeButton(text, className, handler) {
         const button = document.createElement('button');
         button.type = 'button';
@@ -2617,10 +2633,7 @@ Current data will be preserved first.`)) return;
         event.preventDefault();
         addTaskButton.click();
       });
-      contextScrollLeft.addEventListener('click',()=>scrollContexts(-1));
-      contextScrollRight.addEventListener('click',()=>scrollContexts(1));
-      projectFilterBar.addEventListener('scroll',updateContextScrollControls,{passive:true});
-      window.addEventListener('resize',()=>requestAnimationFrame(updateContextScrollControls),{passive:true});
+      contextScrollLeft.addEventListener('click',()=>scrollContexts(-1));contextScrollRight.addEventListener('click',()=>scrollContexts(1));projectFilterBar.addEventListener('scroll',updateContextScrollControls,{passive:true});window.addEventListener('resize',()=>requestAnimationFrame(updateContextScrollControls),{passive:true});
       addContextButton.addEventListener('click',addContext);newContextName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addContext();}});
       document.getElementById('closeProjectFilter').addEventListener('click',()=>projectFilterDialog.close());
       projectFilterDialog.addEventListener('cancel',event=>{event.preventDefault();projectFilterDialog.close();});
@@ -2635,6 +2648,11 @@ Current data will be preserved first.`)) return;
       });
       document.getElementById('closeRecovery').addEventListener('click',()=>recoveryDialog.close());
       document.getElementById('closeSnapshotPreview').addEventListener('click',()=>snapshotPreviewDialog.close());
+      searchButton.addEventListener('click',openSearch);
+      searchInput.addEventListener('input',renderSearchResults);
+      document.getElementById('closeSearch').addEventListener('click',()=>searchDialog.close());
+      searchDialog.addEventListener('cancel',event=>{event.preventDefault();searchDialog.close();});
+      searchDialog.addEventListener('click',event=>{if(event.target===searchDialog)searchDialog.close();});
       helpButton.addEventListener('click',()=>helpDialog.showModal());
       document.getElementById('closeHelp').addEventListener('click',()=>helpDialog.close());
       helpDialog.addEventListener('cancel',event=>{event.preventDefault();helpDialog.close();});
