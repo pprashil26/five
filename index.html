@@ -317,13 +317,14 @@
     .active-time-summary { flex:0 0 auto; display:none; min-height:22px; margin:-2px 0 5px; padding:3px 8px; border-radius:7px; background:#f0f3f8; color:#536b93; font-size:10px; font-weight:760; text-align:center; }
     .active-time-summary.visible { display:block; }
 
-    .project-filter-bar { display:none; flex:0 0 auto; align-items:center; gap:4px; min-height:30px; margin:-1px 0 6px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
-    .project-filter-bar.visible { display:flex; }
+    .project-filter-shell { display:none; flex:0 0 auto; align-items:center; gap:3px; min-width:0; margin:-1px 0 6px; }
+    .project-filter-shell.visible { display:flex; }
+    .project-filter-bar { display:flex; flex:1 1 auto; align-items:center; gap:4px; min-width:0; min-height:30px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; }
     .project-filter-bar::-webkit-scrollbar { display:none; }
+    .context-scroll-button { display:none; flex:0 0 24px; width:24px; min-width:24px; min-height:26px; border:1px solid var(--line); border-radius:7px; background:var(--surface); color:var(--accent); padding:0; font-size:14px; line-height:1; }
+    .context-scroll-button:disabled { opacity:.25; }
     @media (min-width:701px) {
-      .project-filter-bar.desktop-overflow-end { -webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 22px),transparent 100%); mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 22px),transparent 100%); }
-      .project-filter-bar.desktop-overflow-start { -webkit-mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 100%); mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 100%); }
-      .project-filter-bar.desktop-overflow-start.desktop-overflow-end { -webkit-mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%); mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%); }
+      .project-filter-shell.desktop-overflow .context-scroll-button { display:inline-grid; place-items:center; }
     }
     .project-chip { flex:0 0 auto; min-height:26px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:3px 8px; font-size:10px; font-weight:720; white-space:nowrap; }
     .project-chip.active { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
@@ -898,7 +899,11 @@
     </header>
 
     <div class="active-time-summary" id="activeTimeSummary" aria-live="polite"></div>
-    <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter All tasks by context"></div>
+    <div class="project-filter-shell" id="projectFilterShell">
+      <button type="button" class="context-scroll-button" id="contextScrollLeft" aria-label="Scroll contexts left" title="Scroll contexts left">‹</button>
+      <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter All tasks by context"></div>
+      <button type="button" class="context-scroll-button" id="contextScrollRight" aria-label="Scroll contexts right" title="Scroll contexts right">›</button>
+    </div>
     <section class="tasks" id="tasks" aria-live="polite"></section>
 
     <footer class="footer">
@@ -997,7 +1002,10 @@
       const archiveTab = document.getElementById('archiveTab');
       const toggleActionsButton = document.getElementById('toggleActions');
       const activeTimeSummary = document.getElementById('activeTimeSummary');
+      const projectFilterShell=document.getElementById('projectFilterShell');
       const projectFilterBar=document.getElementById('projectFilterBar');
+      const contextScrollLeft=document.getElementById('contextScrollLeft');
+      const contextScrollRight=document.getElementById('contextScrollRight');
       const projectFilterDialog=document.getElementById('projectFilterDialog');
       const projectFilterList=document.getElementById('projectFilterList');
       const newContextName=document.getElementById('newContextName');
@@ -1783,17 +1791,22 @@ Current data will be preserved first.`)) return;
         });
       }
       function setSystemFilter(value){systemFilter=systemFilter===value?'':value;if(systemFilter)selectedProjectFilter='';if(editingId){editingId=null;editSnapshot=null;newDraftId=null;}render();}
-      function updateContextBarOverflow(){
+      function updateContextScrollControls(){
         const desktop=matchMedia('(min-width: 701px)').matches;
-        const overflowing=desktop&&projectFilterBar.scrollWidth>projectFilterBar.clientWidth+1;
-        projectFilterBar.classList.toggle('desktop-overflow-start',overflowing&&projectFilterBar.scrollLeft>2);
-        projectFilterBar.classList.toggle('desktop-overflow-end',overflowing&&projectFilterBar.scrollLeft<projectFilterBar.scrollWidth-projectFilterBar.clientWidth-2);
+        const overflowing=desktop&&projectFilterBar.scrollWidth>projectFilterBar.clientWidth+2;
+        projectFilterShell.classList.toggle('desktop-overflow',overflowing);
+        contextScrollLeft.disabled=!overflowing||projectFilterBar.scrollLeft<=2;
+        contextScrollRight.disabled=!overflowing||projectFilterBar.scrollLeft>=projectFilterBar.scrollWidth-projectFilterBar.clientWidth-2;
+      }
+      function scrollContexts(direction){
+        const distance=Math.max(180,Math.round(projectFilterBar.clientWidth*.65));
+        projectFilterBar.scrollBy({left:direction*distance,behavior:'smooth'});
       }
       function revealSelectedContextChip(){
         if(!matchMedia('(min-width: 701px)').matches)return;
         const selected=projectFilterBar.querySelector('.project-chip.active');
-        if(selected)selected.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
-        requestAnimationFrame(updateContextBarOverflow);
+        selected?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
+        requestAnimationFrame(updateContextScrollControls);
       }
       function createSystemChip(label,value,count,className){const button=document.createElement('button');button.type='button';button.className=`project-chip ${className}${systemFilter===value?' active':''}`;button.setAttribute('aria-pressed',String(systemFilter===value));const text=document.createElement('span');text.textContent=label;button.appendChild(text);if(count!=null){const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=count;button.appendChild(badge);}button.addEventListener('click',()=>setSystemFilter(value));return button;}
       function inboxTasks(){return allTasks().filter(task=>!task.taskDate&&!task.pinned);}
@@ -1802,8 +1815,8 @@ Current data will be preserved first.`)) return;
         projectFilterBar.replaceChildren();
         const projects=allProjectCounts();
         const visible=currentView==='all'&&!editingId;
-        projectFilterBar.classList.toggle('visible',visible);
-        if(!visible)return;
+        projectFilterShell.classList.toggle('visible',visible);
+        if(!visible){projectFilterShell.classList.remove('desktop-overflow');return;}
         const allChip=createProjectChip('All','',allTasks().length);if(systemFilter)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
         projectFilterBar.appendChild(createSystemChip('Inbox','inbox',inboxTasks().length,'inbox-chip'));
         if(inboxTasks().length){const review=document.createElement('button');review.type='button';review.className='project-chip inbox-review-chip';review.textContent='Review';review.setAttribute('aria-label',`Review ${inboxTasks().length} Inbox task${inboxTasks().length===1?'':'s'}`);review.addEventListener('click',startInboxReview);projectFilterBar.appendChild(review);}
@@ -1811,7 +1824,7 @@ Current data will be preserved first.`)) return;
         projectFilterBar.appendChild(createSystemChip('Dated','dated',allTasks().filter(task=>task.taskDate).length,'dated-chip'));
         const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent=matchMedia('(min-width: 701px)').matches?'+ Contexts':'+';picker.setAttribute('aria-label','Manage contexts');picker.title='Add, rename, or reorder contexts';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
         projects.forEach(([name,count])=>projectFilterBar.appendChild(createProjectChip(name,name,count)));
-        requestAnimationFrame(()=>{updateContextBarOverflow();revealSelectedContextChip();});
+        requestAnimationFrame(()=>{updateContextScrollControls();revealSelectedContextChip();});
       }
       function updateHeader() {
         document.body.classList.toggle('compact-card-mode',!showTaskDetails);
@@ -2604,8 +2617,10 @@ Current data will be preserved first.`)) return;
         event.preventDefault();
         addTaskButton.click();
       });
-      projectFilterBar.addEventListener('scroll',updateContextBarOverflow,{passive:true});
-      window.addEventListener('resize',()=>requestAnimationFrame(updateContextBarOverflow),{passive:true});
+      contextScrollLeft.addEventListener('click',()=>scrollContexts(-1));
+      contextScrollRight.addEventListener('click',()=>scrollContexts(1));
+      projectFilterBar.addEventListener('scroll',updateContextScrollControls,{passive:true});
+      window.addEventListener('resize',()=>requestAnimationFrame(updateContextScrollControls),{passive:true});
       addContextButton.addEventListener('click',addContext);newContextName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addContext();}});
       document.getElementById('closeProjectFilter').addEventListener('click',()=>projectFilterDialog.close());
       projectFilterDialog.addEventListener('cancel',event=>{event.preventDefault();projectFilterDialog.close();});
