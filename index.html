@@ -410,6 +410,10 @@
     .task-date-label { flex:0 0 auto; color:#765b00; white-space:nowrap; }
     .task-metadata-dot { color:#a4a9b0; }
     .task-metadata-row .task-actions-toggle { margin-top:0; }
+    .mobile-card-tools { display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin-top:6px; padding:6px 0 1px; border-top:1px solid var(--line); }
+    .mobile-card-tool { min-height:30px; border:1px solid var(--line); border-radius:7px; background:#f7f8fa; color:var(--muted); padding:4px 8px; font-size:10px; font-weight:760; }
+    .mobile-card-tool.primary { border-color:#cbd8f4; background:var(--accent-soft); color:var(--accent); }
+    .mobile-card-tool.pinned { border-color:#cbd8f4; color:var(--accent); }
     .task-date-field { display:grid; gap:3px; margin-bottom:6px; }
     .task-date-field label { color:var(--muted); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
     .task-date-controls { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px; }
@@ -963,7 +967,7 @@
         <section class="help-section"><h3>3. Activate only a few tasks</h3><p>Tap <span class="help-key">⚡</span> on an Inbox task to move it directly to Active. Tracked holds monitored work that is not currently being executed. Active can hold all current work, Focus remains limited to five tasks, and Today Focus highlights no more than two must-do tasks. Tracked and Active cards share Not Started, Started, and Completed progress controls. Duration estimates show the Active workload.</p></section>
         <section class="help-section"><h3>4. Use dates sparingly</h3><p><span class="help-key">Today</span> shows overdue and due-today tasks. <span class="help-key">Dated</span> shows every dated Inbox task. Leave flexible work undated so the lists stay meaningful.</p></section>
         <section class="help-section"><h3>5. Work by context</h3><p>Contexts group tasks by where or how they can be done, such as @CALL, @COMPUTER, @ONLINE, @ERRANDS, @HOME, and @AGENDA. Use <span class="help-key">+ Contexts</span> on desktop, or the compact <span class="help-key">+</span> on mobile, to add, rename, or reorder contexts.</p></section>
-        <section class="help-section"><h3>6. Complete and organise</h3><p>Open a task with <span class="help-key">✎</span> to add descriptions, actions, dates, duration, or change status. Use Waiting for delegated or blocked work, and Archive for completed or retained tasks.</p></section>
+        <section class="help-section"><h3>6. Complete and organise</h3><p>On mobile, expand the date/action row to access secondary tools such as Move to Active, Pin, and Edit while keeping task titles clear. Open Edit to add descriptions, actions, dates, duration, or change status. Use Waiting for delegated or blocked work, and Archive for completed or retained tasks.</p></section>
         <section class="help-section"><h3>7. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
         <section class="help-section"><h3>Keyboard</h3><p><span class="help-key">T</span> new task · <span class="help-key">Enter</span> capture and close · <span class="help-key">Ctrl/Cmd + Enter</span> capture and continue · <span class="help-key">Esc</span> cancel.</p></section>
         <section class="help-section help-philosophy"><h3>Five Philosophy</h3><p>Capture quickly. Track intentionally. Focus on five. Finish today's two.</p></section>
@@ -1993,7 +1997,6 @@ Current data will be preserved first.`)) return;
       function createView(task, index) {
         const view = document.createElement('div');
         view.className = 'task-view';
-
         const handle = document.createElement('button');
         handle.type = 'button';
         handle.className = 'drag-handle';
@@ -2001,44 +2004,53 @@ Current data will be preserved first.`)) return;
         handle.setAttribute('aria-label', `Reorder ${task.title.trim() || `task ${index + 1}`}`);
         handle.title = 'Hold and drag to reorder';
         handle.addEventListener('pointerdown', event => startReorder(event, task.id));
-
         const content = document.createElement('div');
         content.className = 'task-content';
-
-        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';if(currentView==='all'){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title='Quick Activate';headingActions.appendChild(quick);}if(currentView==='tracked'||currentView==='active'){const progress=makeButton(progressLabel(task.progressStatus),`progress-status ${task.progressStatus}`,()=>cycleProgress(task.id));progress.setAttribute('aria-label',`Progress: ${progressLabel(task.progressStatus)}`);progress.title='Change progress status';headingActions.appendChild(progress);}if(currentView==='active'){if(task.focus){const today=makeButton(task.todayFocus?'●':'○',`today-focus-task${task.todayFocus?' selected':''}`,()=>toggleTodayFocus(task.id));today.setAttribute('aria-label',task.todayFocus?'Remove from Today Focus':'Add to Today Focus');today.title=task.todayFocus?'Remove from Today Focus':todayFocusedTasks().length>=MAX_TODAY_FOCUS_TASKS?'Today Focus is full':'Must do today';headingActions.appendChild(today);}const focus=makeButton(task.focus?'★':'☆',`focus-task${task.focus?' focused':''}`,()=>toggleTaskFocus(task.id));focus.setAttribute('aria-label',task.focus?'Remove from Focus':'Add to Focus');focus.title=task.focus?'Remove from Focus':focusedTasks().length>=MAX_FOCUS_TASKS?'Focus is full':'Add to Focus';headingActions.appendChild(focus);}const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
-        if (currentView === 'active' && task.durationMinutes) {
-          const duration = document.createElement('div');
-          duration.className = 'task-duration';
-          duration.textContent = `⏱ ${durationLabel(task.durationMinutes)}`;
-          content.appendChild(duration);
-        }
-
-        if (showTaskDetails && task.description.trim()) {
-          const description = document.createElement('p');
-          description.className = 'description';
-          description.textContent = task.description;
-          content.appendChild(description);
-        }
-
+        const mobileCondensed = mobileFooterMode && (currentView==='all' || currentView==='active');
+        const headingRow=document.createElement('div');headingRow.className='task-heading-row';
+        const headingMain=document.createElement('div');headingMain.className='task-heading-main';
+        const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(title);
+        const headingActions=document.createElement('div');headingActions.className='task-heading-actions';
+        if(currentView==='all'&&!mobileCondensed){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title='Quick Activate';headingActions.appendChild(quick);}
+        if(currentView==='tracked'||currentView==='active'){const progress=makeButton(progressLabel(task.progressStatus),`progress-status ${task.progressStatus}`,()=>cycleProgress(task.id));progress.setAttribute('aria-label',`Progress: ${progressLabel(task.progressStatus)}`);progress.title='Change progress status';headingActions.appendChild(progress);}
+        if(currentView==='active'){if(task.focus){const today=makeButton(task.todayFocus?'●':'○',`today-focus-task${task.todayFocus?' selected':''}`,()=>toggleTodayFocus(task.id));today.setAttribute('aria-label',task.todayFocus?'Remove from Today Focus':'Add to Today Focus');today.title=task.todayFocus?'Remove from Today Focus':todayFocusedTasks().length>=MAX_TODAY_FOCUS_TASKS?'Today Focus is full':'Must do today';headingActions.appendChild(today);}const focus=makeButton(task.focus?'★':'☆',`focus-task${task.focus?' focused':''}`,()=>toggleTaskFocus(task.id));focus.setAttribute('aria-label',task.focus?'Remove from Focus':'Add to Focus');focus.title=task.focus?'Remove from Focus':focusedTasks().length>=MAX_FOCUS_TASKS?'Focus is full':'Add to Focus';headingActions.appendChild(focus);}
+        const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';
+        const openEditor=()=>beginEditing(task);
+        const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';
+        if(!mobileCondensed)headingActions.append(pin,edit);
+        headingRow.append(headingMain,headingActions);
+        view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});
+        content.appendChild(headingRow);
+        if (currentView === 'active' && task.durationMinutes) {const duration=document.createElement('div');duration.className='task-duration';duration.textContent=`⏱ ${durationLabel(task.durationMinutes)}`;content.appendChild(duration);}
+        if (showTaskDetails && task.description.trim()) {const description=document.createElement('p');description.className='description';description.textContent=task.description;content.appendChild(description);}
         const taskDateLabel=localTaskDateLabel(task.taskDate);
-        if (task.actions.length) {
+        const expanded=expandedCompactTaskActions.has(task.id);
+        if(mobileCondensed){
+          const metadata=document.createElement('div');metadata.className='task-metadata-row';
+          if(taskDateLabel){const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);const dot=document.createElement('span');dot.className='task-metadata-dot';dot.textContent='·';metadata.appendChild(dot);}
+          const toggle=document.createElement('button');toggle.type='button';toggle.className='task-actions-toggle';toggle.textContent=`${expanded?'▼':'▶'} ${task.actions.length} action${task.actions.length===1?'':'s'} · tools`;toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-controls',`task-actions-${task.id}`);toggle.addEventListener('click',event=>{event.stopPropagation();toggleCompactTaskActions(task.id);});metadata.appendChild(toggle);content.appendChild(metadata);
+          if(expanded){
+            const tools=document.createElement('div');tools.className='mobile-card-tools';
+            if(currentView==='all'){const quick=makeButton('⚡ Move to Active','mobile-card-tool primary',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');tools.appendChild(quick);}
+            const mobilePin=makeButton(task.pinned?'📌 Unpin':'📌 Pin',`mobile-card-tool${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));
+            const mobileEdit=makeButton('✎ Edit','mobile-card-tool',openEditor);
+            tools.append(mobilePin,mobileEdit);content.appendChild(tools);
+            if(task.actions.length)content.appendChild(renderActionRows(task));
+          }
+        } else if (task.actions.length) {
           if (showTaskDetails) {
-            if (taskDateLabel) { const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata); }
+            if (taskDateLabel) {const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata);}
             content.appendChild(renderActionRows(task));
           } else {
-            const expanded=expandedCompactTaskActions.has(task.id);
             const metadata=document.createElement('div');metadata.className='task-metadata-row';
-            if (taskDateLabel) { const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);const dot=document.createElement('span');dot.className='task-metadata-dot';dot.textContent='·';metadata.appendChild(dot); }
+            if (taskDateLabel) {const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);const dot=document.createElement('span');dot.className='task-metadata-dot';dot.textContent='·';metadata.appendChild(dot);}
             const toggle=document.createElement('button');toggle.type='button';toggle.className='task-actions-toggle';toggle.textContent=`${expanded?'▼':'▶'} ${task.actions.length} action${task.actions.length===1?'':'s'}`;toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-controls',`task-actions-${task.id}`);toggle.addEventListener('click',event=>{event.stopPropagation();toggleCompactTaskActions(task.id);});metadata.appendChild(toggle);content.appendChild(metadata);
             if (expanded) content.appendChild(renderActionRows(task));
           }
-        } else if (taskDateLabel) {
-          const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata);
-        }
-        view.append(handle, content);
+        } else if (taskDateLabel) {const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata);}
+        view.append(handle,content);
         return view;
       }
-
       function startReorder(event, taskId) {
         if (event.button !== undefined && event.button !== 0) return;
         if (!['all','tracked','active'].includes(currentView)) return;
