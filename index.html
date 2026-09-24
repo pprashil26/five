@@ -930,6 +930,33 @@
       .projects-empty { padding:34px 18px; }
       html.mobile-footer #mobileProjectsButton { display:inline-flex !important; align-items:center; color:var(--accent); }
     }
+
+    .today-plan-panel{display:none;position:fixed;z-index:8;top:8px;bottom:8px;left:calc(50% + 310px);width:200px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.97);box-shadow:0 4px 18px rgba(29,35,42,.07);overflow:hidden;color:var(--text)}
+    .today-plan-panel.collapsed{width:34px}
+    .today-plan-panel-header{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:38px;padding:5px 6px;border-bottom:1px solid var(--line);background:#fafaf9}
+    .today-plan-panel-title{min-width:0;font-size:11px;font-weight:820;letter-spacing:.25px;text-transform:uppercase;white-space:nowrap}
+    .today-plan-collapse{flex:0 0 26px;width:26px;min-width:26px;min-height:26px;border:0;background:transparent;color:var(--muted);padding:0;font-size:12px}
+    .today-plan-panel.collapsed .today-plan-panel-title,.today-plan-panel.collapsed .today-plan-scroll{display:none}
+    .today-plan-panel.collapsed .today-plan-panel-header{height:100%;padding:4px;align-items:flex-start;border-bottom:0}
+    .today-plan-panel.collapsed .today-plan-collapse{writing-mode:vertical-rl;width:26px;height:auto;min-height:92px;padding:7px 0;font-size:10px;letter-spacing:.4px;text-transform:uppercase}
+    .today-plan-scroll{height:calc(100% - 38px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+    .today-plan-row{display:grid;grid-template-columns:42px minmax(0,1fr);min-height:38px;border-bottom:1px solid #ece8e1}
+    .today-plan-row.current{background:#fff8dc}
+    .today-plan-time{padding:7px 5px 5px;color:#536170;font-size:10px;font-weight:780;text-align:right;white-space:nowrap}
+    .today-plan-input{width:100%;min-width:0;min-height:37px;border:0;border-left:1px solid #ece8e1;border-radius:0;background:transparent;color:var(--text);padding:5px 6px;font-size:11px;line-height:1.25;outline:none}
+    .today-plan-input:focus{background:#fff;box-shadow:inset 2px 0 0 rgba(40,88,199,.35)}
+    .today-plan-dialog{width:min(100%,600px);max-width:600px;height:100dvh;max-height:100dvh;margin:0 auto;border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:var(--surface);color:var(--text);overflow:hidden}
+    .today-plan-dialog[open]{display:flex;flex-direction:column}
+    .today-plan-dialog::backdrop{background:rgba(29,35,42,.34)}
+    .today-plan-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto;min-height:38px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+    .today-plan-dialog-header h2{margin:0;font-size:17px}
+    .today-plan-dialog-date{color:var(--muted);font-size:10px;font-weight:650}
+    .today-plan-dialog .today-plan-scroll{height:auto;flex:1 1 auto;min-height:0;margin-top:2px}
+    .today-plan-dialog .today-plan-row{min-height:44px}
+    .today-plan-dialog .today-plan-input{min-height:43px;font-size:16px;padding:7px 8px}
+    #mobilePlanButton{display:none}
+    @media(min-width:1020px) and (pointer:fine){.today-plan-panel{display:block}}
+    @media(max-width:700px),(pointer:coarse){html.mobile-footer #mobilePlanButton{display:inline-flex!important;align-items:center;color:var(--accent)}}
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
@@ -976,6 +1003,7 @@
     <footer class="footer">
       <div class="footer-actions">
         <button type="button" id="mobileProjectsButton" aria-label="Open Projects" title="Projects">Projects</button>
+        <button type="button" id="mobilePlanButton" aria-label="Open Today Plan" title="Today Plan">Plan</button>
         <button type="button" id="backupMenuButton">Backup</button>
         <button type="button" id="quickBackup">Quick Backup</button>
         <button type="button" id="exportData">Export backup</button>
@@ -993,7 +1021,7 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div>
-    <dialog id="desktopMenuDialog" class="desktop-menu-dialog"><div class="desktop-menu-header"><h2>Five Menu</h2><button type="button" class="dialog-close" id="closeDesktopMenu">✕</button></div><div class="desktop-menu-actions"><button id="menuProjects" class="wide">Projects</button><button id="menuSearch" class="wide">⌕ Search tasks</button><button id="menuQuickBackup">Quick Backup</button><button id="menuExport">Export Backup</button><button id="menuImport">Import Backup</button><button id="menuRecovery">Recovery</button><button id="menuHelp">Help</button><button id="menuShortcuts">Keyboard Shortcuts</button></div><div class="desktop-menu-health" id="desktopMenuHealth">Storage status available after startup</div></dialog>
+    <dialog id="desktopMenuDialog" class="desktop-menu-dialog"><div class="desktop-menu-header"><h2>Five Menu</h2><button type="button" class="dialog-close" id="closeDesktopMenu">✕</button></div><div class="desktop-menu-actions"><button id="menuProjects" class="wide">Projects</button><button id="menuPlan" class="wide">Today Plan</button><button id="menuSearch" class="wide">⌕ Search tasks</button><button id="menuQuickBackup">Quick Backup</button><button id="menuExport">Export Backup</button><button id="menuImport">Import Backup</button><button id="menuRecovery">Recovery</button><button id="menuHelp">Help</button><button id="menuShortcuts">Keyboard Shortcuts</button></div><div class="desktop-menu-health" id="desktopMenuHealth">Storage status available after startup</div></dialog>
     <dialog id="projectsDialog" class="projects-dialog"><div class="projects-header"><h2>Projects</h2><button type="button" class="dialog-close" id="closeProjects">✕</button></div><div class="projects-toolbar"><div class="projects-tabs"><button id="projectsListTab" class="projects-tab">Areas</button><button id="projectsTimelineTab" class="projects-tab active">Timeline</button></div><button id="addProject">+ Add</button></div><div id="projectsList" class="projects-list"></div><div id="projectEditor" class="project-editor hidden"></div></dialog><dialog id="projectTypeDialog" class="project-filter-dialog" aria-labelledby="projectTypeTitle"><div class="project-filter-header"><h2 id="projectTypeTitle">Add to Projects</h2><button type="button" class="dialog-close" id="closeProjectType" aria-label="Close">✕</button></div><div class="project-filter-list"><button type="button" id="addAreaChoice" class="project-filter-option"><span>Area</span><span>Ongoing responsibility</span></button><button type="button" id="addTimelineChoice" class="project-filter-option"><span>Timeline Project</span><span>Time-bound initiative</span></button></div></dialog>
     <dialog id="searchDialog" class="search-dialog" aria-labelledby="searchTitle">
       <div class="search-header"><h2 id="searchTitle">Search tasks</h2><button type="button" class="dialog-close" id="closeSearch" aria-label="Close search">✕</button></div>
@@ -1010,7 +1038,8 @@
         <section class="help-section"><h3>4. Use dates sparingly</h3><p><span class="help-key">Today</span> shows overdue and due-today tasks. <span class="help-key">Dated</span> shows every dated All task. Leave flexible work undated so the lists stay meaningful.</p></section>
         <section class="help-section"><h3>5. Work by context</h3><p>Contexts group tasks by where or how they can be done, such as @CALL, @COMPUTER, @ONLINE, @ERRANDS, @HOME, and @AGENDA. Use <span class="help-key">+ Contexts</span> on desktop, or the compact <span class="help-key">+</span> on mobile, to add, rename, or reorder contexts.</p></section>
         <section class="help-section"><h3>6. Complete and organise</h3><p>Open a task with <span class="help-key">✎</span> to add descriptions, actions, dates, duration, or change status. Use Waiting for delegated or blocked work, and Archive for completed or retained tasks.</p></section>
-        <section class="help-section"><h3>7. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
+        <section class="help-section"><h3>7. Sketch today</h3><p>Use <span class="help-key">Today Plan</span> as a lightweight execution whiteboard with 30-minute blocks. It is intentionally separate from tasks, projects and calendar scheduling.</p></section>
+        <section class="help-section"><h3>8. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
         <section class="help-section"><h3>Keyboard</h3><p><span class="help-key">T</span> new task · <span class="help-key">Enter</span> capture and close · <span class="help-key">Ctrl/Cmd + Enter</span> capture and continue · <span class="help-key">Esc</span> cancel.</p></section>
         <section class="help-section help-philosophy"><h3>Five Philosophy</h3><p>Capture quickly. Track intentionally. Focus on five. Finish today's two.</p></section>
       </div>
@@ -1026,7 +1055,7 @@
       <div class="backup-sheet-handle" aria-hidden="true"></div>
       <div class="backup-sheet-header"><h2 id="backupSheetTitle">Backup</h2><button type="button" class="backup-sheet-close" id="closeBackupSheet" aria-label="Close backup menu">✕</button></div>
       <div class="backup-sheet-actions">
-        <button type="button" class="backup-sheet-action" id="sheetQuickBackup"><span class="backup-sheet-icon">↓</span><span class="backup-sheet-copy"><strong>Quick Backup</strong><span>Download a verified task backup</span></span></button>
+        <button type="button" class="backup-sheet-action" id="sheetQuickBackup"><span class="backup-sheet-icon">↓</span><span class="backup-sheet-copy"><strong>Quick Backup</strong><span>Download a verified Five data backup</span></span></button>
         <button type="button" class="backup-sheet-action" id="sheetImportBackup"><span class="backup-sheet-icon">↑</span><span class="backup-sheet-copy"><strong>Import Backup</strong><span>Restore tasks from a JSON backup</span></span></button>
       </div>
       <div class="backup-sheet-meta" id="backupSheetMeta">No backup recorded</div>
@@ -1041,6 +1070,15 @@
       <div class="snapshot-preview-body" id="snapshotPreviewBody"></div>
     </dialog>
   </main>
+
+  <aside id="todayPlanPanel" class="today-plan-panel" aria-label="Today Plan">
+    <div class="today-plan-panel-header"><span class="today-plan-panel-title">Today Plan</span><button type="button" id="toggleTodayPlanPanel" class="today-plan-collapse" aria-label="Collapse Today Plan">◀</button></div>
+    <div id="desktopTodayPlanRows" class="today-plan-scroll"></div>
+  </aside>
+  <dialog id="todayPlanDialog" class="today-plan-dialog" aria-labelledby="todayPlanTitle">
+    <div class="today-plan-dialog-header"><div><h2 id="todayPlanTitle">Today Plan</h2><div id="todayPlanDate" class="today-plan-dialog-date"></div></div><button type="button" class="dialog-close" id="closeTodayPlan" aria-label="Close Today Plan">✕</button></div>
+    <div id="mobileTodayPlanRows" class="today-plan-scroll"></div>
+  </dialog>
 
   <script>
     (async () => {
@@ -1071,6 +1109,7 @@
       const LAST_CAPTURE_CONTEXT_KEY='five.lastCaptureContext';
       const ACTIVE_SECTION_STATE_KEY='five.activeSections.v1';
       const PROJECTS_KEY='five.projects.v1'; const PROJECT_VIEW_KEY='five.projectView.v1';
+      const TODAY_PLAN_KEY='five.todayPlan.v1'; const TODAY_PLAN_COLLAPSED_KEY='five.todayPlanCollapsed.v1';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const trackedCountElement = document.getElementById('trackedCount');
@@ -1100,6 +1139,7 @@
       window.addEventListener('resize',applyMobileFooterMode,{passive:true});
       window.addEventListener('orientationchange',applyMobileFooterMode,{passive:true});
       const mobileProjectsButton = document.getElementById('mobileProjectsButton');
+      const mobilePlanButton=document.getElementById('mobilePlanButton'),todayPlanPanel=document.getElementById('todayPlanPanel'),todayPlanDialog=document.getElementById('todayPlanDialog'),desktopTodayPlanRows=document.getElementById('desktopTodayPlanRows'),mobileTodayPlanRows=document.getElementById('mobileTodayPlanRows'),todayPlanDate=document.getElementById('todayPlanDate');
       const backupMenuButton = document.getElementById('backupMenuButton');
       const backupSheet = document.getElementById('backupSheet');
       const backupSheetMeta = document.getElementById('backupSheetMeta');
@@ -1163,6 +1203,8 @@
       } catch {}
       let tasks = [];
       let projects=[];try{const saved=JSON.parse(localStorage.getItem(PROJECTS_KEY)||'[]');if(Array.isArray(saved))projects=saved.map(normaliseProject);}catch{}
+      const TODAY_PLAN_SLOTS=Array.from({length:31},(_,index)=>{const minutes=360+index*30;return `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;});
+      let todayPlan=loadTodayPlan();
       let projectView=localStorage.getItem(PROJECT_VIEW_KEY)==='areas'?'areas':'timeline';let editingProjectId=null;
       let activeSectionState={today:false,focus:false,other:true};
       try{Object.assign(activeSectionState,JSON.parse(localStorage.getItem(ACTIVE_SECTION_STATE_KEY)||'{}'));}catch{}
@@ -1435,7 +1477,7 @@
         const envelope = await finaliseEnvelope(currentRevision);
         const validation = validateDataPayload(envelope);
         if (!validation.valid) throw new Error(validation.issues.join('; '));
-        const data = { app:'Five', backupFormatVersion:2, exportedAt:new Date().toISOString(), sourceRevision:currentRevision, schemaVersion:ENVELOPE_SCHEMA_VERSION, checksum:envelope.checksum, tasks:envelope.tasks, projects:JSON.parse(JSON.stringify(projects)) };
+        const data = { app:'Five', backupFormatVersion:3, exportedAt:new Date().toISOString(), sourceRevision:currentRevision, schemaVersion:ENVELOPE_SCHEMA_VERSION, checksum:envelope.checksum, tasks:envelope.tasks, projects:JSON.parse(JSON.stringify(projects)), todayPlan:JSON.parse(JSON.stringify(todayPlan)) };
         const text = JSON.stringify(data, null, 2);
         JSON.parse(text);
         const blob = new Blob([text], { type:'application/json' });
@@ -1473,10 +1515,10 @@
         return new Promise((resolve,reject)=>{ transaction.oncomplete=resolve; transaction.onerror=()=>reject(transaction.error); transaction.onabort=()=>reject(transaction.error || new Error('Transaction aborted')); });
       }
       function combinedPayload() {
-        return { schemaVersion:2, savedAt:new Date().toISOString(), tasks:JSON.parse(JSON.stringify(tasks)), projects:JSON.parse(JSON.stringify(projects)) };
+        return { schemaVersion:2, savedAt:new Date().toISOString(), tasks:JSON.parse(JSON.stringify(tasks)), projects:JSON.parse(JSON.stringify(projects)), todayPlan:JSON.parse(JSON.stringify(todayPlan)) };
       }
       async function payloadChecksum(payload) {
-        const text=JSON.stringify({tasks:payload.tasks,projects:payload.projects||[]});
+        const checksumPayload={tasks:payload.tasks,projects:payload.projects||[]};if(Object.prototype.hasOwnProperty.call(payload,'todayPlan'))checksumPayload.todayPlan=normaliseTodayPlan(payload.todayPlan);const text=JSON.stringify(checksumPayload);
         if (!crypto?.subtle) return String(text.length);
         const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
         return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
@@ -1559,7 +1601,7 @@
 Current data will be preserved first.`)) return;
         try {
           await createRecoverySnapshot('before restore',true);
-          tasks=normaliseValidatedTasks(snapshot.tasks);projects=Array.isArray(snapshot.projects)?snapshot.projects.map(normaliseProject):[];localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));
+          tasks=normaliseValidatedTasks(snapshot.tasks);projects=Array.isArray(snapshot.projects)?snapshot.projects.map(normaliseProject):[];localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));if(Object.prototype.hasOwnProperty.call(snapshot,'todayPlan')){todayPlan=normaliseTodayPlan(snapshot.todayPlan);persistTodayPlan(false);renderTodayPlan();}
           await persistEnvelope({strict:true});
           editingId=null; currentView='all';
           render();
@@ -1621,6 +1663,13 @@ Current data will be preserved first.`)) return;
         } catch { showStatus('Recovery storage unavailable; export a backup'); }
       }
 
+      function normaliseTodayPlan(source){const next={};const value=source&&typeof source==='object'&&!Array.isArray(source)?source:{};TODAY_PLAN_SLOTS.forEach(slot=>{next[slot]=String(value[slot]||'').slice(0,300);});return next;}
+      function loadTodayPlan(){try{return normaliseTodayPlan(JSON.parse(localStorage.getItem(TODAY_PLAN_KEY)||'{}'));}catch{return normaliseTodayPlan({});}}
+      function persistTodayPlan(snapshot=true){try{const encoded=JSON.stringify(normaliseTodayPlan(todayPlan));localStorage.setItem(TODAY_PLAN_KEY,encoded);if(localStorage.getItem(TODAY_PLAN_KEY)!==encoded)throw new Error('Today Plan read-back failed');if(snapshot)scheduleRecoverySnapshot('Today Plan update');}catch{showStatus('Today Plan could not be saved');}}
+      function currentTodayPlanSlot(){const now=new Date(),minutes=now.getHours()*60+now.getMinutes(),rounded=Math.floor(minutes/30)*30;return `${String(Math.floor(rounded/60)).padStart(2,'0')}:${String(rounded%60).padStart(2,'0')}`;}
+      function createTodayPlanRows(host){host.replaceChildren();const current=currentTodayPlanSlot();TODAY_PLAN_SLOTS.forEach(slot=>{const row=document.createElement('label');row.className=`today-plan-row${slot===current?' current':''}`;row.dataset.slot=slot;const time=document.createElement('span');time.className='today-plan-time';time.textContent=slot;const input=document.createElement('input');input.type='text';input.className='today-plan-input';input.value=todayPlan[slot]||'';input.maxLength=300;input.setAttribute('aria-label',`Today Plan ${slot}`);input.autocomplete='off';input.addEventListener('input',()=>{todayPlan[slot]=input.value;const other=host===desktopTodayPlanRows?mobileTodayPlanRows:desktopTodayPlanRows;const counterpart=other.querySelector(`[data-slot="${slot}"] .today-plan-input`);if(counterpart&&counterpart.value!==input.value)counterpart.value=input.value;persistTodayPlan();});row.append(time,input);host.appendChild(row);});}
+      function renderTodayPlan(){createTodayPlanRows(desktopTodayPlanRows);createTodayPlanRows(mobileTodayPlanRows);todayPlanDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});const collapsed=localStorage.getItem(TODAY_PLAN_COLLAPSED_KEY)==='true';todayPlanPanel.classList.toggle('collapsed',collapsed);const toggle=document.getElementById('toggleTodayPlanPanel');toggle.textContent=collapsed?'Plan ▶':'◀';toggle.setAttribute('aria-label',collapsed?'Expand Today Plan':'Collapse Today Plan');if(!collapsed)requestAnimationFrame(()=>desktopTodayPlanRows.querySelector('.today-plan-row.current')?.scrollIntoView({block:'center'}));}
+      function openTodayPlan(){renderTodayPlan();if(!todayPlanDialog.open)todayPlanDialog.showModal();requestAnimationFrame(()=>mobileTodayPlanRows.querySelector('.today-plan-row.current')?.scrollIntoView({block:'center'}));}
       function normaliseProject(p){p=p&&typeof p==='object'?p:{};const type=p.type==='area'?'area':'timeline';return{id:typeof p.id==='string'&&p.id?p.id:(self.crypto?.randomUUID?.()||`project-${Date.now()}-${Math.random()}`),type,name:String(p.name||'').slice(0,200),status:['Active','Monitoring','Blocked','On Hold','Complete'].includes(p.status)?p.status:'Active',startDate:type==='timeline'&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.startDate||''))?p.startDate:'',milestone:type==='timeline'&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.milestone||''))?p.milestone:'',summary:String(p.summary||'').slice(0,500),vision:String(p.vision||p.summary||'').slice(0,500),notes:String(p.notes||'').slice(0,5000),createdAt:String(p.createdAt||new Date().toISOString()),updatedAt:String(p.updatedAt||new Date().toISOString())};}
       function saveProjects(message='Project saved'){localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));try{localStorage.setItem('five.projectsSignal.v1',JSON.stringify({at:Date.now(),writerId}));}catch{}showStatus(message);renderProjects();}
       function projectRank(s){return ['Active','Monitoring','Blocked','On Hold','Complete'].indexOf(s);}
@@ -1961,7 +2010,7 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.textContent = showTaskDetails ? 'Actions visible' : 'Compact view';
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
-        exportButton.disabled = tasks.length === 0;
+        exportButton.disabled = tasks.length === 0 && projects.length === 0 && !Object.values(todayPlan).some(value=>value.trim());
         const focusCount=focusedTasks().length;focusLimitSummary.textContent=`Today Focus ${todayFocusedTasks().length}/${MAX_TODAY_FOCUS_TASKS} · Focus ${focusCount}/${MAX_FOCUS_TASKS}`;focusLimitSummary.classList.toggle('visible',currentView==='active');
         activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
         activeTimeSummary.classList.toggle('visible',currentView==='active'&&plannedMinutes>0);
@@ -2653,11 +2702,12 @@ Current data will be preserved first.`)) return;
 
       function openProjectsDialog(){renderProjects();if(!projectsDialog.open)projectsDialog.showModal();}
       mobileProjectsButton.addEventListener('click',openProjectsDialog);
+      mobilePlanButton.addEventListener('click',openTodayPlan);document.getElementById('closeTodayPlan').addEventListener('click',()=>todayPlanDialog.close());todayPlanDialog.addEventListener('cancel',event=>{event.preventDefault();todayPlanDialog.close();});document.getElementById('toggleTodayPlanPanel').addEventListener('click',()=>{const collapsed=!todayPlanPanel.classList.contains('collapsed');localStorage.setItem(TODAY_PLAN_COLLAPSED_KEY,String(collapsed));renderTodayPlan();});
       desktopMenuButton.addEventListener('click',()=>desktopMenuDialog.showModal());document.getElementById('closeDesktopMenu').addEventListener('click',()=>desktopMenuDialog.close());
-      document.getElementById('menuProjects').addEventListener('click',()=>{desktopMenuDialog.close();openProjectsDialog();});document.getElementById('closeProjects').addEventListener('click',()=>projectsDialog.close());projectsDialog.addEventListener('cancel',event=>{event.preventDefault();projectsDialog.close();});
+      document.getElementById('menuProjects').addEventListener('click',()=>{desktopMenuDialog.close();openProjectsDialog();});document.getElementById('menuPlan').addEventListener('click',()=>{desktopMenuDialog.close();openTodayPlan();});document.getElementById('closeProjects').addEventListener('click',()=>projectsDialog.close());projectsDialog.addEventListener('cancel',event=>{event.preventDefault();projectsDialog.close();});
       document.getElementById('projectsListTab').addEventListener('click',()=>{projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});document.getElementById('projectsTimelineTab').addEventListener('click',()=>{projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});const projectTypeDialog=document.getElementById('projectTypeDialog');document.getElementById('addProject').addEventListener('click',()=>projectTypeDialog.showModal());document.getElementById('closeProjectType').addEventListener('click',()=>projectTypeDialog.close());projectTypeDialog.addEventListener('cancel',event=>{event.preventDefault();projectTypeDialog.close();});document.getElementById('addAreaChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'area');});document.getElementById('addTimelineChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'timeline');});
       const menuForward=(id,target)=>document.getElementById(id).addEventListener('click',()=>{desktopMenuDialog.close();target?.click();});menuForward('menuSearch',searchButton);menuForward('menuQuickBackup',quickBackupButton);menuForward('menuExport',exportButton);menuForward('menuImport',importButton);menuForward('menuRecovery',recoveryButton);menuForward('menuHelp',helpButton);menuForward('menuShortcuts',shortcutHelp);
-      window.addEventListener('storage',event=>{if(event.key===PROJECTS_KEY&&event.newValue){try{projects=JSON.parse(event.newValue).map(normaliseProject);renderProjects();}catch{}}});
+      window.addEventListener('storage',event=>{if(event.key===PROJECTS_KEY&&event.newValue){try{projects=JSON.parse(event.newValue).map(normaliseProject);renderProjects();}catch{}}if(event.key===TODAY_PLAN_KEY&&event.newValue){try{todayPlan=normaliseTodayPlan(JSON.parse(event.newValue));renderTodayPlan();}catch{}}});
       backupMenuButton.addEventListener('click',()=>{updateBackupReminder();backupSheet.showModal();});
       document.getElementById('closeBackupSheet').addEventListener('click',()=>backupSheet.close());
       backupSheet.addEventListener('cancel',event=>{event.preventDefault();backupSheet.close();});
@@ -2679,15 +2729,15 @@ Current data will be preserved first.`)) return;
           const incomingTasks = Array.isArray(parsed) ? parsed : parsed?.tasks;
           if (!Array.isArray(incomingTasks)) throw new Error('Invalid backup');
           const nextTasks = normaliseValidatedTasks(incomingTasks);
-          const nextProjects=Array.isArray(parsed?.projects)?parsed.projects.map(normaliseProject):[];
-          if (!confirm('Replace current tasks with this backup? Current data will be preserved in Recovery first.')) return;
+          const nextProjects=Array.isArray(parsed?.projects)?parsed.projects.map(normaliseProject):[];const nextTodayPlan=Object.prototype.hasOwnProperty.call(parsed||{},'todayPlan')?normaliseTodayPlan(parsed.todayPlan):todayPlan;
+          if (!confirm('Replace current Five data with this backup? Current data will be preserved in Recovery first.')) return;
           try { await createRecoverySnapshot('before import',true); }
           catch { showStatus('Could not secure recovery snapshot'); return; }
-          tasks = nextTasks;projects=nextProjects;localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));
+          tasks = nextTasks;projects=nextProjects;todayPlan=nextTodayPlan;localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));persistTodayPlan(false);
           await persistEnvelope({strict:true});
           editingId = null; editSnapshot = null; newDraftId = null; currentView = 'all';
-          render();
-          showStatus('Tasks imported');
+          render();renderTodayPlan();
+          showStatus('Tasks, projects and Today Plan imported');
         } catch { showStatus('Could not import this backup'); }
       });
       document.addEventListener('keydown', event => {
@@ -2779,7 +2829,7 @@ Current data will be preserved first.`)) return;
       await runIntegrityScan();
       localStorage.removeItem('fiveEvents.v1');
       localStorage.removeItem('five.eventsDismissedDate');
-      render();
+      render();renderTodayPlan();
       updateBackupReminder();
       if (startupValidationMessage) showStatus(startupValidationMessage);
       initRecovery();
