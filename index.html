@@ -417,8 +417,6 @@
     .clear-task-date { min-height:34px; border:0; background:#f3f4f6; color:var(--muted); padding:4px 8px; font-size:11px; }
     .dated-chip { border-color:#eadfab; color:#765b00; }
     .dated-chip.active { border-color:#d8c873; background:#fff4c2; color:#654f00; }
-    .inbox-chip { border-color:#dfe3e8; color:#536170; }
-    .inbox-chip.active { border-color:#cbd8f4; background:#eef3ff; color:var(--accent); }
     .today-chip { border-color:#eadfab; color:#765b00; }
     .today-chip.active { border-color:#d8c873; background:#fff4c2; color:#654f00; }
     .quick-activate { width:26px; min-width:26px; min-height:26px; border:0; border-radius:6px; background:transparent; color:#7b8490; padding:0; font-size:13px; line-height:1; }
@@ -910,7 +908,7 @@
     <header class="topbar">
       <div class="view-tabs-row">
         <nav class="view-tabs" aria-label="Task views">
-          <button type="button" class="view-tab active" id="allTab">All <span id="allCount">0</span></button>
+          <button type="button" class="view-tab active" id="allTab">Inbox <span id="allCount">0</span></button>
           <button type="button" class="view-tab" id="trackedTab">Tracked <span id="trackedCount">0</span></button>
           <button type="button" class="view-tab" id="activeTab">Active <span id="taskCount">0</span></button>
           <button type="button" class="view-tab" id="waitingTab">Waiting <span id="waitingCount">0</span></button>
@@ -927,7 +925,7 @@
     <div class="active-time-summary" id="activeTimeSummary" aria-live="polite"></div>
     <div class="project-filter-shell" id="projectFilterShell">
       <button type="button" class="context-scroll-button" id="contextScrollLeft" aria-label="Scroll contexts left" title="Scroll contexts left">‹</button>
-      <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter All tasks by context"></div>
+      <div class="project-filter-bar" id="projectFilterBar" aria-label="Filter Inbox tasks by context"></div>
       <button type="button" class="context-scroll-button" id="contextScrollRight" aria-label="Scroll contexts right" title="Scroll contexts right">›</button>
     </div>
     <section class="tasks" id="tasks" aria-live="polite"></section>
@@ -961,9 +959,9 @@
       <div class="help-header"><h2 id="helpTitle">How to Use Five</h2><button type="button" class="dialog-close" id="closeHelp" aria-label="Close help">✕</button></div>
       <div class="help-body">
         <section class="help-section"><h3>1. Capture quickly</h3><p>Tap <span class="help-key">+ Task</span>, choose a context, enter the task title, and add a date only when the task genuinely belongs to a day.</p><p>Use <span class="help-key">Save + Next</span> for batch capture. Five remembers the last context and automatically creates the first action from the task title.</p></section>
-        <section class="help-section"><h3>2. Process Inbox</h3><p><span class="help-key">Inbox</span> contains unpinned, undated tasks in All. Tap <span class="help-key">Review</span> to process one task at a time, then add a date, change its context, activate it, move it to Waiting, archive it, or continue to the next task.</p></section>
-        <section class="help-section"><h3>3. Activate only a few tasks</h3><p>Tap <span class="help-key">⚡</span> on an All task to move it directly to Active. Tracked holds monitored work that is not currently being executed. Active can hold all current work, Focus remains limited to five tasks, and Today Focus highlights no more than two must-do tasks. Tracked and Active cards share Not Started, Started, and Completed progress controls. Duration estimates show the Active workload.</p></section>
-        <section class="help-section"><h3>4. Use dates sparingly</h3><p><span class="help-key">Today</span> shows overdue and due-today tasks. <span class="help-key">Dated</span> shows every dated All task. Leave flexible work undated so the lists stay meaningful.</p></section>
+        <section class="help-section"><h3>2. Process Inbox</h3><p><span class="help-key">Inbox</span> contains every task stored in the Inbox, including pinned and dated tasks. Tap <span class="help-key">Review</span> to process every Inbox task one at a time, then add or change its date or context, activate it, move it to Tracked or Waiting, archive it, or continue to the next task.</p></section>
+        <section class="help-section"><h3>3. Activate only a few tasks</h3><p>Tap <span class="help-key">⚡</span> on an Inbox task to move it directly to Active. Tracked holds monitored work that is not currently being executed. Active can hold all current work, Focus remains limited to five tasks, and Today Focus highlights no more than two must-do tasks. Tracked and Active cards share Not Started, Started, and Completed progress controls. Duration estimates show the Active workload.</p></section>
+        <section class="help-section"><h3>4. Use dates sparingly</h3><p><span class="help-key">Today</span> shows overdue and due-today tasks. <span class="help-key">Dated</span> shows every dated Inbox task. Leave flexible work undated so the lists stay meaningful.</p></section>
         <section class="help-section"><h3>5. Work by context</h3><p>Contexts group tasks by where or how they can be done, such as @CALL, @COMPUTER, @ONLINE, @ERRANDS, @HOME, and @AGENDA. Use <span class="help-key">+ Contexts</span> on desktop, or the compact <span class="help-key">+</span> on mobile, to add, rename, or reorder contexts.</p></section>
         <section class="help-section"><h3>6. Complete and organise</h3><p>Open a task with <span class="help-key">✎</span> to add descriptions, actions, dates, duration, or change status. Use Waiting for delegated or blocked work, and Archive for completed or retained tasks.</p></section>
         <section class="help-section"><h3>7. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
@@ -1660,19 +1658,19 @@ Current data will be preserved first.`)) return;
           card?.querySelector('input')?.focus();
         });
       }
-      function currentInboxQueue(){return inboxTasks();}
+      function currentInboxQueue(){return allTasks();}
       function startInboxReview(){
         if(editingId)return;
         const queue=currentInboxQueue();
         if(!queue.length){showStatus('Inbox is clear');return;}
-        currentView='all';systemFilter='inbox';selectedProjectFilter='';inboxReviewMode=true;beginEditing(queue[0]);
+        currentView='all';systemFilter='';selectedProjectFilter='';inboxReviewMode=true;beginEditing(queue[0]);
       }
       function openNextInboxTask(currentId){
         const queue=currentInboxQueue().filter(task=>task.id!==currentId);
         if(!queue.length){inboxReviewMode=false;editingId=null;editSnapshot=null;newDraftId=null;render();showStatus('Inbox review complete');return;}
         editingId=queue[0].id;editSnapshot=cloneTask(queue[0]);newDraftId=null;render();
       }
-      function finishInboxReview(){inboxReviewMode=false;editingId=null;editSnapshot=null;newDraftId=null;systemFilter='inbox';render();showStatus('Inbox review paused');}
+      function finishInboxReview(){inboxReviewMode=false;editingId=null;editSnapshot=null;newDraftId=null;systemFilter='';render();showStatus('Inbox review paused');}
       function cancelEditing() {
         if (!editingId) return;
         if(inboxReviewMode){finishInboxReview();return;}
@@ -1831,7 +1829,7 @@ Current data will be preserved first.`)) return;
       function cancelProjectOrder(event){if(projectOrderDragState&&event.pointerId===projectOrderDragState.pointerId)cleanupProjectOrder();}
       function cleanupProjectOrder(){if(!projectOrderDragState)return;projectOrderDragState.row.classList.remove('project-dragging');projectOrderDragState.handle.releasePointerCapture?.(projectOrderDragState.pointerId);clearProjectOrderMarkers();document.body.classList.remove('reordering');document.removeEventListener('pointermove',moveProjectOrder);document.removeEventListener('pointerup',finishProjectOrder);document.removeEventListener('pointercancel',cancelProjectOrder);projectOrderDragState=null;}
       function setProjectFilter(value) {
-        selectedProjectFilter=value||'';
+        selectedProjectFilter=selectedProjectFilter===value?'':(value||'');
         systemFilter='';
         if (editingId) { editingId=null; editSnapshot=null; newDraftId=null; }
         if (projectFilterDialog.open) projectFilterDialog.close();
@@ -1858,7 +1856,6 @@ Current data will be preserved first.`)) return;
       function scrollContexts(direction){const distance=Math.max(180,Math.round(projectFilterBar.clientWidth*.65));projectFilterBar.scrollBy({left:direction*distance,behavior:'smooth'});}
       function revealSelectedContextChip(){if(!matchMedia('(min-width: 701px)').matches)return;const selected=projectFilterBar.querySelector('.project-chip.active');selected?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});requestAnimationFrame(updateContextScrollControls);}
       function createSystemChip(label,value,count,className){const button=document.createElement('button');button.type='button';button.className=`project-chip ${className}${systemFilter===value?' active':''}`;button.setAttribute('aria-pressed',String(systemFilter===value));const text=document.createElement('span');text.textContent=label;button.appendChild(text);if(count!=null){const badge=document.createElement('span');badge.className='project-chip-count';badge.textContent=count;button.appendChild(badge);}button.addEventListener('click',()=>setSystemFilter(value));return button;}
-      function inboxTasks(){return allTasks().filter(task=>!task.taskDate&&!task.pinned);}
       function todayTasks(){const today=todayLocal();return allTasks().filter(task=>task.taskDate&&task.taskDate<=today);}
       function renderProjectFilter() {
         projectFilterBar.replaceChildren();
@@ -1866,9 +1863,7 @@ Current data will be preserved first.`)) return;
         const visible=currentView==='all'&&!editingId;
         projectFilterShell.classList.toggle('visible',visible);
         if(!visible){projectFilterShell.classList.remove('desktop-overflow');return;}
-        const allChip=createProjectChip('All','',allTasks().length);if(systemFilter)allChip.classList.remove('active');projectFilterBar.appendChild(allChip);
-        projectFilterBar.appendChild(createSystemChip('Inbox','inbox',inboxTasks().length,'inbox-chip'));
-        if(inboxTasks().length){const review=document.createElement('button');review.type='button';review.className='project-chip inbox-review-chip';review.textContent='Review';review.setAttribute('aria-label',`Review ${inboxTasks().length} Inbox task${inboxTasks().length===1?'':'s'}`);review.addEventListener('click',startInboxReview);projectFilterBar.appendChild(review);}
+        if(allTasks().length){const review=document.createElement('button');review.type='button';review.className='project-chip inbox-review-chip';review.textContent='Review';review.setAttribute('aria-label',`Review all ${allTasks().length} Inbox task${allTasks().length===1?'':'s'}`);review.addEventListener('click',startInboxReview);projectFilterBar.appendChild(review);}
         projectFilterBar.appendChild(createSystemChip('Today','today',todayTasks().length,'today-chip'));
         projectFilterBar.appendChild(createSystemChip('Dated','dated',allTasks().filter(task=>task.taskDate).length,'dated-chip'));
         const picker=document.createElement('button');picker.type='button';picker.className='project-chip project-picker-chip';picker.textContent=matchMedia('(min-width: 701px)').matches?'+ Contexts':'+';picker.setAttribute('aria-label','Manage contexts');picker.title='Add, rename, or reorder contexts';picker.addEventListener('click',()=>{renderProjectFilterDialog(projects);projectFilterDialog.showModal();});projectFilterBar.appendChild(picker);
@@ -1912,11 +1907,11 @@ Current data will be preserved first.`)) return;
         renderProjectFilter();
       }
 
-      function taskSearchStatus(task){return task.archived?'Archive':task.waiting?'Waiting':task.list==='tracked'?'Tracked':task.list==='active'?'Active':'All';}
+      function taskSearchStatus(task){return task.archived?'Archive':task.waiting?'Waiting':task.list==='tracked'?'Tracked':task.list==='active'?'Active':'Inbox';}
       function taskSearchText(task){return [task.title,task.description,task.requestor,...task.actions.map(action=>action.text)].join(' ').toLocaleLowerCase();}
       function searchMatchHint(task,query){const fields=[[task.requestor,'Context'],[task.title,'Title'],[task.description,'Description'],...task.actions.map(action=>[action.text,'Action'])];const found=fields.find(([value])=>String(value||'').toLocaleLowerCase().includes(query));if(!found)return '';const compact=String(found[0]||'').replace(/\s+/g,' ').trim();return `${found[1]}: ${compact}`;}
       function openSearchResult(task){searchDialog.close();inboxReviewMode=false;systemFilter='';selectedProjectFilter='';currentView=task.archived?'archive':task.waiting?'waiting':task.list==='tracked'?'tracked':task.list==='active'?'active':'all';if(task.todayFocus)activeSectionState.today=false;else if(task.focus)activeSectionState.focus=false;else if(task.list==='active')activeSectionState.other=false;saveActiveSectionState();editingId=task.id;editSnapshot=cloneTask(task);newDraftId=null;render();requestAnimationFrame(()=>{const card=tasksHost.querySelector(`[data-task-id="${CSS.escape(task.id)}"]`);card?.scrollIntoView({behavior:'smooth',block:'center'});card?.querySelector('input,textarea,select')?.focus();});}
-      function renderSearchResults(){const query=searchInput.value.trim().toLocaleLowerCase();searchResults.replaceChildren();if(!query){searchSummary.textContent='Type to search all tasks';return;}const matches=tasks.filter(task=>taskSearchText(task).includes(query));searchSummary.textContent=`${matches.length} match${matches.length===1?'':'es'} across All, Tracked, Active, Waiting and Archive`;if(!matches.length){const empty=document.createElement('div');empty.className='search-empty';empty.textContent='No matching tasks';searchResults.appendChild(empty);return;}matches.forEach(task=>{const button=document.createElement('button');button.type='button';button.className='search-result';const main=document.createElement('span');main.className='search-result-main';const title=document.createElement('span');title.className='search-result-title';title.textContent=task.title.trim()||'Untitled task';const hint=document.createElement('span');hint.className='search-result-match';hint.textContent=searchMatchHint(task,query);main.append(title,hint);const meta=document.createElement('span');meta.className='search-result-meta';meta.textContent=`${taskSearchStatus(task)}${!task.archived&&!task.waiting&&['tracked','active'].includes(task.list)?` · ${progressLabel(task.progressStatus)}`:''} · ${task.requestor||'@CONTEXT'}`;button.append(main,meta);button.addEventListener('click',()=>openSearchResult(task));searchResults.appendChild(button);});}
+      function renderSearchResults(){const query=searchInput.value.trim().toLocaleLowerCase();searchResults.replaceChildren();if(!query){searchSummary.textContent='Type to search all tasks';return;}const matches=tasks.filter(task=>taskSearchText(task).includes(query));searchSummary.textContent=`${matches.length} match${matches.length===1?'':'es'} across Inbox, Tracked, Active, Waiting and Archive`;if(!matches.length){const empty=document.createElement('div');empty.className='search-empty';empty.textContent='No matching tasks';searchResults.appendChild(empty);return;}matches.forEach(task=>{const button=document.createElement('button');button.type='button';button.className='search-result';const main=document.createElement('span');main.className='search-result-main';const title=document.createElement('span');title.className='search-result-title';title.textContent=task.title.trim()||'Untitled task';const hint=document.createElement('span');hint.className='search-result-match';hint.textContent=searchMatchHint(task,query);main.append(title,hint);const meta=document.createElement('span');meta.className='search-result-meta';meta.textContent=`${taskSearchStatus(task)}${!task.archived&&!task.waiting&&['tracked','active'].includes(task.list)?` · ${progressLabel(task.progressStatus)}`:''} · ${task.requestor||'@CONTEXT'}`;button.append(main,meta);button.addEventListener('click',()=>openSearchResult(task));searchResults.appendChild(button);});}
       function openSearch(){searchInput.value='';renderSearchResults();searchDialog.showModal();requestAnimationFrame(()=>searchInput.focus());}
       function makeButton(text, className, handler) {
         const button = document.createElement('button');
@@ -1949,8 +1944,7 @@ Current data will be preserved first.`)) return;
                 ? waitingTasks()
                 : archivedTasks();
         const filteredTasks=currentView==='all'
-          ? systemFilter==='inbox' ? allVisibleTasks.filter(task=>!task.taskDate&&!task.pinned)
-            : systemFilter==='today' ? allVisibleTasks.filter(task=>task.taskDate&&task.taskDate<=todayLocal())
+          ? systemFilter==='today' ? allVisibleTasks.filter(task=>task.taskDate&&task.taskDate<=todayLocal())
             : systemFilter==='dated' ? allVisibleTasks.filter(task=>Boolean(task.taskDate))
             : selectedProjectFilter ? allVisibleTasks.filter(task=>(task.requestor||'').trim()===selectedProjectFilter)
             : allVisibleTasks
@@ -1963,11 +1957,11 @@ Current data will be preserved first.`)) return;
           const empty = document.createElement('div');
           empty.className = 'empty';
           empty.innerHTML = currentView === 'all'
-            ? systemFilter==='inbox' ? '<strong>Inbox is clear</strong>No unpinned, undated All tasks.' : systemFilter==='today' ? '<strong>Nothing due</strong>No overdue or due-today All tasks.' : systemFilter==='dated' ? '<strong>No dated tasks</strong>Assign a date to an All task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No All tasks remain for ${selectedProjectFilter}.` : '<strong>No tasks</strong>Add an unlimited number of tasks here.'
+            ? systemFilter==='today' ? '<strong>Nothing due</strong>No overdue or due-today Inbox tasks.' : systemFilter==='dated' ? '<strong>No dated tasks</strong>Assign a date to an Inbox task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No Inbox tasks remain for ${selectedProjectFilter}.` : '<strong>Inbox is empty</strong>Capture a task to add it to Inbox.'
             : currentView === 'tracked'
-              ? '<strong>No tracked tasks</strong>Move important monitored work here from All.'
+              ? '<strong>No tracked tasks</strong>Move important monitored work here from Inbox.'
               : currentView === 'active'
-              ? '<strong>No active tasks</strong>Move current work here from All, then focus on up to five.'
+              ? '<strong>No active tasks</strong>Move current work here from Inbox, then focus on up to five.'
               : currentView === 'waiting'
               ? '<strong>Waiting is empty</strong>Tasks waiting on others will appear here.'
               : '<strong>Archive is empty</strong>Archived tasks will appear here.';
@@ -2283,7 +2277,7 @@ Current data will be preserved first.`)) return;
         task.todayFocus = false;
         finishEditing();
         currentView = 'all';
-        save('Moved to All');
+        save('Moved to Inbox');
         render();
       }
 
@@ -2524,7 +2518,7 @@ Current data will be preserved first.`)) return;
         const deleteButton=makeButton('Delete','delete-link',async()=>{if(!confirm(`Delete "${task.title.trim()||'Untitled task'}"?`))return;try{await createRecoverySnapshot('before task delete',true);}catch{showStatus('Could not secure recovery snapshot');return;}tasks=tasks.filter(item=>item.id!==task.id);editingId=null;save('Task deleted');render();});
         const statusSelect=document.createElement('select'); statusSelect.className='task-status-select'; statusSelect.setAttribute('aria-label','Task status');
         const currentStatus=task.archived?'archive':task.waiting?'waiting':task.list==='tracked'?'tracked':task.list==='active'?'active':'all';
-        [['','Status'],['all','All'],['tracked','Tracked'],['active','Active'],['waiting','Waiting'],['archive','Archive']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;option.selected=value===currentStatus;if(!value&&currentStatus)option.disabled=true;statusSelect.appendChild(option);});
+        [['','Status'],['all','Inbox'],['tracked','Tracked'],['active','Active'],['waiting','Waiting'],['archive','Archive']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;option.selected=value===currentStatus;if(!value&&currentStatus)option.disabled=true;statusSelect.appendChild(option);});
         statusSelect.addEventListener('change',()=>changeTaskStatus(task.id,statusSelect.value,editor));
         const primaryRow=document.createElement('div');primaryRow.className='editor-primary-row';primaryRow.append(addActionButton,saveButton,statusSelect,cancelButton);
         const secondaryRow=document.createElement('div');secondaryRow.className='editor-secondary-row';secondaryRow.append(deleteButton);
@@ -2532,11 +2526,11 @@ Current data will be preserved first.`)) return;
         editor.append(requestorField, titleField, descriptionField, taskDateField);
         if (durationField.childElementCount) editor.append(durationField);
         editor.append(heading, actionList, tools);
-        if(inboxReviewMode){const reviewTools=document.createElement('div');reviewTools.className='inbox-review-tools';const next=makeButton('Next Inbox','inbox-review-next',()=>openNextInboxTask(task.id));const done=makeButton('Finish Review','inbox-review-done',finishInboxReview);reviewTools.append(next,done);editor.appendChild(reviewTools);}
+        if(inboxReviewMode){const reviewTools=document.createElement('div');reviewTools.className='inbox-review-tools';const next=makeButton('Next Task','inbox-review-next',()=>openNextInboxTask(task.id));const done=makeButton('Finish Review','inbox-review-done',finishInboxReview);reviewTools.append(next,done);editor.appendChild(reviewTools);}
         return editor;
       }
 
-      function changeTaskStatus(taskId,status,editor){const task=tasks.find(item=>item.id===taskId);if(!task||!status)return;if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;}if(status==='all'){Object.assign(task,{list:'all',focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='tracked'){Object.assign(task,{list:'tracked',focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='active'){Object.assign(task,{list:'active',focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='waiting'){Object.assign(task,{list:'active',focus:false,todayFocus:false,waiting:true,waitingSince:task.waitingSince||new Date().toISOString(),archived:false,archivedAt:null});}else if(status==='archive'){if(!confirm(`Archive "${task.title.trim()||'Untitled task'}"?`)){render();return;}Object.assign(task,{focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:true,archivedAt:new Date().toISOString()});}finishEditing();currentView=status==='archive'?'archive':status;save(`Moved to ${status[0].toUpperCase()+status.slice(1)}`);render();}
+      function changeTaskStatus(taskId,status,editor){const task=tasks.find(item=>item.id===taskId);if(!task||!status)return;if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;}if(status==='all'){Object.assign(task,{list:'all',focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='tracked'){Object.assign(task,{list:'tracked',focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='active'){Object.assign(task,{list:'active',focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='waiting'){Object.assign(task,{list:'active',focus:false,todayFocus:false,waiting:true,waitingSince:task.waitingSince||new Date().toISOString(),archived:false,archivedAt:null});}else if(status==='archive'){if(!confirm(`Archive "${task.title.trim()||'Untitled task'}"?`)){render();return;}Object.assign(task,{focus:false,todayFocus:false,waiting:false,waitingSince:null,followUpDate:'',archived:true,archivedAt:new Date().toISOString()});}finishEditing();currentView=status==='archive'?'archive':status;const statusLabel=status==='all'?'Inbox':status[0].toUpperCase()+status.slice(1);save(`Moved to ${statusLabel}`);render();}
       function startActionReorder(event,taskId,actionId){if(event.button!==undefined&&event.button!==0)return;const task=tasks.find(i=>i.id===taskId),row=event.currentTarget.closest('.action-edit-row'),sourceIndex=task?.actions.findIndex(a=>a.id===actionId)??-1;if(!task||!row||sourceIndex<0)return;event.preventDefault();event.currentTarget.setPointerCapture?.(event.pointerId);actionDragState={pointerId:event.pointerId,taskId,actionId,sourceIndex,targetIndex:sourceIndex,insertAfter:false,handle:event.currentTarget,sourceRow:row};row.classList.add('action-dragging');document.body.classList.add('reordering');document.addEventListener('pointermove',moveActionReorder,{passive:false});document.addEventListener('pointerup',finishActionReorder);document.addEventListener('pointercancel',cancelActionReorder);}
       function clearActionDropMarkers(){tasksHost.querySelectorAll('.action-drag-before,.action-drag-after').forEach(r=>r.classList.remove('action-drag-before','action-drag-after'));}
       function moveActionReorder(event){if(!actionDragState||event.pointerId!==actionDragState.pointerId)return;event.preventDefault();clearActionDropMarkers();for(const row of tasksHost.querySelectorAll('.action-edit-row')){if(row===actionDragState.sourceRow)continue;const rect=row.getBoundingClientRect();if(event.clientY>=rect.top&&event.clientY<=rect.bottom){const task=tasks.find(i=>i.id===actionDragState.taskId);actionDragState.targetIndex=task?.actions.findIndex(a=>a.id===row.dataset.actionId)??actionDragState.sourceIndex;actionDragState.insertAfter=event.clientY>rect.top+rect.height/2;row.classList.add(actionDragState.insertAfter?'action-drag-after':'action-drag-before');break;}}}
