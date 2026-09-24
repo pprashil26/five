@@ -931,7 +931,7 @@
       html.mobile-footer #mobileProjectsButton { display:inline-flex !important; align-items:center; color:var(--accent); }
     }
 
-    .today-plan-panel{display:none;position:fixed;z-index:8;top:8px;bottom:8px;left:calc(50% + 310px);width:200px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.97);box-shadow:0 4px 18px rgba(29,35,42,.07);overflow:hidden;color:var(--text)}
+    .today-plan-panel{display:none;position:fixed;z-index:8;top:8px;bottom:8px;left:calc(50% + 310px);width:250px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.97);box-shadow:0 4px 18px rgba(29,35,42,.07);overflow:hidden;color:var(--text)}
     .today-plan-panel.collapsed{width:34px}
     .today-plan-panel-header{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:38px;padding:5px 6px;border-bottom:1px solid var(--line);background:#fafaf9}
     .today-plan-panel-title{min-width:0;font-size:11px;font-weight:820;letter-spacing:.25px;text-transform:uppercase;white-space:nowrap}
@@ -940,11 +940,12 @@
     .today-plan-panel.collapsed .today-plan-panel-header{height:100%;padding:4px;align-items:flex-start;border-bottom:0}
     .today-plan-panel.collapsed .today-plan-collapse{writing-mode:vertical-rl;width:26px;height:auto;min-height:92px;padding:7px 0;font-size:10px;letter-spacing:.4px;text-transform:uppercase}
     .today-plan-scroll{height:calc(100% - 38px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
-    .today-plan-row{display:grid;grid-template-columns:42px minmax(0,1fr);min-height:38px;border-bottom:1px solid #ece8e1}
+    .today-plan-row{display:grid;grid-template-columns:36px minmax(0,1fr);height:24px;min-height:24px;border-bottom:1px solid #ece8e1}
     .today-plan-row.current{background:#fff8dc}
-    .today-plan-time{padding:7px 5px 5px;color:#536170;font-size:10px;font-weight:780;text-align:right;white-space:nowrap}
-    .today-plan-input{width:100%;min-width:0;min-height:37px;border:0;border-left:1px solid #ece8e1;border-radius:0;background:transparent;color:var(--text);padding:5px 6px;font-size:11px;line-height:1.25;outline:none}
+    .today-plan-time{padding:4px 4px 2px 2px;color:#536170;font-size:9px;font-weight:780;line-height:17px;text-align:right;white-space:nowrap}
+    .today-plan-input{width:100%;min-width:0;height:23px;min-height:23px;border:0;border-left:1px solid #ece8e1;border-radius:0;background:transparent;color:var(--text);padding:1px 6px;font-size:11px;line-height:21px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .today-plan-input:focus{background:#fff;box-shadow:inset 2px 0 0 rgba(40,88,199,.35)}
+    .today-plan-panel .today-plan-input{height:23px;min-height:23px}
     .today-plan-dialog{width:min(100%,600px);max-width:600px;height:100dvh;max-height:100dvh;margin:0 auto;border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:var(--surface);color:var(--text);overflow:hidden}
     .today-plan-dialog[open]{display:flex;flex-direction:column}
     .today-plan-dialog::backdrop{background:rgba(29,35,42,.34)}
@@ -952,8 +953,8 @@
     .today-plan-dialog-header h2{margin:0;font-size:17px}
     .today-plan-dialog-date{color:var(--muted);font-size:10px;font-weight:650}
     .today-plan-dialog .today-plan-scroll{height:auto;flex:1 1 auto;min-height:0;margin-top:2px}
-    .today-plan-dialog .today-plan-row{min-height:44px}
-    .today-plan-dialog .today-plan-input{min-height:43px;font-size:16px;padding:7px 8px}
+    .today-plan-dialog .today-plan-row{height:32px;min-height:32px}
+    .today-plan-dialog .today-plan-input{height:31px;min-height:31px;font-size:15px;line-height:25px;padding:3px 8px}
     #mobilePlanButton{display:none}
     @media(min-width:1020px) and (pointer:fine){.today-plan-panel{display:block}}
     @media(max-width:700px),(pointer:coarse){html.mobile-footer #mobilePlanButton{display:inline-flex!important;align-items:center;color:var(--accent)}}
@@ -1667,7 +1668,7 @@ Current data will be preserved first.`)) return;
       function loadTodayPlan(){try{return normaliseTodayPlan(JSON.parse(localStorage.getItem(TODAY_PLAN_KEY)||'{}'));}catch{return normaliseTodayPlan({});}}
       function persistTodayPlan(snapshot=true){try{const encoded=JSON.stringify(normaliseTodayPlan(todayPlan));localStorage.setItem(TODAY_PLAN_KEY,encoded);if(localStorage.getItem(TODAY_PLAN_KEY)!==encoded)throw new Error('Today Plan read-back failed');if(snapshot)scheduleRecoverySnapshot('Today Plan update');}catch{showStatus('Today Plan could not be saved');}}
       function currentTodayPlanSlot(){const now=new Date(),minutes=now.getHours()*60+now.getMinutes(),rounded=Math.floor(minutes/30)*30;return `${String(Math.floor(rounded/60)).padStart(2,'0')}:${String(rounded%60).padStart(2,'0')}`;}
-      function createTodayPlanRows(host){host.replaceChildren();const current=currentTodayPlanSlot();TODAY_PLAN_SLOTS.forEach(slot=>{const row=document.createElement('label');row.className=`today-plan-row${slot===current?' current':''}`;row.dataset.slot=slot;const time=document.createElement('span');time.className='today-plan-time';time.textContent=slot;const input=document.createElement('input');input.type='text';input.className='today-plan-input';input.value=todayPlan[slot]||'';input.maxLength=300;input.setAttribute('aria-label',`Today Plan ${slot}`);input.autocomplete='off';input.addEventListener('input',()=>{todayPlan[slot]=input.value;const other=host===desktopTodayPlanRows?mobileTodayPlanRows:desktopTodayPlanRows;const counterpart=other.querySelector(`[data-slot="${slot}"] .today-plan-input`);if(counterpart&&counterpart.value!==input.value)counterpart.value=input.value;persistTodayPlan();});row.append(time,input);host.appendChild(row);});}
+      function createTodayPlanRows(host){host.replaceChildren();const current=currentTodayPlanSlot();TODAY_PLAN_SLOTS.forEach(slot=>{const row=document.createElement('label');row.className=`today-plan-row${slot===current?' current':''}`;row.dataset.slot=slot;const time=document.createElement('span');time.className='today-plan-time';time.textContent=slot.replace(/^0/,'');const input=document.createElement('input');input.type='text';input.className='today-plan-input';input.value=todayPlan[slot]||'';input.maxLength=300;input.setAttribute('aria-label',`Today Plan ${slot}`);input.autocomplete='off';input.addEventListener('input',()=>{todayPlan[slot]=input.value;const other=host===desktopTodayPlanRows?mobileTodayPlanRows:desktopTodayPlanRows;const counterpart=other.querySelector(`[data-slot="${slot}"] .today-plan-input`);if(counterpart&&counterpart.value!==input.value)counterpart.value=input.value;persistTodayPlan();});row.append(time,input);host.appendChild(row);});}
       function renderTodayPlan(){createTodayPlanRows(desktopTodayPlanRows);createTodayPlanRows(mobileTodayPlanRows);todayPlanDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});const collapsed=localStorage.getItem(TODAY_PLAN_COLLAPSED_KEY)==='true';todayPlanPanel.classList.toggle('collapsed',collapsed);const toggle=document.getElementById('toggleTodayPlanPanel');toggle.textContent=collapsed?'Plan ▶':'◀';toggle.setAttribute('aria-label',collapsed?'Expand Today Plan':'Collapse Today Plan');if(!collapsed)requestAnimationFrame(()=>desktopTodayPlanRows.querySelector('.today-plan-row.current')?.scrollIntoView({block:'center'}));}
       function openTodayPlan(){renderTodayPlan();if(!todayPlanDialog.open)todayPlanDialog.showModal();requestAnimationFrame(()=>mobileTodayPlanRows.querySelector('.today-plan-row.current')?.scrollIntoView({block:'center'}));}
       function normaliseProject(p){p=p&&typeof p==='object'?p:{};const type=p.type==='area'?'area':'timeline';return{id:typeof p.id==='string'&&p.id?p.id:(self.crypto?.randomUUID?.()||`project-${Date.now()}-${Math.random()}`),type,name:String(p.name||'').slice(0,200),status:['Active','Monitoring','Blocked','On Hold','Complete'].includes(p.status)?p.status:'Active',startDate:type==='timeline'&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.startDate||''))?p.startDate:'',milestone:type==='timeline'&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.milestone||''))?p.milestone:'',summary:String(p.summary||'').slice(0,500),vision:String(p.vision||p.summary||'').slice(0,500),notes:String(p.notes||'').slice(0,5000),createdAt:String(p.createdAt||new Date().toISOString()),updatedAt:String(p.updatedAt||new Date().toISOString())};}
