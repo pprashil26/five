@@ -203,10 +203,13 @@
       border-radius: var(--radius);
       background: var(--surface);
     }
-    .task.top-focus {
-      background: #fff9db;
-      border-color: #eee3a7;
-    }
+    .task.top-focus { background:#fffdf3; border-color:#e8d99a; }
+    .focus-task { width:26px; min-width:26px; min-height:26px; border:0; border-radius:6px; background:transparent; color:#9aa0a8; padding:0; font-size:15px; line-height:1; opacity:.55; }
+    .focus-task.focused { color:#b77900; opacity:1; }
+    .focus-section-label { display:flex; align-items:center; justify-content:space-between; min-height:24px; margin:1px 2px -2px; color:var(--muted); font-size:10px; font-weight:800; letter-spacing:.25px; text-transform:uppercase; }
+    .focus-section-label.focus { color:#765b00; }
+    .focus-limit-summary { flex:0 0 auto; display:none; min-height:22px; margin:-2px 0 5px; padding:3px 8px; border-radius:7px; background:#fff8dc; color:#765b00; font-size:10px; font-weight:760; text-align:center; }
+    .focus-limit-summary.visible { display:block; }
 
     .task-view {
       display:grid;
@@ -910,6 +913,7 @@
       <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
     </header>
 
+    <div class="focus-limit-summary" id="focusLimitSummary" aria-live="polite"></div>
     <div class="active-time-summary" id="activeTimeSummary" aria-live="polite"></div>
     <div class="project-filter-shell" id="projectFilterShell">
       <button type="button" class="context-scroll-button" id="contextScrollLeft" aria-label="Scroll contexts left" title="Scroll contexts left">‹</button>
@@ -933,7 +937,7 @@
       </div>
       <div class="philosophy">
         <span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
-        <div class="philosophy-tagline">List only the five tasks you will start or finish in next few hours.</div>
+        <div class="philosophy-tagline">Keep all active work visible, but focus on no more than five tasks at a time.</div>
       </div>
     </footer>
     <div class="status" id="status" role="status"></div>
@@ -948,13 +952,13 @@
       <div class="help-body">
         <section class="help-section"><h3>1. Capture quickly</h3><p>Tap <span class="help-key">+ Task</span>, choose a context, enter the task title, and add a date only when the task genuinely belongs to a day.</p><p>Use <span class="help-key">Save + Next</span> for batch capture. Five remembers the last context and automatically creates the first action from the task title.</p></section>
         <section class="help-section"><h3>2. Process Inbox</h3><p><span class="help-key">Inbox</span> contains unpinned, undated tasks in All. Tap <span class="help-key">Review</span> to process one task at a time, then add a date, change its context, activate it, move it to Waiting, archive it, or continue to the next task.</p></section>
-        <section class="help-section"><h3>3. Activate only a few tasks</h3><p>Tap <span class="help-key">⚡</span> on an All task to move it directly to Active. Active is deliberately limited to five tasks. Duration estimates show the workload beside the Active count.</p></section>
+        <section class="help-section"><h3>3. Activate only a few tasks</h3><p>Tap <span class="help-key">⚡</span> on an All task to move it directly to Active. Active can hold all work currently in play. Mark up to five Active tasks with Focus so the app still protects your immediate attention. Duration estimates show the workload beside the Active count.</p></section>
         <section class="help-section"><h3>4. Use dates sparingly</h3><p><span class="help-key">Today</span> shows overdue and due-today tasks. <span class="help-key">Dated</span> shows every dated All task. Leave flexible work undated so the lists stay meaningful.</p></section>
         <section class="help-section"><h3>5. Work by context</h3><p>Contexts group tasks by where or how they can be done, such as @CALL, @COMPUTER, @ONLINE, @ERRANDS, @HOME, and @AGENDA. Use <span class="help-key">+ Contexts</span> on desktop, or the compact <span class="help-key">+</span> on mobile, to add, rename, or reorder contexts.</p></section>
         <section class="help-section"><h3>6. Complete and organise</h3><p>Open a task with <span class="help-key">✎</span> to add descriptions, actions, dates, duration, or change status. Use Waiting for delegated or blocked work, and Archive for completed or retained tasks.</p></section>
         <section class="help-section"><h3>7. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
         <section class="help-section"><h3>Keyboard</h3><p><span class="help-key">T</span> new task · <span class="help-key">Enter</span> capture and close · <span class="help-key">Ctrl/Cmd + Enter</span> capture and continue · <span class="help-key">Esc</span> cancel.</p></section>
-        <section class="help-section help-philosophy"><h3>Five Philosophy</h3><p>Capture quickly. Process intentionally. Activate only a few tasks. Focus deeply.</p></section>
+        <section class="help-section help-philosophy"><h3>Five Philosophy</h3><p>Capture quickly. Track active work. Focus on five. Work deeply.</p></section>
       </div>
     </dialog>
     <dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
@@ -991,7 +995,7 @@
       document.documentElement.classList.toggle('mobile-footer', mobileFooterMode);
 
       const STORAGE_KEY = 'fiveTasks.v1';
-      const MAX_TASKS = 5;
+      const MAX_FOCUS_TASKS = 5;
       const ENVELOPE_KEY = 'five.dataEnvelope.v1';
       const ENVELOPE_SCHEMA_VERSION = 2;
       const LAST_BACKUP_KEY = 'five.lastExportAt';
@@ -1020,6 +1024,7 @@
       const waitingTab = document.getElementById('waitingTab');
       const archiveTab = document.getElementById('archiveTab');
       const toggleActionsButton = document.getElementById('toggleActions');
+      const focusLimitSummary = document.getElementById('focusLimitSummary');
       const activeTimeSummary = document.getElementById('activeTimeSummary');
       const projectFilterShell=document.getElementById('projectFilterShell');
       const projectFilterBar=document.getElementById('projectFilterBar');
@@ -1196,11 +1201,13 @@
       function normaliseValidatedTasks(source) {
         const check = validateDataPayload({tasks:source});
         if (!check.valid) throw new Error(check.issues.join('; '));
-        let activeSeen = 0;
-        return source.map(normaliseTask).map(task => {
-          if (!task.archived && !task.waiting && task.list === 'active' && ++activeSeen > MAX_TASKS) task.list = 'all';
-          return task;
+        const normalised=source.map(normaliseTask);
+        let legacyFocusCount=0;
+        normalised.forEach(task=>{
+          if(task.archived||task.waiting||task.list!=='active'){task.focus=false;return;}
+          if(task.focus&&++legacyFocusCount>MAX_FOCUS_TASKS)task.focus=false;
         });
+        return normalised;
       }
       async function loadValidatedStartupData() {
         let envelopeError = '';
@@ -1557,6 +1564,7 @@ Current data will be preserved first.`)) return;
           createdAt: task.createdAt ? String(task.createdAt) : '',
           durationMinutes: [15,30,45,60,90,120,180,240].includes(Number(task.durationMinutes)) ? Number(task.durationMinutes) : 0,
           pinned: Boolean(task.pinned),
+          focus: typeof task.focus==='boolean' ? task.focus : task.list==='active',
           list: task.list === 'all' ? 'all' : 'active',
           waiting: Boolean(task.waiting) && !Boolean(task.archived),
           waitingSince: task.waitingSince ? String(task.waitingSince) : null,
@@ -1583,6 +1591,7 @@ Current data will be preserved first.`)) return;
           createdAt: new Date().toISOString(),
           durationMinutes: 0,
           pinned: false,
+          focus: false,
           list: 'all',
           waiting: false,
           waitingSince: null,
@@ -1690,8 +1699,10 @@ Current data will be preserved first.`)) return;
           .map(item=>item.task);
       }
       function activeTasks() {
-        return pinnedFirst(tasks.filter(task => !task.archived && !task.waiting && task.list === 'active'));
+        return tasks.filter(task=>!task.archived&&!task.waiting&&task.list==='active').map((task,index)=>({task,index})).sort((a,b)=>Number(b.task.focus)-Number(a.task.focus)||Number(b.task.pinned)-Number(a.task.pinned)||a.index-b.index).map(item=>item.task);
       }
+      function focusedTasks(){return activeTasks().filter(task=>task.focus);}
+      function toggleTaskFocus(taskId){const task=tasks.find(item=>item.id===taskId);if(!task||task.archived||task.waiting||task.list!=='active')return;if(!task.focus&&focusedTasks().length>=MAX_FOCUS_TASKS){showStatus('Focus limit reached (5)');return;}task.focus=!task.focus;save(task.focus?'Added to Focus':'Removed from Focus');render();}
 
       function durationLabel(minutes) {
         const hours = Math.floor(minutes / 60);
@@ -1845,7 +1856,7 @@ Current data will be preserved first.`)) return;
         const archiveCount = archivedTasks().length;
         allCountElement.textContent = allCount;
         const plannedMinutes=activeTasks().reduce((total,task)=>total+task.durationMinutes,0);
-        countElement.textContent=`${activeCount}/${MAX_TASKS}${plannedMinutes?` · ${durationLabel(plannedMinutes)}`:''}`;
+        countElement.textContent=`${activeCount}${plannedMinutes?` · ${durationLabel(plannedMinutes)}`:''}`;
         waitingCountElement.textContent = waitingCount;
         archiveCountElement.textContent = archiveCount;
         allTab.classList.toggle('active', currentView === 'all');
@@ -1863,6 +1874,9 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
         exportButton.disabled = tasks.length === 0;
+        const focusCount=focusedTasks().length;
+        focusLimitSummary.textContent=`Focus ${focusCount}/${MAX_FOCUS_TASKS}`;
+        focusLimitSummary.classList.toggle('visible',currentView==='active');
         activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
         activeTimeSummary.classList.toggle('visible',currentView==='active'&&plannedMinutes>0);
         renderProjectFilter();
@@ -1919,7 +1933,7 @@ Current data will be preserved first.`)) return;
           empty.innerHTML = currentView === 'all'
             ? systemFilter==='inbox' ? '<strong>Inbox is clear</strong>No unpinned, undated All tasks.' : systemFilter==='today' ? '<strong>Nothing due</strong>No overdue or due-today All tasks.' : systemFilter==='dated' ? '<strong>No dated tasks</strong>Assign a date to an All task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No All tasks remain for ${selectedProjectFilter}.` : '<strong>No tasks</strong>Add an unlimited number of tasks here.'
             : currentView === 'active'
-              ? '<strong>No active tasks</strong>Move up to five tasks here from All.'
+              ? '<strong>No active tasks</strong>Move current work here from All, then focus on up to five.'
               : currentView === 'waiting'
               ? '<strong>Waiting is empty</strong>Tasks waiting on others will appear here.'
               : '<strong>Archive is empty</strong>Archived tasks will appear here.';
@@ -1929,9 +1943,15 @@ Current data will be preserved first.`)) return;
         }
 
         visibleTasks.forEach((task, index) => {
+          if(currentView==='active'&&!editingId&&(index===0||visibleTasks[index-1].focus!==task.focus)){
+            const label=document.createElement('div');label.className=`focus-section-label${task.focus?' focus':''}`;
+            const sectionName=document.createElement('span');sectionName.textContent=task.focus?'★ Focus':'Other Active';
+            const sectionCount=document.createElement('span');sectionCount.textContent=task.focus?`${focusedTasks().length}/${MAX_FOCUS_TASKS}`:`${activeTasks().length-focusedTasks().length}`;
+            label.append(sectionName,sectionCount);tasksHost.appendChild(label);
+          }
           const card = document.createElement('article');
           card.className = `task${editingId === task.id ? ' editing' : ''}`;
-          if (currentView === 'active' && index === 0) card.classList.add('top-focus');
+          if (currentView === 'active' && task.focus) card.classList.add('top-focus');
           card.dataset.taskId = task.id;
           if (currentView === 'all' || currentView === 'active') {
             card.append(createView(task, index), createEditor(task));
@@ -1961,7 +1981,7 @@ Current data will be preserved first.`)) return;
         const content = document.createElement('div');
         content.className = 'task-content';
 
-        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';if(currentView==='all'){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title=activeTasks().length>=MAX_TASKS?'Active is full':'Quick Activate';quick.disabled=activeTasks().length>=MAX_TASKS;headingActions.appendChild(quick);}const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
+        const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';if(currentView==='all'){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title='Quick Activate';headingActions.appendChild(quick);}if(currentView==='active'){const focus=makeButton(task.focus?'★':'☆',`focus-task${task.focus?' focused':''}`,()=>toggleTaskFocus(task.id));focus.setAttribute('aria-label',task.focus?'Remove from Focus':'Add to Focus');focus.title=task.focus?'Remove from Focus':focusedTasks().length>=MAX_FOCUS_TASKS?'Focus is full':'Add to Focus';headingActions.appendChild(focus);}const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
         if (currentView === 'active' && task.durationMinutes) {
           const duration = document.createElement('div');
           duration.className = 'task-duration';
@@ -2202,6 +2222,7 @@ Current data will be preserved first.`)) return;
         if (!task) return;
         task.list = 'active';
         task.waiting = true;
+        task.focus = false;
         task.waitingSince = new Date().toISOString();
         task.followUpDate = followUpDate;
         editingId = null;
@@ -2210,16 +2231,13 @@ Current data will be preserved first.`)) return;
       }
 
       function moveToActive(taskId) {
-        if (activeTasks().length >= MAX_TASKS) {
-          showStatus('Five active tasks already exist');
-          return;
-        }
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
         task.list = 'active';
         task.waiting = false;
         task.waitingSince = null;
         task.followUpDate = '';
+        task.focus = false;
         save('Moved to Active');
         render();
       }
@@ -2228,6 +2246,7 @@ Current data will be preserved first.`)) return;
         const task = tasks.find(item => item.id === taskId);
         if (!task || task.list !== 'active' || task.waiting || task.archived) return;
         task.list = 'all';
+        task.focus = false;
         finishEditing();
         currentView = 'all';
         save('Moved to All');
@@ -2235,18 +2254,14 @@ Current data will be preserved first.`)) return;
       }
 
       function quickActivateTask(taskId){
-        if(activeTasks().length>=MAX_TASKS){showStatus('Five active tasks already exist');return;}
         const task=tasks.find(item=>item.id===taskId);if(!task||task.list!=='all'||task.waiting||task.archived)return;
-        task.list='active';save('Moved to Active');render();
+        task.list='active';task.focus=false;save('Moved to Active');render();
       }
       function moveAllTaskToActive(taskId) {
-        if (activeTasks().length >= MAX_TASKS) {
-          showStatus('Five active tasks already exist');
-          return;
-        }
         const task = tasks.find(item => item.id === taskId);
         if (!task || task.list !== 'all') return;
         task.list = 'active';
+        task.focus = false;
         finishEditing();
         currentView = 'active';
         save('Moved to Active');
@@ -2325,6 +2340,7 @@ Current data will be preserved first.`)) return;
         task.waitingSince = null;
         task.followUpDate = '';
         task.archived = true;
+        task.focus = false;
         task.archivedAt = new Date().toISOString();
         editingId = null;
         save('Task archived');
@@ -2332,10 +2348,6 @@ Current data will be preserved first.`)) return;
       }
 
       function restoreTask(taskId) {
-        if (activeTasks().length >= MAX_TASKS) {
-          showStatus('Five active tasks already exist');
-          return;
-        }
         const task = tasks.find(item => item.id === taskId);
         if (!task) return;
         task.list = 'active';
@@ -2343,6 +2355,7 @@ Current data will be preserved first.`)) return;
         task.waitingSince = null;
         task.followUpDate = '';
         task.archived = false;
+        task.focus = false;
         task.archivedAt = null;
         save('Task restored');
         render();
@@ -2486,7 +2499,7 @@ Current data will be preserved first.`)) return;
         return editor;
       }
 
-      function changeTaskStatus(taskId,status,editor){const task=tasks.find(item=>item.id===taskId);if(!task||!status)return;if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;}if(status==='all'){Object.assign(task,{list:'all',waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='active'){const already=!task.archived&&!task.waiting&&task.list==='active';if(!already&&activeTasks().length>=MAX_TASKS){showStatus('Five active tasks already exist');render();return;}Object.assign(task,{list:'active',waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='waiting'){Object.assign(task,{list:'active',waiting:true,waitingSince:task.waitingSince||new Date().toISOString(),archived:false,archivedAt:null});}else if(status==='archive'){if(!confirm(`Archive "${task.title.trim()||'Untitled task'}"?`)){render();return;}Object.assign(task,{waiting:false,waitingSince:null,followUpDate:'',archived:true,archivedAt:new Date().toISOString()});}finishEditing();currentView=status==='archive'?'archive':status;save(`Moved to ${status[0].toUpperCase()+status.slice(1)}`);render();}
+      function changeTaskStatus(taskId,status,editor){const task=tasks.find(item=>item.id===taskId);if(!task||!status)return;if(!task.actions.some(a=>a.text.trim())){showStatus('Add at least one next action');editor.querySelector('.action-edit-row input')?.focus();return;}if(status==='all'){Object.assign(task,{list:'all',focus:false,waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='active'){Object.assign(task,{list:'active',waiting:false,waitingSince:null,followUpDate:'',archived:false,archivedAt:null});}else if(status==='waiting'){Object.assign(task,{list:'active',focus:false,waiting:true,waitingSince:task.waitingSince||new Date().toISOString(),archived:false,archivedAt:null});}else if(status==='archive'){if(!confirm(`Archive "${task.title.trim()||'Untitled task'}"?`)){render();return;}Object.assign(task,{focus:false,waiting:false,waitingSince:null,followUpDate:'',archived:true,archivedAt:new Date().toISOString()});}finishEditing();currentView=status==='archive'?'archive':status;save(`Moved to ${status[0].toUpperCase()+status.slice(1)}`);render();}
       function startActionReorder(event,taskId,actionId){if(event.button!==undefined&&event.button!==0)return;const task=tasks.find(i=>i.id===taskId),row=event.currentTarget.closest('.action-edit-row'),sourceIndex=task?.actions.findIndex(a=>a.id===actionId)??-1;if(!task||!row||sourceIndex<0)return;event.preventDefault();event.currentTarget.setPointerCapture?.(event.pointerId);actionDragState={pointerId:event.pointerId,taskId,actionId,sourceIndex,targetIndex:sourceIndex,insertAfter:false,handle:event.currentTarget,sourceRow:row};row.classList.add('action-dragging');document.body.classList.add('reordering');document.addEventListener('pointermove',moveActionReorder,{passive:false});document.addEventListener('pointerup',finishActionReorder);document.addEventListener('pointercancel',cancelActionReorder);}
       function clearActionDropMarkers(){tasksHost.querySelectorAll('.action-drag-before,.action-drag-after').forEach(r=>r.classList.remove('action-drag-before','action-drag-after'));}
       function moveActionReorder(event){if(!actionDragState||event.pointerId!==actionDragState.pointerId)return;event.preventDefault();clearActionDropMarkers();for(const row of tasksHost.querySelectorAll('.action-edit-row')){if(row===actionDragState.sourceRow)continue;const rect=row.getBoundingClientRect();if(event.clientY>=rect.top&&event.clientY<=rect.bottom){const task=tasks.find(i=>i.id===actionDragState.taskId);actionDragState.targetIndex=task?.actions.findIndex(a=>a.id===row.dataset.actionId)??actionDragState.sourceIndex;actionDragState.insertAfter=event.clientY>rect.top+rect.height/2;row.classList.add(actionDragState.insertAfter?'action-drag-after':'action-drag-before');break;}}}
