@@ -893,6 +893,24 @@
     .help-key { display:inline-block; border:1px solid var(--line); border-radius:5px; background:#f5f6f7; padding:1px 5px; color:var(--text); font-size:10px; font-weight:750; white-space:nowrap; }
     .help-philosophy { border-color:#d9e3fa; background:var(--accent-soft); text-align:center; }
     .help-philosophy p { color:#38558d; font-weight:680; }
+
+    .desktop-philosophy { display:none; }
+    .desktop-menu-button { display:none; min-width:34px; min-height:30px; padding:3px 8px; font-size:18px; line-height:1; }
+    .desktop-menu-dialog { width:min(90vw,330px); border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
+    .desktop-menu-dialog::backdrop { background:rgba(29,35,42,.28); }
+    .desktop-menu-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .desktop-menu-header h2 { margin:0; font-size:16px; }
+    .desktop-menu-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
+    .desktop-menu-actions button { min-height:38px; text-align:left; }
+    .desktop-menu-actions .wide { grid-column:1/-1; }
+    .desktop-menu-health { margin-top:9px; padding-top:8px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; text-align:center; }
+    @media (min-width:701px) {
+      .desktop-philosophy { display:block; flex:0 0 auto; margin:0 0 5px; }
+      .desktop-menu-button { display:inline-flex; align-items:center; justify-content:center; }
+      .footer { display:none; }
+      .app { padding-bottom:max(8px,env(safe-area-inset-bottom)); }
+      .status { flex:0 0 auto; }
+    }
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
@@ -909,6 +927,10 @@
 </head>
 <body>
   <main class="app">
+    <div class="philosophy desktop-philosophy">
+      <span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
+      <div class="philosophy-tagline">Track important work, focus on five, and highlight no more than two must-do tasks today.</div>
+    </div>
     <header class="topbar">
       <div class="view-tabs-row">
         <nav class="view-tabs" aria-label="Task views">
@@ -922,6 +944,7 @@
           <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
         </div>
       </div>
+      <button type="button" class="desktop-menu-button" id="desktopMenuButton" aria-label="Open menu" title="Menu">☰</button>
       <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
     </header>
 
@@ -953,6 +976,19 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div>
+    <dialog id="desktopMenuDialog" class="desktop-menu-dialog" aria-labelledby="desktopMenuTitle">
+      <div class="desktop-menu-header"><h2 id="desktopMenuTitle">Five Menu</h2><button type="button" class="dialog-close" id="closeDesktopMenu" aria-label="Close menu">✕</button></div>
+      <div class="desktop-menu-actions">
+        <button type="button" id="menuSearch" class="wide">⌕ Search tasks</button>
+        <button type="button" id="menuQuickBackup">Quick Backup</button>
+        <button type="button" id="menuExport">Export Backup</button>
+        <button type="button" id="menuImport">Import Backup</button>
+        <button type="button" id="menuRecovery">Recovery</button>
+        <button type="button" id="menuHelp">Help</button>
+        <button type="button" id="menuShortcuts">Keyboard Shortcuts</button>
+      </div>
+      <div class="desktop-menu-health" id="desktopMenuHealth">Storage status available after startup</div>
+    </dialog>
     <dialog id="searchDialog" class="search-dialog" aria-labelledby="searchTitle">
       <div class="search-header"><h2 id="searchTitle">Search tasks</h2><button type="button" class="dialog-close" id="closeSearch" aria-label="Close search">✕</button></div>
       <input type="search" id="searchInput" class="search-input" placeholder="Title, action, description or context" autocomplete="off" spellcheck="false">
@@ -1051,6 +1087,9 @@
       const newContextName=document.getElementById('newContextName');
       const addContextButton=document.getElementById('addContextButton');
       const addTaskButton = document.getElementById('addTask');
+      const desktopMenuButton=document.getElementById('desktopMenuButton');
+      const desktopMenuDialog=document.getElementById('desktopMenuDialog');
+      const desktopMenuHealth=document.getElementById('desktopMenuHealth');
       const applyMobileFooterMode = () => document.documentElement.classList.toggle('mobile-footer', matchMedia('(max-width: 700px)').matches || matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
       window.addEventListener('resize',applyMobileFooterMode,{passive:true});
       window.addEventListener('orientationchange',applyMobileFooterMode,{passive:true});
@@ -1298,6 +1337,7 @@
         clearTimeout(saveHealthTimer);
         saveHealthElement.className = `save-health ${state}`;
         saveHealthElement.textContent = label;
+        if(desktopMenuHealth)desktopMenuHealth.textContent=label;
         if (state === 'saved') saveHealthTimer = setTimeout(() => {
           saveHealthElement.textContent = `Saved · ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
         }, 500);
@@ -1961,7 +2001,7 @@ Current data will be preserved first.`)) return;
           const empty = document.createElement('div');
           empty.className = 'empty';
           empty.innerHTML = currentView === 'all'
-            ? systemFilter==='today' ? '<strong>Nothing due</strong>No overdue or due-today Inbox tasks.' : systemFilter==='dated' ? '<strong>No dated tasks</strong>Assign a date to an Inbox task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No Inbox tasks remain for ${selectedProjectFilter}.` : '<strong>Inbox is empty</strong>Capture a task to add it to Inbox.'
+            ? systemFilter==='inbox' ? '<strong>Inbox is clear</strong>No unpinned, undated All tasks.' : systemFilter==='today' ? '<strong>Nothing due</strong>No overdue or due-today Inbox tasks.' : systemFilter==='dated' ? '<strong>No dated tasks</strong>Assign a date to an Inbox task.' : selectedProjectFilter ? `<strong>No matching tasks</strong>No Inbox tasks remain for ${selectedProjectFilter}.` : '<strong>Inbox is empty</strong>Capture a task to add it to Inbox.'
             : currentView === 'tracked'
               ? '<strong>No tracked tasks</strong>Move important monitored work here from Inbox.'
               : currentView === 'active'
@@ -1997,6 +2037,7 @@ Current data will be preserved first.`)) return;
       function createView(task, index) {
         const view = document.createElement('div');
         view.className = 'task-view';
+
         const handle = document.createElement('button');
         handle.type = 'button';
         handle.className = 'drag-handle';
@@ -2004,53 +2045,50 @@ Current data will be preserved first.`)) return;
         handle.setAttribute('aria-label', `Reorder ${task.title.trim() || `task ${index + 1}`}`);
         handle.title = 'Hold and drag to reorder';
         handle.addEventListener('pointerdown', event => startReorder(event, task.id));
+
         const content = document.createElement('div');
         content.className = 'task-content';
-        const mobileCondensed = mobileFooterMode && (currentView==='all' || currentView==='active');
-        const headingRow=document.createElement('div');headingRow.className='task-heading-row';
-        const headingMain=document.createElement('div');headingMain.className='task-heading-main';
-        const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(title);
-        const headingActions=document.createElement('div');headingActions.className='task-heading-actions';
-        if(currentView==='all'&&!mobileCondensed){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title='Quick Activate';headingActions.appendChild(quick);}
-        if(currentView==='tracked'||currentView==='active'){const progress=makeButton(progressLabel(task.progressStatus),`progress-status ${task.progressStatus}`,()=>cycleProgress(task.id));progress.setAttribute('aria-label',`Progress: ${progressLabel(task.progressStatus)}`);progress.title='Change progress status';headingActions.appendChild(progress);}
-        if(currentView==='active'){if(task.focus){const today=makeButton(task.todayFocus?'●':'○',`today-focus-task${task.todayFocus?' selected':''}`,()=>toggleTodayFocus(task.id));today.setAttribute('aria-label',task.todayFocus?'Remove from Today Focus':'Add to Today Focus');today.title=task.todayFocus?'Remove from Today Focus':todayFocusedTasks().length>=MAX_TODAY_FOCUS_TASKS?'Today Focus is full':'Must do today';headingActions.appendChild(today);}const focus=makeButton(task.focus?'★':'☆',`focus-task${task.focus?' focused':''}`,()=>toggleTaskFocus(task.id));focus.setAttribute('aria-label',task.focus?'Remove from Focus':'Add to Focus');focus.title=task.focus?'Remove from Focus':focusedTasks().length>=MAX_FOCUS_TASKS?'Focus is full':'Add to Focus';headingActions.appendChild(focus);}
-        const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';
-        const openEditor=()=>beginEditing(task);
-        const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';
-        if(!mobileCondensed)headingActions.append(pin,edit);
-        headingRow.append(headingMain,headingActions);
-        view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});
-        content.appendChild(headingRow);
-        if (currentView === 'active' && task.durationMinutes) {const duration=document.createElement('div');duration.className='task-duration';duration.textContent=`⏱ ${durationLabel(task.durationMinutes)}`;content.appendChild(duration);}
-        if (showTaskDetails && task.description.trim()) {const description=document.createElement('p');description.className='description';description.textContent=task.description;content.appendChild(description);}
+
+        const mobileCondensed=mobileFooterMode&&(currentView==='all'||currentView==='active');const headingRow=document.createElement('div');headingRow.className='task-heading-row';const headingMain=document.createElement('div');headingMain.className='task-heading-main';const title=document.createElement('span');title.className='task-heading-title task-title';title.textContent=task.title.trim()||'Untitled task';headingMain.append(title);const headingActions=document.createElement('div');headingActions.className='task-heading-actions';if(currentView==='all'&&!mobileCondensed){const quick=makeButton('⚡','quick-activate',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');quick.title='Quick Activate';headingActions.appendChild(quick);}if(currentView==='tracked'||currentView==='active'){const progress=makeButton(progressLabel(task.progressStatus),`progress-status ${task.progressStatus}`,()=>cycleProgress(task.id));progress.setAttribute('aria-label',`Progress: ${progressLabel(task.progressStatus)}`);progress.title='Change progress status';headingActions.appendChild(progress);}if(currentView==='active'){if(task.focus){const today=makeButton(task.todayFocus?'●':'○',`today-focus-task${task.todayFocus?' selected':''}`,()=>toggleTodayFocus(task.id));today.setAttribute('aria-label',task.todayFocus?'Remove from Today Focus':'Add to Today Focus');today.title=task.todayFocus?'Remove from Today Focus':todayFocusedTasks().length>=MAX_TODAY_FOCUS_TASKS?'Today Focus is full':'Must do today';headingActions.appendChild(today);}const focus=makeButton(task.focus?'★':'☆',`focus-task${task.focus?' focused':''}`,()=>toggleTaskFocus(task.id));focus.setAttribute('aria-label',task.focus?'Remove from Focus':'Add to Focus');focus.title=task.focus?'Remove from Focus':focusedTasks().length>=MAX_FOCUS_TASKS?'Focus is full':'Add to Focus';headingActions.appendChild(focus);}const pin=makeButton('📌',`pin-task${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));pin.setAttribute('aria-label',task.pinned?'Unpin task':'Pin task');pin.title=task.pinned?'Unpin task':'Pin task';const openEditor=()=>beginEditing(task);const edit=makeButton('✎','edit-button',openEditor);edit.setAttribute('aria-label','Edit task');edit.title='Edit task';if(!mobileCondensed)headingActions.append(pin,edit);headingRow.append(headingMain,headingActions);view.addEventListener('click',event=>{if(event.target.closest('input, button, .drag-handle'))return;openEditor();});content.appendChild(headingRow);
+        if (currentView === 'active' && task.durationMinutes) {
+          const duration = document.createElement('div');
+          duration.className = 'task-duration';
+          duration.textContent = `⏱ ${durationLabel(task.durationMinutes)}`;
+          content.appendChild(duration);
+        }
+
+        if (showTaskDetails && task.description.trim()) {
+          const description = document.createElement('p');
+          description.className = 'description';
+          description.textContent = task.description;
+          content.appendChild(description);
+        }
+
         const taskDateLabel=localTaskDateLabel(task.taskDate);
-        const expanded=expandedCompactTaskActions.has(task.id);
-        if(mobileCondensed){
+        if (mobileCondensed) {
+          const expanded=expandedCompactTaskActions.has(task.id);
           const metadata=document.createElement('div');metadata.className='task-metadata-row';
           if(taskDateLabel){const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);const dot=document.createElement('span');dot.className='task-metadata-dot';dot.textContent='·';metadata.appendChild(dot);}
           const toggle=document.createElement('button');toggle.type='button';toggle.className='task-actions-toggle';toggle.textContent=`${expanded?'▼':'▶'} ${task.actions.length} action${task.actions.length===1?'':'s'} · tools`;toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-controls',`task-actions-${task.id}`);toggle.addEventListener('click',event=>{event.stopPropagation();toggleCompactTaskActions(task.id);});metadata.appendChild(toggle);content.appendChild(metadata);
-          if(expanded){
-            const tools=document.createElement('div');tools.className='mobile-card-tools';
-            if(currentView==='all'){const quick=makeButton('⚡ Move to Active','mobile-card-tool primary',()=>quickActivateTask(task.id));quick.setAttribute('aria-label','Move task to Active');tools.appendChild(quick);}
-            const mobilePin=makeButton(task.pinned?'📌 Unpin':'📌 Pin',`mobile-card-tool${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));
-            const mobileEdit=makeButton('✎ Edit','mobile-card-tool',openEditor);
-            tools.append(mobilePin,mobileEdit);content.appendChild(tools);
-            if(task.actions.length)content.appendChild(renderActionRows(task));
-          }
+          if(expanded){const tools=document.createElement('div');tools.className='mobile-card-tools';if(currentView==='all'){const quick=makeButton('⚡ Move to Active','mobile-card-tool primary',()=>quickActivateTask(task.id));tools.appendChild(quick);}const mobilePin=makeButton(task.pinned?'📌 Unpin':'📌 Pin',`mobile-card-tool${task.pinned?' pinned':''}`,()=>toggleTaskPin(task.id));const mobileEdit=makeButton('✎ Edit','mobile-card-tool',openEditor);tools.append(mobilePin,mobileEdit);content.appendChild(tools);if(task.actions.length)content.appendChild(renderActionRows(task));}
         } else if (task.actions.length) {
           if (showTaskDetails) {
-            if (taskDateLabel) {const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata);}
+            if (taskDateLabel) { const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata); }
             content.appendChild(renderActionRows(task));
           } else {
+            const expanded=expandedCompactTaskActions.has(task.id);
             const metadata=document.createElement('div');metadata.className='task-metadata-row';
-            if (taskDateLabel) {const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);const dot=document.createElement('span');dot.className='task-metadata-dot';dot.textContent='·';metadata.appendChild(dot);}
+            if (taskDateLabel) { const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);const dot=document.createElement('span');dot.className='task-metadata-dot';dot.textContent='·';metadata.appendChild(dot); }
             const toggle=document.createElement('button');toggle.type='button';toggle.className='task-actions-toggle';toggle.textContent=`${expanded?'▼':'▶'} ${task.actions.length} action${task.actions.length===1?'':'s'}`;toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-controls',`task-actions-${task.id}`);toggle.addEventListener('click',event=>{event.stopPropagation();toggleCompactTaskActions(task.id);});metadata.appendChild(toggle);content.appendChild(metadata);
             if (expanded) content.appendChild(renderActionRows(task));
           }
-        } else if (taskDateLabel) {const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata);}
-        view.append(handle,content);
+        } else if (taskDateLabel) {
+          const metadata=document.createElement('div');metadata.className='task-metadata-row';const date=document.createElement('span');date.className='task-date-label';date.textContent=taskDateLabel;metadata.appendChild(date);content.appendChild(metadata);
+        }
+        view.append(handle, content);
         return view;
       }
+
       function startReorder(event, taskId) {
         if (event.button !== undefined && event.button !== 0) return;
         if (!['all','tracked','active'].includes(currentView)) return;
@@ -2602,6 +2640,18 @@ Current data will be preserved first.`)) return;
         });
       });
 
+      desktopMenuButton.addEventListener('click',()=>desktopMenuDialog.showModal());
+      document.getElementById('closeDesktopMenu').addEventListener('click',()=>desktopMenuDialog.close());
+      desktopMenuDialog.addEventListener('cancel',event=>{event.preventDefault();desktopMenuDialog.close();});
+      desktopMenuDialog.addEventListener('click',event=>{if(event.target===desktopMenuDialog)desktopMenuDialog.close();});
+      const runDesktopMenuAction=button=>{desktopMenuDialog.close();button?.click();};
+      document.getElementById('menuSearch').addEventListener('click',()=>runDesktopMenuAction(searchButton));
+      document.getElementById('menuQuickBackup').addEventListener('click',()=>runDesktopMenuAction(quickBackupButton));
+      document.getElementById('menuExport').addEventListener('click',()=>runDesktopMenuAction(exportButton));
+      document.getElementById('menuImport').addEventListener('click',()=>runDesktopMenuAction(importButton));
+      document.getElementById('menuRecovery').addEventListener('click',()=>runDesktopMenuAction(recoveryButton));
+      document.getElementById('menuHelp').addEventListener('click',()=>runDesktopMenuAction(helpButton));
+      document.getElementById('menuShortcuts').addEventListener('click',()=>runDesktopMenuAction(shortcutHelp));
       backupMenuButton.addEventListener('click',()=>{updateBackupReminder();backupSheet.showModal();});
       document.getElementById('closeBackupSheet').addEventListener('click',()=>backupSheet.close());
       backupSheet.addEventListener('cancel',event=>{event.preventDefault();backupSheet.close();});
