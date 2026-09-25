@@ -939,28 +939,20 @@
     .today-plan-panel.collapsed .today-plan-panel-title,.today-plan-panel.collapsed .today-plan-scroll{display:none}
     .today-plan-panel.collapsed .today-plan-panel-header{height:100%;padding:4px;align-items:flex-start;border-bottom:0}
     .today-plan-panel.collapsed .today-plan-collapse{writing-mode:vertical-rl;width:26px;height:auto;min-height:92px;padding:7px 0;font-size:10px;letter-spacing:.4px;text-transform:uppercase}
-    .today-plan-scroll{height:calc(100% - 67px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+    .today-plan-scroll{height:calc(100% - 38px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
     .today-plan-row{display:grid;grid-template-columns:36px minmax(0,1fr);height:24px;min-height:24px;border-bottom:1px solid #ece8e1}
     .today-plan-row.current{background:#fff8dc}
-    .today-plan-row.current .today-plan-time{position:relative;color:#765b00}
-    .today-plan-row.current .today-plan-time::before{content:'▶';position:absolute;left:2px;top:7px;font-size:6px;line-height:1;color:#b77900}
-    .today-plan-time{padding:4px 4px 2px 8px;color:#536170;font-size:9px;font-weight:780;line-height:17px;text-align:right;white-space:nowrap}
+    .today-plan-time{padding:4px 4px 2px 2px;color:#536170;font-size:9px;font-weight:780;line-height:17px;text-align:right;white-space:nowrap}
     .today-plan-input{width:100%;min-width:0;height:23px;min-height:23px;border:0;border-left:1px solid #ece8e1;border-radius:0;background:transparent;color:var(--text);padding:1px 6px;font-size:11px;line-height:21px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .today-plan-input:focus{background:#fff;box-shadow:inset 2px 0 0 rgba(40,88,199,.35)}
     .today-plan-panel .today-plan-input{height:23px;min-height:23px}
-    .today-plan-tools{display:flex;align-items:center;justify-content:space-between;gap:4px;height:29px;padding:3px 5px;border-bottom:1px solid var(--line);background:#fff}
-    .today-plan-range{display:flex;align-items:center;gap:2px;min-width:0}
-    .today-plan-tool{min-height:22px;border:0;border-radius:5px;background:transparent;color:var(--muted);padding:2px 5px;font-size:9px;font-weight:740;white-space:nowrap}
-    .today-plan-tool.active{background:var(--accent-soft);color:var(--accent)}
-    .today-plan-clear{color:#8b4b45}
-    .today-plan-panel.collapsed .today-plan-tools{display:none}
     .today-plan-dialog{width:min(100%,600px);max-width:600px;height:100dvh;max-height:100dvh;margin:0 auto;border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:var(--surface);color:var(--text);overflow:hidden}
     .today-plan-dialog[open]{display:flex;flex-direction:column}
     .today-plan-dialog::backdrop{background:rgba(29,35,42,.34)}
     .today-plan-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto;min-height:38px;padding-bottom:7px;border-bottom:1px solid var(--line)}
     .today-plan-dialog-header h2{margin:0;font-size:17px}
     .today-plan-dialog-date{color:var(--muted);font-size:10px;font-weight:650}
-    .today-plan-dialog .today-plan-scroll{height:auto;flex:1 1 auto;min-height:0;margin-top:0}
+    .today-plan-dialog .today-plan-scroll{height:auto;flex:1 1 auto;min-height:0;margin-top:2px}
     .today-plan-dialog .today-plan-row{height:32px;min-height:32px}
     .today-plan-dialog .today-plan-input{height:31px;min-height:31px;font-size:15px;line-height:25px;padding:3px 8px}
     #mobilePlanButton{display:none}
@@ -996,6 +988,7 @@
           <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
         </div>
       </div>
+      <button type="button" id="toolbarSearchButton" class="desktop-menu-button" aria-label="Search tasks">⌕</button>
       <button type="button" class="desktop-menu-button" id="desktopMenuButton" aria-label="Open menu">☰</button>
       <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
     </header>
@@ -1053,7 +1046,7 @@
         <section class="help-section help-philosophy"><h3>Five Philosophy</h3><p>Capture quickly. Track intentionally. Focus on five. Finish today's two.</p></section>
       </div>
     </dialog>
-    <dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>/ Search<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
     <dialog id="projectFilterDialog" class="project-filter-dialog" aria-labelledby="projectFilterTitle">
       <div class="project-filter-header"><h2 id="projectFilterTitle">Manage Contexts</h2><button type="button" class="dialog-close" id="closeProjectFilter" aria-label="Close project filter">✕</button></div>
       <div class="project-filter-list" id="projectFilterList"></div>
@@ -1082,12 +1075,10 @@
 
   <aside id="todayPlanPanel" class="today-plan-panel" aria-label="Today Plan">
     <div class="today-plan-panel-header"><span class="today-plan-panel-title">Today Plan</span><button type="button" id="toggleTodayPlanPanel" class="today-plan-collapse" aria-label="Collapse Today Plan">◀</button></div>
-    <div class="today-plan-tools"><div class="today-plan-range"><button type="button" id="desktopPlanWorking" class="today-plan-tool">Working</button><button type="button" id="desktopPlanFull" class="today-plan-tool">Full</button></div><button type="button" id="desktopPlanClear" class="today-plan-tool today-plan-clear">Clear Day</button></div>
     <div id="desktopTodayPlanRows" class="today-plan-scroll"></div>
   </aside>
   <dialog id="todayPlanDialog" class="today-plan-dialog" aria-labelledby="todayPlanTitle">
     <div class="today-plan-dialog-header"><div><h2 id="todayPlanTitle">Today Plan</h2><div id="todayPlanDate" class="today-plan-dialog-date"></div></div><button type="button" class="dialog-close" id="closeTodayPlan" aria-label="Close Today Plan">✕</button></div>
-    <div class="today-plan-tools"><div class="today-plan-range"><button type="button" id="mobilePlanWorking" class="today-plan-tool">Working</button><button type="button" id="mobilePlanFull" class="today-plan-tool">Full</button></div><button type="button" id="mobilePlanClear" class="today-plan-tool today-plan-clear">Clear Day</button></div>
     <div id="mobileTodayPlanRows" class="today-plan-scroll"></div>
   </dialog>
 
@@ -1120,7 +1111,7 @@
       const LAST_CAPTURE_CONTEXT_KEY='five.lastCaptureContext';
       const ACTIVE_SECTION_STATE_KEY='five.activeSections.v1';
       const PROJECTS_KEY='five.projects.v1'; const PROJECT_VIEW_KEY='five.projectView.v1';
-      const TODAY_PLAN_KEY='five.todayPlan.v1'; const TODAY_PLAN_COLLAPSED_KEY='five.todayPlanCollapsed.v1'; const TODAY_PLAN_RANGE_KEY='five.todayPlanRange.v1';
+      const TODAY_PLAN_KEY='five.todayPlan.v1'; const TODAY_PLAN_COLLAPSED_KEY='five.todayPlanCollapsed.v1';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const trackedCountElement = document.getElementById('trackedCount');
@@ -1164,7 +1155,7 @@
       const importFile = document.getElementById('importFile');
       const statusElement = document.getElementById('status');
       const shortcutHelp = document.getElementById('shortcutHelp');
-      const searchButton = document.getElementById('searchButton');
+      const searchButton = document.getElementById('searchButton'); const toolbarSearchButton=document.getElementById('toolbarSearchButton');
       const searchDialog = document.getElementById('searchDialog');
       const searchInput = document.getElementById('searchInput');
       const searchSummary = document.getElementById('searchSummary');
@@ -1216,7 +1207,6 @@
       let projects=[];try{const saved=JSON.parse(localStorage.getItem(PROJECTS_KEY)||'[]');if(Array.isArray(saved))projects=saved.map(normaliseProject);}catch{}
       const TODAY_PLAN_SLOTS=Array.from({length:31},(_,index)=>{const minutes=360+index*30;return `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;});
       let todayPlan=loadTodayPlan();
-      let todayPlanRange=localStorage.getItem(TODAY_PLAN_RANGE_KEY)==='working'?'working':'full';
       let projectView=localStorage.getItem(PROJECT_VIEW_KEY)==='areas'?'areas':'timeline';let editingProjectId=null;
       let activeSectionState={today:false,focus:false,other:true};
       try{Object.assign(activeSectionState,JSON.parse(localStorage.getItem(ACTIVE_SECTION_STATE_KEY)||'{}'));}catch{}
@@ -1679,13 +1669,9 @@ Current data will be preserved first.`)) return;
       function loadTodayPlan(){try{return normaliseTodayPlan(JSON.parse(localStorage.getItem(TODAY_PLAN_KEY)||'{}'));}catch{return normaliseTodayPlan({});}}
       function persistTodayPlan(snapshot=true){try{const encoded=JSON.stringify(normaliseTodayPlan(todayPlan));localStorage.setItem(TODAY_PLAN_KEY,encoded);if(localStorage.getItem(TODAY_PLAN_KEY)!==encoded)throw new Error('Today Plan read-back failed');if(snapshot)scheduleRecoverySnapshot('Today Plan update');}catch{showStatus('Today Plan could not be saved');}}
       function currentTodayPlanSlot(){const now=new Date(),minutes=now.getHours()*60+now.getMinutes(),rounded=Math.floor(minutes/30)*30;return `${String(Math.floor(rounded/60)).padStart(2,'0')}:${String(rounded%60).padStart(2,'0')}`;}
-      function visibleTodayPlanSlots(){return todayPlanRange==='working'?TODAY_PLAN_SLOTS.filter(slot=>slot>='08:00'&&slot<='18:00'):TODAY_PLAN_SLOTS;}
-      function createTodayPlanRows(host){host.replaceChildren();const current=currentTodayPlanSlot();visibleTodayPlanSlots().forEach(slot=>{const row=document.createElement('label');row.className=`today-plan-row${slot===current?' current':''}`;row.dataset.slot=slot;const time=document.createElement('span');time.className='today-plan-time';time.textContent=slot.replace(/^0/,'');const input=document.createElement('input');input.type='text';input.className='today-plan-input';input.value=todayPlan[slot]||'';input.maxLength=300;input.setAttribute('aria-label',`Today Plan ${slot}`);input.autocomplete='off';input.addEventListener('input',()=>{todayPlan[slot]=input.value;const other=host===desktopTodayPlanRows?mobileTodayPlanRows:desktopTodayPlanRows;const counterpart=other.querySelector(`[data-slot="${slot}"] .today-plan-input`);if(counterpart&&counterpart.value!==input.value)counterpart.value=input.value;persistTodayPlan();});row.append(time,input);host.appendChild(row);});}
-      function focusCurrentPlanRow(host){requestAnimationFrame(()=>host.querySelector('.today-plan-row.current')?.scrollIntoView({block:'center',behavior:'smooth'}));}
-      function setTodayPlanRange(value){todayPlanRange=value==='working'?'working':'full';localStorage.setItem(TODAY_PLAN_RANGE_KEY,todayPlanRange);renderTodayPlan();focusCurrentPlanRow(todayPlanDialog.open?mobileTodayPlanRows:desktopTodayPlanRows);}
-      async function clearTodayPlan(){if(!Object.values(todayPlan).some(value=>value.trim())){showStatus('Today Plan is already clear');return;}if(!confirm("Clear today's plan?"))return;try{await createRecoverySnapshot('before Today Plan clear',true);}catch{showStatus('Could not secure recovery snapshot');return;}todayPlan=normaliseTodayPlan({});persistTodayPlan(false);renderTodayPlan();await createRecoverySnapshot('after Today Plan clear',true).catch(()=>{});showStatus("Today's plan cleared");}
-      function renderTodayPlan(){createTodayPlanRows(desktopTodayPlanRows);createTodayPlanRows(mobileTodayPlanRows);todayPlanDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});['desktopPlanWorking','mobilePlanWorking'].forEach(id=>document.getElementById(id).classList.toggle('active',todayPlanRange==='working'));['desktopPlanFull','mobilePlanFull'].forEach(id=>document.getElementById(id).classList.toggle('active',todayPlanRange==='full'));const collapsed=localStorage.getItem(TODAY_PLAN_COLLAPSED_KEY)==='true';todayPlanPanel.classList.toggle('collapsed',collapsed);const toggle=document.getElementById('toggleTodayPlanPanel');toggle.textContent=collapsed?'Plan ▶':'◀';toggle.setAttribute('aria-label',collapsed?'Expand Today Plan':'Collapse Today Plan');if(!collapsed)focusCurrentPlanRow(desktopTodayPlanRows);}
-      function openTodayPlan(){renderTodayPlan();if(!todayPlanDialog.open)todayPlanDialog.showModal();focusCurrentPlanRow(mobileTodayPlanRows);}
+      function createTodayPlanRows(host){host.replaceChildren();const current=currentTodayPlanSlot();TODAY_PLAN_SLOTS.forEach(slot=>{const row=document.createElement('label');row.className=`today-plan-row${slot===current?' current':''}`;row.dataset.slot=slot;const time=document.createElement('span');time.className='today-plan-time';time.textContent=slot.replace(/^0/,'');const input=document.createElement('input');input.type='text';input.className='today-plan-input';input.value=todayPlan[slot]||'';input.maxLength=300;input.setAttribute('aria-label',`Today Plan ${slot}`);input.autocomplete='off';input.addEventListener('input',()=>{todayPlan[slot]=input.value;const other=host===desktopTodayPlanRows?mobileTodayPlanRows:desktopTodayPlanRows;const counterpart=other.querySelector(`[data-slot="${slot}"] .today-plan-input`);if(counterpart&&counterpart.value!==input.value)counterpart.value=input.value;persistTodayPlan();});row.append(time,input);host.appendChild(row);});}
+      function renderTodayPlan(){createTodayPlanRows(desktopTodayPlanRows);createTodayPlanRows(mobileTodayPlanRows);todayPlanDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});const collapsed=localStorage.getItem(TODAY_PLAN_COLLAPSED_KEY)==='true';todayPlanPanel.classList.toggle('collapsed',collapsed);const toggle=document.getElementById('toggleTodayPlanPanel');toggle.textContent=collapsed?'Plan ▶':'◀';toggle.setAttribute('aria-label',collapsed?'Expand Today Plan':'Collapse Today Plan');if(!collapsed)requestAnimationFrame(()=>desktopTodayPlanRows.querySelector('.today-plan-row.current')?.scrollIntoView({block:'center'}));}
+      function openTodayPlan(){renderTodayPlan();if(!todayPlanDialog.open)todayPlanDialog.showModal();requestAnimationFrame(()=>mobileTodayPlanRows.querySelector('.today-plan-row.current')?.scrollIntoView({block:'center'}));}
       function normaliseProject(p){p=p&&typeof p==='object'?p:{};const type=p.type==='area'?'area':'timeline';return{id:typeof p.id==='string'&&p.id?p.id:(self.crypto?.randomUUID?.()||`project-${Date.now()}-${Math.random()}`),type,name:String(p.name||'').slice(0,200),status:['Active','Monitoring','Blocked','On Hold','Complete'].includes(p.status)?p.status:'Active',startDate:type==='timeline'&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.startDate||''))?p.startDate:'',milestone:type==='timeline'&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.milestone||''))?p.milestone:'',summary:String(p.summary||'').slice(0,500),vision:String(p.vision||p.summary||'').slice(0,500),notes:String(p.notes||'').slice(0,5000),createdAt:String(p.createdAt||new Date().toISOString()),updatedAt:String(p.updatedAt||new Date().toISOString())};}
       function saveProjects(message='Project saved'){localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));try{localStorage.setItem('five.projectsSignal.v1',JSON.stringify({at:Date.now(),writerId}));}catch{}showStatus(message);renderProjects();}
       function projectRank(s){return ['Active','Monitoring','Blocked','On Hold','Complete'].indexOf(s);}
@@ -2718,12 +2704,12 @@ Current data will be preserved first.`)) return;
 
       function openProjectsDialog(){renderProjects();if(!projectsDialog.open)projectsDialog.showModal();}
       mobileProjectsButton.addEventListener('click',openProjectsDialog);
-      mobilePlanButton.addEventListener('click',openTodayPlan);document.getElementById('closeTodayPlan').addEventListener('click',()=>todayPlanDialog.close());['desktopPlanWorking','mobilePlanWorking'].forEach(id=>document.getElementById(id).addEventListener('click',()=>setTodayPlanRange('working')));['desktopPlanFull','mobilePlanFull'].forEach(id=>document.getElementById(id).addEventListener('click',()=>setTodayPlanRange('full')));['desktopPlanClear','mobilePlanClear'].forEach(id=>document.getElementById(id).addEventListener('click',clearTodayPlan));todayPlanDialog.addEventListener('cancel',event=>{event.preventDefault();todayPlanDialog.close();});document.getElementById('toggleTodayPlanPanel').addEventListener('click',()=>{const collapsed=!todayPlanPanel.classList.contains('collapsed');localStorage.setItem(TODAY_PLAN_COLLAPSED_KEY,String(collapsed));renderTodayPlan();});
+      mobilePlanButton.addEventListener('click',openTodayPlan);document.getElementById('closeTodayPlan').addEventListener('click',()=>todayPlanDialog.close());todayPlanDialog.addEventListener('cancel',event=>{event.preventDefault();todayPlanDialog.close();});document.getElementById('toggleTodayPlanPanel').addEventListener('click',()=>{const collapsed=!todayPlanPanel.classList.contains('collapsed');localStorage.setItem(TODAY_PLAN_COLLAPSED_KEY,String(collapsed));renderTodayPlan();});
       desktopMenuButton.addEventListener('click',()=>desktopMenuDialog.showModal());document.getElementById('closeDesktopMenu').addEventListener('click',()=>desktopMenuDialog.close());
       document.getElementById('menuProjects').addEventListener('click',()=>{desktopMenuDialog.close();openProjectsDialog();});document.getElementById('menuPlan').addEventListener('click',()=>{desktopMenuDialog.close();openTodayPlan();});document.getElementById('closeProjects').addEventListener('click',()=>projectsDialog.close());projectsDialog.addEventListener('cancel',event=>{event.preventDefault();projectsDialog.close();});
       document.getElementById('projectsListTab').addEventListener('click',()=>{projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});document.getElementById('projectsTimelineTab').addEventListener('click',()=>{projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});const projectTypeDialog=document.getElementById('projectTypeDialog');document.getElementById('addProject').addEventListener('click',()=>projectTypeDialog.showModal());document.getElementById('closeProjectType').addEventListener('click',()=>projectTypeDialog.close());projectTypeDialog.addEventListener('cancel',event=>{event.preventDefault();projectTypeDialog.close();});document.getElementById('addAreaChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'area');});document.getElementById('addTimelineChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'timeline');});
       const menuForward=(id,target)=>document.getElementById(id).addEventListener('click',()=>{desktopMenuDialog.close();target?.click();});menuForward('menuSearch',searchButton);menuForward('menuQuickBackup',quickBackupButton);menuForward('menuExport',exportButton);menuForward('menuImport',importButton);menuForward('menuRecovery',recoveryButton);menuForward('menuHelp',helpButton);menuForward('menuShortcuts',shortcutHelp);
-      window.addEventListener('storage',event=>{if(event.key===PROJECTS_KEY&&event.newValue){try{projects=JSON.parse(event.newValue).map(normaliseProject);renderProjects();}catch{}}if(event.key===TODAY_PLAN_KEY&&event.newValue){try{todayPlan=normaliseTodayPlan(JSON.parse(event.newValue));renderTodayPlan();}catch{}}if(event.key===TODAY_PLAN_RANGE_KEY){todayPlanRange=event.newValue==='working'?'working':'full';renderTodayPlan();}});
+      window.addEventListener('storage',event=>{if(event.key===PROJECTS_KEY&&event.newValue){try{projects=JSON.parse(event.newValue).map(normaliseProject);renderProjects();}catch{}}if(event.key===TODAY_PLAN_KEY&&event.newValue){try{todayPlan=normaliseTodayPlan(JSON.parse(event.newValue));renderTodayPlan();}catch{}}});
       backupMenuButton.addEventListener('click',()=>{updateBackupReminder();backupSheet.showModal();});
       document.getElementById('closeBackupSheet').addEventListener('click',()=>backupSheet.close());
       backupSheet.addEventListener('cancel',event=>{event.preventDefault();backupSheet.close();});
@@ -2808,6 +2794,7 @@ Current data will be preserved first.`)) return;
           target.matches('input, textarea, select') || target.isContentEditable
         );
         if (isTyping || event.altKey || event.ctrlKey || event.metaKey) return;
+        if(event.key==='/' ){event.preventDefault();openSearch();return;}
         if (event.key.toLowerCase() !== 't') return;
         if (editingId) return;
         event.preventDefault();
@@ -2828,7 +2815,7 @@ Current data will be preserved first.`)) return;
       });
       document.getElementById('closeRecovery').addEventListener('click',()=>recoveryDialog.close());
       document.getElementById('closeSnapshotPreview').addEventListener('click',()=>snapshotPreviewDialog.close());
-      searchButton.addEventListener('click',openSearch);
+      searchButton.addEventListener('click',openSearch); toolbarSearchButton?.addEventListener('click',openSearch);
       searchInput.addEventListener('input',renderSearchResults);
       document.getElementById('closeSearch').addEventListener('click',()=>searchDialog.close());
       searchDialog.addEventListener('cancel',event=>{event.preventDefault();searchDialog.close();});
