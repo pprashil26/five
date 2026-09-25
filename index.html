@@ -966,6 +966,23 @@
     #mobilePlanButton{display:none}
     @media(min-width:1020px) and (pointer:fine){.today-plan-panel{display:block}}
     @media(max-width:700px),(pointer:coarse){html.mobile-footer #mobilePlanButton{display:inline-flex!important;align-items:center;color:var(--accent)}}
+
+    .quick-pad-dialog{width:min(92vw,420px);height:min(70dvh,520px);border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface);color:var(--text)}
+    .quick-pad-dialog::backdrop{background:rgba(29,35,42,.28)}
+    .quick-pad-dialog[open]{display:flex;flex-direction:column}
+    .quick-pad-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto;padding-bottom:7px;border-bottom:1px solid var(--line)}
+    .quick-pad-header h2{margin:0;font-size:16px}
+    .quick-pad-header-actions{display:flex;align-items:center;gap:3px}
+    .quick-pad-clear{min-height:28px;border:0;background:transparent;color:#8b4b45;padding:2px 6px;font-size:10px}
+    .quick-pad-text{flex:1 1 auto;width:100%;min-height:0!important;max-height:none!important;margin-top:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);padding:9px;font-size:14px;line-height:1.45;resize:none}
+    .quick-pad-hint{flex:0 0 auto;margin-top:6px;color:var(--muted);font-size:9px;text-align:center}
+    #mobilePadButton{display:none}
+    @media(max-width:700px),(pointer:coarse){
+      html.mobile-footer #mobilePadButton{display:inline-flex!important;align-items:center;color:var(--accent)}
+      .quick-pad-dialog{width:100%;max-width:600px;height:100dvh;max-height:100dvh;margin:0 auto;border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+      .quick-pad-header h2{font-size:17px}
+      .quick-pad-text{font-size:16px}
+    }
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
@@ -996,6 +1013,7 @@
           <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
         </div>
       </div>
+      <button type="button" id="toolbarPadButton" class="desktop-menu-button" aria-label="Open Quick Pad" title="Quick Pad · Alt+Q">📝</button>
       <button type="button" id="toolbarSearchButton" class="desktop-menu-button" aria-label="Search tasks">⌕</button>
       <button type="button" class="desktop-menu-button" id="desktopMenuButton" aria-label="Open menu">☰</button>
       <button type="button" class="add-task" id="addTask" aria-label="Add task" title="Add task">+</button>
@@ -1014,6 +1032,7 @@
       <div class="footer-actions">
         <button type="button" id="mobileProjectsButton" aria-label="Open Projects" title="Projects">Projects</button>
         <button type="button" id="mobilePlanButton" aria-label="Open Today Plan" title="Today Plan">Plan</button>
+        <button type="button" id="mobilePadButton" aria-label="Open Quick Pad" title="Quick Pad">Pad</button>
         <button type="button" id="backupMenuButton">Backup</button>
         <button type="button" id="quickBackup">Quick Backup</button>
         <button type="button" id="exportData">Export backup</button>
@@ -1031,7 +1050,7 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div>
-    <dialog id="desktopMenuDialog" class="desktop-menu-dialog"><div class="desktop-menu-header"><h2>Five Menu</h2><button type="button" class="dialog-close" id="closeDesktopMenu">✕</button></div><div class="desktop-menu-actions"><button id="menuProjects" class="wide">Projects</button><button id="menuPlan" class="wide">Today Plan</button><button id="menuSearch" class="wide">⌕ Search tasks</button><button id="menuQuickBackup">Quick Backup</button><button id="menuExport">Export Backup</button><button id="menuImport">Import Backup</button><button id="menuRecovery">Recovery</button><button id="menuHelp">Help</button><button id="menuShortcuts">Keyboard Shortcuts</button></div><div class="desktop-menu-health" id="desktopMenuHealth">Storage status available after startup</div></dialog>
+    <dialog id="desktopMenuDialog" class="desktop-menu-dialog"><div class="desktop-menu-header"><h2>Five Menu</h2><button type="button" class="dialog-close" id="closeDesktopMenu">✕</button></div><div class="desktop-menu-actions"><button id="menuProjects" class="wide">Projects</button><button id="menuPlan" class="wide">Today Plan</button><button id="menuPad" class="wide">📝 Quick Pad</button><button id="menuSearch" class="wide">⌕ Search tasks</button><button id="menuQuickBackup">Quick Backup</button><button id="menuExport">Export Backup</button><button id="menuImport">Import Backup</button><button id="menuRecovery">Recovery</button><button id="menuHelp">Help</button><button id="menuShortcuts">Keyboard Shortcuts</button></div><div class="desktop-menu-health" id="desktopMenuHealth">Storage status available after startup</div></dialog>
     <dialog id="projectsDialog" class="projects-dialog"><div class="projects-header"><h2>Projects</h2><button type="button" class="dialog-close" id="closeProjects">✕</button></div><div class="projects-toolbar"><div class="projects-tabs"><button id="projectsListTab" class="projects-tab">Areas</button><button id="projectsTimelineTab" class="projects-tab active">Timeline</button></div><button id="addProject">+ Add</button></div><div id="projectsList" class="projects-list"></div><div id="projectEditor" class="project-editor hidden"></div></dialog><dialog id="projectTypeDialog" class="project-filter-dialog" aria-labelledby="projectTypeTitle"><div class="project-filter-header"><h2 id="projectTypeTitle">Add to Projects</h2><button type="button" class="dialog-close" id="closeProjectType" aria-label="Close">✕</button></div><div class="project-filter-list"><button type="button" id="addAreaChoice" class="project-filter-option"><span>Area</span><span>Ongoing responsibility</span></button><button type="button" id="addTimelineChoice" class="project-filter-option"><span>Timeline Project</span><span>Time-bound initiative</span></button></div></dialog>
     <dialog id="searchDialog" class="search-dialog" aria-labelledby="searchTitle">
       <div class="search-header"><h2 id="searchTitle">Search tasks</h2><button type="button" class="dialog-close" id="closeSearch" aria-label="Close search">✕</button></div>
@@ -1049,12 +1068,13 @@
         <section class="help-section"><h3>5. Work by context</h3><p>Contexts group tasks by where or how they can be done, such as @CALL, @COMPUTER, @ONLINE, @ERRANDS, @HOME, and @AGENDA. Use <span class="help-key">+ Contexts</span> on desktop, or the compact <span class="help-key">+</span> on mobile, to add, rename, or reorder contexts.</p></section>
         <section class="help-section"><h3>6. Complete and organise</h3><p>Open a task with <span class="help-key">✎</span> to add descriptions, actions, dates, duration, or change status. Use Waiting for delegated or blocked work, and Archive for completed or retained tasks.</p></section>
         <section class="help-section"><h3>7. Sketch today</h3><p>Use <span class="help-key">Today Plan</span> as a lightweight execution whiteboard with 30-minute blocks. It is intentionally separate from tasks, projects and calendar scheduling.</p></section>
-        <section class="help-section"><h3>8. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
-        <section class="help-section"><h3>Keyboard</h3><p><span class="help-key">T</span> new task · <span class="help-key">Enter</span> capture and close · <span class="help-key">Ctrl/Cmd + Enter</span> capture and continue · <span class="help-key">Esc</span> cancel.</p></section>
+        <section class="help-section"><h3>8. Park interruptions</h3><p>Open <span class="help-key">Quick Pad</span> or press <span class="help-key">Alt + Q</span>, type a brief interruption note, then close it and return to focused work. Process the plain-text pad later.</p></section>
+        <section class="help-section"><h3>9. Protect your data</h3><p>Five saves locally using verified browser storage and creates Recovery snapshots. Use <span class="help-key">Backup</span> regularly to keep an external JSON copy, especially before browser cleanup or moving devices.</p></section>
+        <section class="help-section"><h3>Keyboard</h3><p><span class="help-key">Alt + Q</span> Quick Pad · <span class="help-key">T</span> new task · <span class="help-key">Enter</span> capture and close · <span class="help-key">Ctrl/Cmd + Enter</span> capture and continue · <span class="help-key">Esc</span> cancel.</p></section>
         <section class="help-section help-philosophy"><h3>Five Philosophy</h3><p>Capture quickly. Track intentionally. Focus on five. Finish today's two.</p></section>
       </div>
     </dialog>
-    <dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>/ Search<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
+    <dialog id="shortcutDialog" style="border:1px solid #ddd;border-radius:10px;padding:12px;max-width:320px"><b>Keyboard shortcuts</b><br><br>T New Task<br>/ Search<br>Alt+Q Quick Pad<br>Ctrl+Enter Save<br>Esc Cancel<br>Alt+N Add action<br>Alt+W Waiting<br>Alt+A Archive<br>Alt+D Date<br>Alt+Shift+D Timestamp<br>Alt+T Time<br><br><button id="closeShortcutDialog">Close</button></dialog>
     <dialog id="projectFilterDialog" class="project-filter-dialog" aria-labelledby="projectFilterTitle">
       <div class="project-filter-header"><h2 id="projectFilterTitle">Manage Contexts</h2><button type="button" class="dialog-close" id="closeProjectFilter" aria-label="Close project filter">✕</button></div>
       <div class="project-filter-list" id="projectFilterList"></div>
@@ -1078,6 +1098,11 @@
     <dialog id="snapshotPreviewDialog" class="snapshot-preview-dialog">
       <div class="recovery-header"><h2>Snapshot Preview</h2><button type="button" class="dialog-close" id="closeSnapshotPreview" aria-label="Close snapshot preview">✕</button></div>
       <div class="snapshot-preview-body" id="snapshotPreviewBody"></div>
+    </dialog>
+    <dialog id="quickPadDialog" class="quick-pad-dialog" aria-labelledby="quickPadTitle">
+      <div class="quick-pad-header"><h2 id="quickPadTitle">Quick Pad</h2><div class="quick-pad-header-actions"><button type="button" id="clearQuickPad" class="quick-pad-clear">Clear</button><button type="button" id="closeQuickPad" class="dialog-close" aria-label="Close Quick Pad">✕</button></div></div>
+      <textarea id="quickPadText" class="quick-pad-text" maxlength="20000" placeholder="Park a brief interruption here…" aria-label="Quick Pad"></textarea>
+      <div class="quick-pad-hint">Auto-saved · Alt+Q to open · Esc to close</div>
     </dialog>
   </main>
 
@@ -1121,7 +1146,7 @@
       const LAST_CAPTURE_CONTEXT_KEY='five.lastCaptureContext';
       const ACTIVE_SECTION_STATE_KEY='five.activeSections.v1';
       const PROJECTS_KEY='five.projects.v1'; const PROJECT_VIEW_KEY='five.projectView.v1';
-      const TODAY_PLAN_KEY='five.todayPlan.v1'; const TODAY_PLAN_COLLAPSED_KEY='five.todayPlanCollapsed.v1'; const TODAY_PLAN_RANGE_KEY='five.todayPlanRange.v1';
+      const TODAY_PLAN_KEY='five.todayPlan.v1'; const TODAY_PLAN_COLLAPSED_KEY='five.todayPlanCollapsed.v1'; const TODAY_PLAN_RANGE_KEY='five.todayPlanRange.v1'; const QUICK_PAD_KEY='five.quickPad.v1';
       const tasksHost = document.getElementById('tasks');
       const allCountElement = document.getElementById('allCount');
       const trackedCountElement = document.getElementById('trackedCount');
@@ -1166,6 +1191,7 @@
       const statusElement = document.getElementById('status');
       const shortcutHelp = document.getElementById('shortcutHelp');
       const searchButton = document.getElementById('searchButton'); const toolbarSearchButton=document.getElementById('toolbarSearchButton');
+      const toolbarPadButton=document.getElementById('toolbarPadButton'),mobilePadButton=document.getElementById('mobilePadButton'),quickPadDialog=document.getElementById('quickPadDialog'),quickPadText=document.getElementById('quickPadText');
       const searchDialog = document.getElementById('searchDialog');
       const searchInput = document.getElementById('searchInput');
       const searchSummary = document.getElementById('searchSummary');
@@ -1218,6 +1244,7 @@
       const TODAY_PLAN_SLOTS=Array.from({length:31},(_,index)=>{const minutes=360+index*30;return `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;});
       let todayPlan=loadTodayPlan();
       let todayPlanRange=localStorage.getItem(TODAY_PLAN_RANGE_KEY)==='working'?'working':'full';
+      let quickPad=String(localStorage.getItem(QUICK_PAD_KEY)||'').slice(0,20000);
       let projectView=localStorage.getItem(PROJECT_VIEW_KEY)==='areas'?'areas':'timeline';let editingProjectId=null;
       let activeSectionState={today:false,focus:false,other:true};
       try{Object.assign(activeSectionState,JSON.parse(localStorage.getItem(ACTIVE_SECTION_STATE_KEY)||'{}'));}catch{}
@@ -1490,7 +1517,7 @@
         const envelope = await finaliseEnvelope(currentRevision);
         const validation = validateDataPayload(envelope);
         if (!validation.valid) throw new Error(validation.issues.join('; '));
-        const data = { app:'Five', backupFormatVersion:3, exportedAt:new Date().toISOString(), sourceRevision:currentRevision, schemaVersion:ENVELOPE_SCHEMA_VERSION, checksum:envelope.checksum, tasks:envelope.tasks, projects:JSON.parse(JSON.stringify(projects)), todayPlan:JSON.parse(JSON.stringify(todayPlan)) };
+        const data = { app:'Five', backupFormatVersion:4, exportedAt:new Date().toISOString(), sourceRevision:currentRevision, schemaVersion:ENVELOPE_SCHEMA_VERSION, checksum:envelope.checksum, tasks:envelope.tasks, projects:JSON.parse(JSON.stringify(projects)), todayPlan:JSON.parse(JSON.stringify(todayPlan)), quickPad };
         const text = JSON.stringify(data, null, 2);
         JSON.parse(text);
         const blob = new Blob([text], { type:'application/json' });
@@ -1528,10 +1555,10 @@
         return new Promise((resolve,reject)=>{ transaction.oncomplete=resolve; transaction.onerror=()=>reject(transaction.error); transaction.onabort=()=>reject(transaction.error || new Error('Transaction aborted')); });
       }
       function combinedPayload() {
-        return { schemaVersion:2, savedAt:new Date().toISOString(), tasks:JSON.parse(JSON.stringify(tasks)), projects:JSON.parse(JSON.stringify(projects)), todayPlan:JSON.parse(JSON.stringify(todayPlan)) };
+        return { schemaVersion:2, savedAt:new Date().toISOString(), tasks:JSON.parse(JSON.stringify(tasks)), projects:JSON.parse(JSON.stringify(projects)), todayPlan:JSON.parse(JSON.stringify(todayPlan)), quickPad };
       }
       async function payloadChecksum(payload) {
-        const checksumPayload={tasks:payload.tasks,projects:payload.projects||[]};if(Object.prototype.hasOwnProperty.call(payload,'todayPlan'))checksumPayload.todayPlan=normaliseTodayPlan(payload.todayPlan);const text=JSON.stringify(checksumPayload);
+        const checksumPayload={tasks:payload.tasks,projects:payload.projects||[]};if(Object.prototype.hasOwnProperty.call(payload,'todayPlan'))checksumPayload.todayPlan=normaliseTodayPlan(payload.todayPlan);if(Object.prototype.hasOwnProperty.call(payload,'quickPad'))checksumPayload.quickPad=String(payload.quickPad||'').slice(0,20000);const text=JSON.stringify(checksumPayload);
         if (!crypto?.subtle) return String(text.length);
         const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
         return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
@@ -1614,7 +1641,7 @@
 Current data will be preserved first.`)) return;
         try {
           await createRecoverySnapshot('before restore',true);
-          tasks=normaliseValidatedTasks(snapshot.tasks);projects=Array.isArray(snapshot.projects)?snapshot.projects.map(normaliseProject):[];localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));if(Object.prototype.hasOwnProperty.call(snapshot,'todayPlan')){todayPlan=normaliseTodayPlan(snapshot.todayPlan);persistTodayPlan(false);renderTodayPlan();}
+          tasks=normaliseValidatedTasks(snapshot.tasks);projects=Array.isArray(snapshot.projects)?snapshot.projects.map(normaliseProject):[];localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));if(Object.prototype.hasOwnProperty.call(snapshot,'todayPlan')){todayPlan=normaliseTodayPlan(snapshot.todayPlan);persistTodayPlan(false);renderTodayPlan();}if(Object.prototype.hasOwnProperty.call(snapshot,'quickPad')){quickPad=String(snapshot.quickPad||'').slice(0,20000);persistQuickPad(false);}
           await persistEnvelope({strict:true});
           editingId=null; currentView='all';
           render();
@@ -1676,6 +1703,9 @@ Current data will be preserved first.`)) return;
         } catch { showStatus('Recovery storage unavailable; export a backup'); }
       }
 
+      function persistQuickPad(snapshot=true){try{quickPad=String(quickPad||'').slice(0,20000);localStorage.setItem(QUICK_PAD_KEY,quickPad);if(localStorage.getItem(QUICK_PAD_KEY)!==quickPad)throw new Error('Quick Pad read-back failed');if(snapshot)scheduleRecoverySnapshot('Quick Pad update');}catch{showStatus('Quick Pad could not be saved');}}
+      function openQuickPad(){quickPadText.value=quickPad;if(!quickPadDialog.open)quickPadDialog.showModal();requestAnimationFrame(()=>{quickPadText.focus();quickPadText.setSelectionRange(quickPadText.value.length,quickPadText.value.length);});}
+      async function clearQuickPad(){if(!quickPad.trim()){showStatus('Quick Pad is already clear');return;}if(!confirm('Clear Quick Pad?'))return;try{await createRecoverySnapshot('before Quick Pad clear',true);}catch{showStatus('Could not secure recovery snapshot');return;}quickPad='';quickPadText.value='';persistQuickPad(false);await createRecoverySnapshot('after Quick Pad clear',true).catch(()=>{});showStatus('Quick Pad cleared');}
       function normaliseTodayPlan(source){const next={};const value=source&&typeof source==='object'&&!Array.isArray(source)?source:{};TODAY_PLAN_SLOTS.forEach(slot=>{next[slot]=String(value[slot]||'').slice(0,300);});return next;}
       function loadTodayPlan(){try{return normaliseTodayPlan(JSON.parse(localStorage.getItem(TODAY_PLAN_KEY)||'{}'));}catch{return normaliseTodayPlan({});}}
       function persistTodayPlan(snapshot=true){try{const encoded=JSON.stringify(normaliseTodayPlan(todayPlan));localStorage.setItem(TODAY_PLAN_KEY,encoded);if(localStorage.getItem(TODAY_PLAN_KEY)!==encoded)throw new Error('Today Plan read-back failed');if(snapshot)scheduleRecoverySnapshot('Today Plan update');}catch{showStatus('Today Plan could not be saved');}}
@@ -2027,7 +2057,7 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.textContent = showTaskDetails ? 'Actions visible' : 'Compact view';
         toggleActionsButton.classList.toggle('active', !showTaskDetails);
         toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
-        exportButton.disabled = tasks.length === 0 && projects.length === 0 && !Object.values(todayPlan).some(value=>value.trim());
+        exportButton.disabled = tasks.length === 0 && projects.length === 0 && !Object.values(todayPlan).some(value=>value.trim()) && !quickPad.trim();
         const focusCount=focusedTasks().length;focusLimitSummary.textContent=`Today Focus ${todayFocusedTasks().length}/${MAX_TODAY_FOCUS_TASKS} · Focus ${focusCount}/${MAX_FOCUS_TASKS}`;focusLimitSummary.classList.toggle('visible',currentView==='active');
         activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
         activeTimeSummary.classList.toggle('visible',currentView==='active'&&plannedMinutes>0);
@@ -2721,10 +2751,10 @@ Current data will be preserved first.`)) return;
       mobileProjectsButton.addEventListener('click',openProjectsDialog);
       mobilePlanButton.addEventListener('click',openTodayPlan);document.getElementById('closeTodayPlan').addEventListener('click',()=>todayPlanDialog.close());['desktopPlanWorking','mobilePlanWorking'].forEach(id=>document.getElementById(id).addEventListener('click',()=>setTodayPlanRange('working')));['desktopPlanFull','mobilePlanFull'].forEach(id=>document.getElementById(id).addEventListener('click',()=>setTodayPlanRange('full')));['desktopPlanClear','mobilePlanClear'].forEach(id=>document.getElementById(id).addEventListener('click',clearTodayPlan));todayPlanDialog.addEventListener('cancel',event=>{event.preventDefault();todayPlanDialog.close();});document.getElementById('toggleTodayPlanPanel').addEventListener('click',()=>{const collapsed=!todayPlanPanel.classList.contains('collapsed');localStorage.setItem(TODAY_PLAN_COLLAPSED_KEY,String(collapsed));renderTodayPlan();});
       desktopMenuButton.addEventListener('click',()=>desktopMenuDialog.showModal());document.getElementById('closeDesktopMenu').addEventListener('click',()=>desktopMenuDialog.close());
-      document.getElementById('menuProjects').addEventListener('click',()=>{desktopMenuDialog.close();openProjectsDialog();});document.getElementById('menuPlan').addEventListener('click',()=>{desktopMenuDialog.close();openTodayPlan();});document.getElementById('closeProjects').addEventListener('click',()=>projectsDialog.close());projectsDialog.addEventListener('cancel',event=>{event.preventDefault();projectsDialog.close();});
+      document.getElementById('menuProjects').addEventListener('click',()=>{desktopMenuDialog.close();openProjectsDialog();});document.getElementById('menuPlan').addEventListener('click',()=>{desktopMenuDialog.close();openTodayPlan();});document.getElementById('menuPad').addEventListener('click',()=>{desktopMenuDialog.close();openQuickPad();});document.getElementById('closeProjects').addEventListener('click',()=>projectsDialog.close());projectsDialog.addEventListener('cancel',event=>{event.preventDefault();projectsDialog.close();});
       document.getElementById('projectsListTab').addEventListener('click',()=>{projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});document.getElementById('projectsTimelineTab').addEventListener('click',()=>{projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});const projectTypeDialog=document.getElementById('projectTypeDialog');document.getElementById('addProject').addEventListener('click',()=>projectTypeDialog.showModal());document.getElementById('closeProjectType').addEventListener('click',()=>projectTypeDialog.close());projectTypeDialog.addEventListener('cancel',event=>{event.preventDefault();projectTypeDialog.close();});document.getElementById('addAreaChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'area');});document.getElementById('addTimelineChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'timeline');});
       const menuForward=(id,target)=>document.getElementById(id).addEventListener('click',()=>{desktopMenuDialog.close();target?.click();});menuForward('menuSearch',searchButton);menuForward('menuQuickBackup',quickBackupButton);menuForward('menuExport',exportButton);menuForward('menuImport',importButton);menuForward('menuRecovery',recoveryButton);menuForward('menuHelp',helpButton);menuForward('menuShortcuts',shortcutHelp);
-      window.addEventListener('storage',event=>{if(event.key===PROJECTS_KEY&&event.newValue){try{projects=JSON.parse(event.newValue).map(normaliseProject);renderProjects();}catch{}}if(event.key===TODAY_PLAN_KEY&&event.newValue){try{todayPlan=normaliseTodayPlan(JSON.parse(event.newValue));renderTodayPlan();}catch{}}if(event.key===TODAY_PLAN_RANGE_KEY){todayPlanRange=event.newValue==='working'?'working':'full';renderTodayPlan();}});
+      window.addEventListener('storage',event=>{if(event.key===PROJECTS_KEY&&event.newValue){try{projects=JSON.parse(event.newValue).map(normaliseProject);renderProjects();}catch{}}if(event.key===TODAY_PLAN_KEY&&event.newValue){try{todayPlan=normaliseTodayPlan(JSON.parse(event.newValue));renderTodayPlan();}catch{}}if(event.key===TODAY_PLAN_RANGE_KEY){todayPlanRange=event.newValue==='working'?'working':'full';renderTodayPlan();}if(event.key===QUICK_PAD_KEY){quickPad=String(event.newValue||'').slice(0,20000);if(document.activeElement!==quickPadText)quickPadText.value=quickPad;}});
       backupMenuButton.addEventListener('click',()=>{updateBackupReminder();backupSheet.showModal();});
       document.getElementById('closeBackupSheet').addEventListener('click',()=>backupSheet.close());
       backupSheet.addEventListener('cancel',event=>{event.preventDefault();backupSheet.close();});
@@ -2737,6 +2767,7 @@ Current data will be preserved first.`)) return;
 
       importButton.addEventListener('click', () => importFile.click());
 
+      toolbarPadButton.addEventListener('click',openQuickPad);mobilePadButton.addEventListener('click',openQuickPad);document.getElementById('closeQuickPad').addEventListener('click',()=>quickPadDialog.close());document.getElementById('clearQuickPad').addEventListener('click',clearQuickPad);quickPadDialog.addEventListener('cancel',event=>{event.preventDefault();quickPadDialog.close();});quickPadDialog.addEventListener('click',event=>{if(event.target===quickPadDialog)quickPadDialog.close();});quickPadText.addEventListener('input',()=>{quickPad=quickPadText.value;persistQuickPad();});
       importFile.addEventListener('change', async () => {
         const file = importFile.files?.[0];
         importFile.value = '';
@@ -2746,19 +2777,20 @@ Current data will be preserved first.`)) return;
           const incomingTasks = Array.isArray(parsed) ? parsed : parsed?.tasks;
           if (!Array.isArray(incomingTasks)) throw new Error('Invalid backup');
           const nextTasks = normaliseValidatedTasks(incomingTasks);
-          const nextProjects=Array.isArray(parsed?.projects)?parsed.projects.map(normaliseProject):[];const nextTodayPlan=Object.prototype.hasOwnProperty.call(parsed||{},'todayPlan')?normaliseTodayPlan(parsed.todayPlan):todayPlan;
+          const nextProjects=Array.isArray(parsed?.projects)?parsed.projects.map(normaliseProject):[];const nextTodayPlan=Object.prototype.hasOwnProperty.call(parsed||{},'todayPlan')?normaliseTodayPlan(parsed.todayPlan):todayPlan;const nextQuickPad=Object.prototype.hasOwnProperty.call(parsed||{},'quickPad')?String(parsed.quickPad||'').slice(0,20000):quickPad;
           if (!confirm('Replace current Five data with this backup? Current data will be preserved in Recovery first.')) return;
           try { await createRecoverySnapshot('before import',true); }
           catch { showStatus('Could not secure recovery snapshot'); return; }
-          tasks = nextTasks;projects=nextProjects;todayPlan=nextTodayPlan;localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));persistTodayPlan(false);
+          tasks = nextTasks;projects=nextProjects;todayPlan=nextTodayPlan;quickPad=nextQuickPad;localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));persistTodayPlan(false);persistQuickPad(false);
           await persistEnvelope({strict:true});
           editingId = null; editSnapshot = null; newDraftId = null; currentView = 'all';
-          render();renderTodayPlan();
-          showStatus('Tasks, projects and Today Plan imported');
+          render();renderTodayPlan();quickPadText.value=quickPad;
+          showStatus('Five data imported');
         } catch { showStatus('Could not import this backup'); }
       });
       document.addEventListener('keydown', event => {
         const target = event.target;
+        if(event.altKey&&!event.ctrlKey&&!event.metaKey&&event.key.toLowerCase()==='q'){event.preventDefault();openQuickPad();return;}
         const isField = target instanceof HTMLElement && (
           target.matches('input[type="text"], textarea')
         );
@@ -2847,7 +2879,7 @@ Current data will be preserved first.`)) return;
       await runIntegrityScan();
       localStorage.removeItem('fiveEvents.v1');
       localStorage.removeItem('five.eventsDismissedDate');
-      render();renderTodayPlan();
+      render();renderTodayPlan();quickPadText.value=quickPad;
       updateBackupReminder();
       if (startupValidationMessage) showStatus(startupValidationMessage);
       initRecovery();
