@@ -973,7 +973,7 @@
     .quick-pad-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto;padding-bottom:7px;border-bottom:1px solid var(--line)}
     .quick-pad-header h2{margin:0;font-size:16px}
     .quick-pad-header-actions{display:flex;align-items:center;gap:3px}
-    .quick-pad-clear{min-height:28px;border:0;background:transparent;color:#8b4b45;padding:2px 6px;font-size:10px}
+    .quick-pad-line,.quick-pad-clear{min-height:28px;border:0;background:transparent;padding:2px 6px;font-size:10px}.quick-pad-line{color:var(--accent)}.quick-pad-clear{color:#8b4b45}
     .quick-pad-text{flex:1 1 auto;width:100%;min-height:0!important;max-height:none!important;margin-top:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);padding:9px;font-size:14px;line-height:1.45;resize:none}
     .quick-pad-hint{flex:0 0 auto;margin-top:6px;color:var(--muted);font-size:9px;text-align:center}
     #mobilePadButton{display:none}
@@ -1100,7 +1100,7 @@
       <div class="snapshot-preview-body" id="snapshotPreviewBody"></div>
     </dialog>
     <dialog id="quickPadDialog" class="quick-pad-dialog" aria-labelledby="quickPadTitle">
-      <div class="quick-pad-header"><h2 id="quickPadTitle">Quick Pad</h2><div class="quick-pad-header-actions"><button type="button" id="clearQuickPad" class="quick-pad-clear">Clear</button><button type="button" id="closeQuickPad" class="dialog-close" aria-label="Close Quick Pad">✕</button></div></div>
+      <div class="quick-pad-header"><h2 id="quickPadTitle">Quick Pad</h2><div class="quick-pad-header-actions"><button type="button" id="insertQuickPadLine" class="quick-pad-line">+ Line</button><button type="button" id="clearQuickPad" class="quick-pad-clear">Clear</button><button type="button" id="closeQuickPad" class="dialog-close" aria-label="Close Quick Pad">✕</button></div></div>
       <textarea id="quickPadText" class="quick-pad-text" maxlength="20000" placeholder="Park a brief interruption here…" aria-label="Quick Pad"></textarea>
       <div class="quick-pad-hint">Auto-saved · Alt+Q to open · Esc to close</div>
     </dialog>
@@ -1705,6 +1705,7 @@ Current data will be preserved first.`)) return;
 
       function persistQuickPad(snapshot=true){try{quickPad=String(quickPad||'').slice(0,20000);localStorage.setItem(QUICK_PAD_KEY,quickPad);if(localStorage.getItem(QUICK_PAD_KEY)!==quickPad)throw new Error('Quick Pad read-back failed');if(snapshot)scheduleRecoverySnapshot('Quick Pad update');}catch{showStatus('Quick Pad could not be saved');}}
       function openQuickPad(){quickPadText.value=quickPad;if(!quickPadDialog.open)quickPadDialog.showModal();requestAnimationFrame(()=>{quickPadText.focus();quickPadText.setSelectionRange(quickPadText.value.length,quickPadText.value.length);});}
+      function insertQuickPadLine(){const divider='\n\n--------------------\n\n';insertAtCursor(quickPadText,divider);quickPadText.focus();}
       async function clearQuickPad(){if(!quickPad.trim()){showStatus('Quick Pad is already clear');return;}if(!confirm('Clear Quick Pad?'))return;try{await createRecoverySnapshot('before Quick Pad clear',true);}catch{showStatus('Could not secure recovery snapshot');return;}quickPad='';quickPadText.value='';persistQuickPad(false);await createRecoverySnapshot('after Quick Pad clear',true).catch(()=>{});showStatus('Quick Pad cleared');}
       function normaliseTodayPlan(source){const next={};const value=source&&typeof source==='object'&&!Array.isArray(source)?source:{};TODAY_PLAN_SLOTS.forEach(slot=>{next[slot]=String(value[slot]||'').slice(0,300);});return next;}
       function loadTodayPlan(){try{return normaliseTodayPlan(JSON.parse(localStorage.getItem(TODAY_PLAN_KEY)||'{}'));}catch{return normaliseTodayPlan({});}}
@@ -2767,7 +2768,7 @@ Current data will be preserved first.`)) return;
 
       importButton.addEventListener('click', () => importFile.click());
 
-      toolbarPadButton.addEventListener('click',openQuickPad);mobilePadButton.addEventListener('click',openQuickPad);document.getElementById('closeQuickPad').addEventListener('click',()=>quickPadDialog.close());document.getElementById('clearQuickPad').addEventListener('click',clearQuickPad);quickPadDialog.addEventListener('cancel',event=>{event.preventDefault();quickPadDialog.close();});quickPadDialog.addEventListener('click',event=>{if(event.target===quickPadDialog)quickPadDialog.close();});quickPadText.addEventListener('input',()=>{quickPad=quickPadText.value;persistQuickPad();});
+      toolbarPadButton.addEventListener('click',openQuickPad);mobilePadButton.addEventListener('click',openQuickPad);document.getElementById('closeQuickPad').addEventListener('click',()=>quickPadDialog.close());document.getElementById('insertQuickPadLine').addEventListener('click',insertQuickPadLine);document.getElementById('clearQuickPad').addEventListener('click',clearQuickPad);quickPadDialog.addEventListener('cancel',event=>{event.preventDefault();quickPadDialog.close();});quickPadDialog.addEventListener('click',event=>{if(event.target===quickPadDialog)quickPadDialog.close();});quickPadText.addEventListener('input',()=>{quickPad=quickPadText.value;persistQuickPad();});
       importFile.addEventListener('change', async () => {
         const file = importFile.files?.[0];
         importFile.value = '';
