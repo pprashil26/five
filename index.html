@@ -818,26 +818,34 @@
     .backup-sheet-copy strong { display:block; font-size:13px; }
     .backup-sheet-copy span { display:block; margin-top:1px; color:var(--muted); font-size:10px; font-weight:500; }
     .backup-sheet-meta { margin-top:9px; padding-top:8px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; text-align:center; }
-    #backupMenuButton { display:none; }
+    #backupMenuButton, #mobileFooterMenuButton { display:none; }
     html.mobile-footer #quickBackup,
     html.mobile-footer #exportData,
-    html.mobile-footer #importData { display:none !important; }
-    html.mobile-footer #backupMenuButton { display:inline-flex !important; align-items:center; }
+    html.mobile-footer #importData,
+    html.mobile-footer #recoveryButton,
+    html.mobile-footer #shortcutHelp,
+    html.mobile-footer #backupMenuButton { display:none !important; }
+    html.mobile-footer #mobileFooterMenuButton { display:inline-flex !important; align-items:center; justify-content:center; }
     html.mobile-footer .footer { padding-top:4px; }
-    html.mobile-footer .footer-actions { gap:2px; align-items:center; }
-    html.mobile-footer .footer button { padding-inline:7px; }
-    html.mobile-footer .reliability-row { display:contents; }
-    html.mobile-footer .save-health { order:-1; display:inline-flex; align-items:center; min-height:30px; padding:4px 7px; border-radius:7px; font-size:10px; white-space:nowrap; }
-    html.mobile-footer .save-health.saving::before { content:'↻'; margin-right:4px; }
-    html.mobile-footer .save-health.saved::before { content:'✓'; margin-right:4px; font-weight:900; }
-    html.mobile-footer .save-health.failed::before { content:'!'; margin-right:4px; font-weight:900; }
-    html.mobile-footer .backup-reminder { order:4; }
+    html.mobile-footer .footer-actions { flex-wrap:wrap; justify-content:space-between; gap:0; align-items:center; }
+    html.mobile-footer .footer-actions > button:not(.backup-reminder) { flex:1 1 0; min-width:0; padding-inline:3px; white-space:nowrap; }
+    html.mobile-footer .reliability-row { flex:0 0 100%; width:100%; min-height:16px; margin-top:0; }
+    html.mobile-footer .save-health { display:inline-flex; align-items:center; min-height:16px; padding:1px 5px; border-radius:6px; font-size:9px; white-space:nowrap; }
+    html.mobile-footer .save-health.saving::before { content:'↻'; margin-right:3px; }
+    html.mobile-footer .save-health.saved::before { content:'✓'; margin-right:3px; font-weight:900; }
+    html.mobile-footer .save-health.failed::before { content:'!'; margin-right:3px; font-weight:900; }
+    html.mobile-footer .backup-reminder { min-height:18px !important; padding:1px 5px !important; font-size:9px !important; }
     html.mobile-footer .philosophy { margin-top:3px; }
+    .mobile-footer-menu-dialog { width:min(92vw,390px); border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
+    .mobile-footer-menu-dialog::backdrop { background:rgba(29,35,42,.28); }
+    .mobile-footer-menu-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .mobile-footer-menu-header h2 { margin:0; font-size:16px; }
+    .mobile-footer-menu-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
+    .mobile-footer-menu-actions .wide { grid-column:1/-1; }
     @media (max-width:700px) {
-      #quickBackup,#exportData,#importData { display:none !important; }
-      #backupMenuButton { display:inline-flex !important; align-items:center; }
+      #quickBackup,#exportData,#importData,#recoveryButton,#shortcutHelp,#backupMenuButton { display:none !important; }
+      #mobileFooterMenuButton { display:inline-flex !important; align-items:center; justify-content:center; }
     }
-
     .dialog-close { min-height:28px; border:0; padding:2px 6px; background:transparent; color:var(--muted); }
     .search-dialog { width:min(92vw,460px); max-height:78dvh; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .search-dialog::backdrop { background:rgba(29,35,42,.28); }
@@ -1033,13 +1041,14 @@
         <button type="button" id="mobileProjectsButton" aria-label="Open Projects" title="Projects">Projects</button>
         <button type="button" id="mobilePlanButton" aria-label="Open Today Plan" title="Today Plan">Plan</button>
         <button type="button" id="mobilePadButton" aria-label="Open Quick Pad" title="Quick Pad">Pad</button>
+        <button type="button" id="searchButton" aria-label="Search tasks" title="Search tasks">⌕</button>
+        <button type="button" id="helpButton" aria-label="Open help" title="Help">?</button>
+        <button type="button" id="mobileFooterMenuButton" aria-label="Open footer menu" title="Menu">☰</button>
         <button type="button" id="backupMenuButton">Backup</button>
         <button type="button" id="quickBackup">Quick Backup</button>
         <button type="button" id="exportData">Export backup</button>
         <button type="button" id="importData">Import backup</button>
         <button type="button" id="recoveryButton">Recovery</button>
-        <button type="button" id="searchButton" aria-label="Search tasks" title="Search tasks">⌕</button>
-        <button type="button" id="helpButton">Help</button>
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
         <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
@@ -1050,6 +1059,16 @@
       </div>
     </footer>
     <div class="status" id="status" role="status"></div>
+    <dialog id="mobileFooterMenuDialog" class="mobile-footer-menu-dialog" aria-labelledby="mobileFooterMenuTitle">
+      <div class="mobile-footer-menu-header"><h2 id="mobileFooterMenuTitle">Five Menu</h2><button type="button" class="dialog-close" id="closeMobileFooterMenu" aria-label="Close footer menu">✕</button></div>
+      <div class="mobile-footer-menu-actions">
+        <button type="button" id="mobileMenuQuickBackup">Quick Backup</button>
+        <button type="button" id="mobileMenuExport">Export Backup</button>
+        <button type="button" id="mobileMenuImport">Import Backup</button>
+        <button type="button" id="mobileMenuRecovery">Recovery</button>
+        <button type="button" id="mobileMenuShortcuts" class="wide">Keyboard Shortcuts</button>
+      </div>
+    </dialog>
     <dialog id="desktopMenuDialog" class="desktop-menu-dialog"><div class="desktop-menu-header"><h2>Five Menu</h2><button type="button" class="dialog-close" id="closeDesktopMenu">✕</button></div><div class="desktop-menu-actions"><button id="menuProjects" class="wide">Projects</button><button id="menuPlan" class="wide">Today Plan</button><button id="menuPad" class="wide">📝 Quick Pad</button><button id="menuSearch" class="wide">⌕ Search tasks</button><button id="menuQuickBackup">Quick Backup</button><button id="menuExport">Export Backup</button><button id="menuImport">Import Backup</button><button id="menuRecovery">Recovery</button><button id="menuHelp">Help</button><button id="menuShortcuts">Keyboard Shortcuts</button></div><div class="desktop-menu-health" id="desktopMenuHealth">Storage status available after startup</div></dialog>
     <dialog id="projectsDialog" class="projects-dialog"><div class="projects-header"><h2>Projects</h2><button type="button" class="dialog-close" id="closeProjects">✕</button></div><div class="projects-toolbar"><div class="projects-tabs"><button id="projectsListTab" class="projects-tab">Areas</button><button id="projectsTimelineTab" class="projects-tab active">Timeline</button></div><button id="addProject">+ Add</button></div><div id="projectsList" class="projects-list"></div><div id="projectEditor" class="project-editor hidden"></div></dialog><dialog id="projectTypeDialog" class="project-filter-dialog" aria-labelledby="projectTypeTitle"><div class="project-filter-header"><h2 id="projectTypeTitle">Add to Projects</h2><button type="button" class="dialog-close" id="closeProjectType" aria-label="Close">✕</button></div><div class="project-filter-list"><button type="button" id="addAreaChoice" class="project-filter-option"><span>Area</span><span>Ongoing responsibility</span></button><button type="button" id="addTimelineChoice" class="project-filter-option"><span>Timeline Project</span><span>Time-bound initiative</span></button></div></dialog>
     <dialog id="searchDialog" class="search-dialog" aria-labelledby="searchTitle">
@@ -1178,6 +1197,8 @@
       const mobileProjectsButton = document.getElementById('mobileProjectsButton');
       const mobilePlanButton=document.getElementById('mobilePlanButton'),todayPlanPanel=document.getElementById('todayPlanPanel'),todayPlanDialog=document.getElementById('todayPlanDialog'),desktopTodayPlanRows=document.getElementById('desktopTodayPlanRows'),mobileTodayPlanRows=document.getElementById('mobileTodayPlanRows'),todayPlanDate=document.getElementById('todayPlanDate');
       const backupMenuButton = document.getElementById('backupMenuButton');
+      const mobileFooterMenuButton = document.getElementById('mobileFooterMenuButton');
+      const mobileFooterMenuDialog = document.getElementById('mobileFooterMenuDialog');
       const backupSheet = document.getElementById('backupSheet');
       const backupSheetMeta = document.getElementById('backupSheetMeta');
       const sheetQuickBackup = document.getElementById('sheetQuickBackup');
@@ -2756,6 +2777,16 @@ Current data will be preserved first.`)) return;
       document.getElementById('projectsListTab').addEventListener('click',()=>{projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});document.getElementById('projectsTimelineTab').addEventListener('click',()=>{projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);renderProjects();});const projectTypeDialog=document.getElementById('projectTypeDialog');document.getElementById('addProject').addEventListener('click',()=>projectTypeDialog.showModal());document.getElementById('closeProjectType').addEventListener('click',()=>projectTypeDialog.close());projectTypeDialog.addEventListener('cancel',event=>{event.preventDefault();projectTypeDialog.close();});document.getElementById('addAreaChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='areas';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'area');});document.getElementById('addTimelineChoice').addEventListener('click',()=>{projectTypeDialog.close();projectView='timeline';localStorage.setItem(PROJECT_VIEW_KEY,projectView);openProjectEditor(null,'timeline');});
       const menuForward=(id,target)=>document.getElementById(id).addEventListener('click',()=>{desktopMenuDialog.close();target?.click();});menuForward('menuSearch',searchButton);menuForward('menuQuickBackup',quickBackupButton);menuForward('menuExport',exportButton);menuForward('menuImport',importButton);menuForward('menuRecovery',recoveryButton);menuForward('menuHelp',helpButton);menuForward('menuShortcuts',shortcutHelp);
       window.addEventListener('storage',event=>{if(event.key===PROJECTS_KEY&&event.newValue){try{projects=JSON.parse(event.newValue).map(normaliseProject);renderProjects();}catch{}}if(event.key===TODAY_PLAN_KEY&&event.newValue){try{todayPlan=normaliseTodayPlan(JSON.parse(event.newValue));renderTodayPlan();}catch{}}if(event.key===TODAY_PLAN_RANGE_KEY){todayPlanRange=event.newValue==='working'?'working':'full';renderTodayPlan();}if(event.key===QUICK_PAD_KEY){quickPad=String(event.newValue||'').slice(0,20000);if(document.activeElement!==quickPadText)quickPadText.value=quickPad;}});
+      mobileFooterMenuButton.addEventListener('click',()=>mobileFooterMenuDialog.showModal());
+      document.getElementById('closeMobileFooterMenu').addEventListener('click',()=>mobileFooterMenuDialog.close());
+      mobileFooterMenuDialog.addEventListener('cancel',event=>{event.preventDefault();mobileFooterMenuDialog.close();});
+      mobileFooterMenuDialog.addEventListener('click',event=>{if(event.target===mobileFooterMenuDialog)mobileFooterMenuDialog.close();});
+      const mobileMenuForward=(id,target)=>document.getElementById(id).addEventListener('click',()=>{mobileFooterMenuDialog.close();target?.click();});
+      mobileMenuForward('mobileMenuQuickBackup',quickBackupButton);
+      mobileMenuForward('mobileMenuExport',exportButton);
+      mobileMenuForward('mobileMenuImport',importButton);
+      mobileMenuForward('mobileMenuRecovery',recoveryButton);
+      mobileMenuForward('mobileMenuShortcuts',shortcutHelp);
       backupMenuButton.addEventListener('click',()=>{updateBackupReminder();backupSheet.showModal();});
       document.getElementById('closeBackupSheet').addEventListener('click',()=>backupSheet.close());
       backupSheet.addEventListener('cancel',event=>{event.preventDefault();backupSheet.close();});
