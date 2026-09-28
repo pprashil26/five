@@ -1030,13 +1030,6 @@
     .list-fast-add input{min-width:0;min-height:38px;font-size:15px}.list-fast-add-button{min-height:38px;border-color:#d9e3fa;background:var(--accent-soft);color:var(--accent);padding:4px 10px}
     .list-editor-footer-primary{border-color:var(--accent);background:var(--accent);color:#fff}.list-editor-footer-secondary{background:#f3f4f6;color:var(--muted)}
     @media(max-width:700px),(pointer:coarse){.list-editor-top{display:grid;grid-template-columns:1fr;gap:7px}.list-editor-top input,.list-editor-top select{width:100%}.list-editor-progress{margin-top:6px}.list-fast-add{position:sticky;bottom:0;z-index:2;padding:7px 0;background:var(--surface)}.list-fast-add input{min-height:42px;font-size:16px}.list-fast-add-button{min-height:42px}.list-editor-actions{position:sticky;bottom:0;z-index:3;background:var(--surface)}}
-    /* v2.92.5 one dedicated compact item-row renderer */
-    .compact-list-editor .compact-list-item-row{display:grid!important;grid-template-columns:22px minmax(0,1fr) 26px 24px!important;align-items:center!important;gap:2px!important;width:100%!important;height:32px!important;min-height:32px!important;max-height:32px!important;margin:0!important;padding:0!important;border:0!important;border-bottom:1px solid #eceef0!important;border-radius:0!important;background:var(--surface)!important;overflow:hidden!important}
-    .compact-list-editor .compact-list-item-row>.list-edit-marker{display:grid!important;place-items:center!important;width:22px!important;height:31px!important;min-height:31px!important;margin:0!important;padding:0!important;line-height:31px!important}
-    .compact-list-editor .compact-list-item-row>.compact-list-item-input{display:block!important;min-width:0!important;width:100%!important;height:31px!important;min-height:31px!important;max-height:31px!important;margin:0!important;border:0!important;border-radius:0!important;padding:3px 4px!important;background:transparent!important;font-size:13px!important;line-height:24px!important}
-    .compact-list-editor .compact-list-item-row>.list-delete-item{width:26px!important;min-width:26px!important;max-width:26px!important;height:31px!important;min-height:31px!important;max-height:31px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important}
-    .compact-list-editor .compact-list-item-row>.list-reorder-handle{width:24px!important;min-width:24px!important;max-width:24px!important;height:31px!important;min-height:31px!important;max-height:31px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important}
-    @media(max-width:700px),(pointer:coarse){.compact-list-editor .compact-list-item-row{height:34px!important;min-height:34px!important;max-height:34px!important}.compact-list-editor .compact-list-item-row>.list-edit-marker,.compact-list-editor .compact-list-item-row>.compact-list-item-input,.compact-list-editor .compact-list-item-row>.list-delete-item,.compact-list-editor .compact-list-item-row>.list-reorder-handle{height:33px!important;min-height:33px!important;max-height:33px!important}.compact-list-editor .compact-list-item-row>.compact-list-item-input{font-size:14px!important}}
     /* v2.92.4 compact list editor */
     .list-editor.compact-list-editor{gap:0}
     .compact-list-editor .list-editor-title{margin:0 0 4px;font-size:14px;line-height:1.2}
@@ -1062,6 +1055,47 @@
     .compact-list-editor .list-editor-actions button{min-height:30px;padding:3px 8px;font-size:10px}
     .compact-list-editor .list-editor-actions .list-delete{grid-column:auto;min-height:30px;border:0;background:transparent}
     @media(max-width:700px),(pointer:coarse){.compact-list-editor .list-editor-title{margin-bottom:3px;font-size:13px}.compact-list-editor .list-editor-top{grid-template-columns:minmax(0,1fr) 96px}.compact-list-editor .list-editor-top input,.compact-list-editor .list-editor-top select{height:34px;min-height:34px;font-size:14px}.compact-list-editor .list-item-edit{height:34px;min-height:34px;max-height:34px}.compact-list-editor .list-item-edit input{height:33px;min-height:33px;font-size:14px}.compact-list-editor .list-edit-marker,.compact-list-editor .list-delete-item,.compact-list-editor .list-reorder-handle{height:33px;min-height:33px}.compact-list-editor .list-fast-add input,.compact-list-editor .list-fast-add-button{height:34px;min-height:34px}.compact-list-editor .list-editor-actions{position:sticky;bottom:0}}
+    /* v2.92.5 focused mobile list editor stretch fix */
+    .compact-list-editor .list-items-editor{
+      flex:0 1 auto;
+      height:auto;
+      min-height:0;
+      align-content:start;
+      justify-content:start;
+    }
+    @media(max-width:700px),(pointer:coarse){
+      .lists-body:has(.compact-list-editor){
+        display:block;
+        overflow-y:auto;
+        overscroll-behavior:contain;
+        -webkit-overflow-scrolling:touch;
+      }
+      .compact-list-editor{
+        height:auto;
+        min-height:0;
+        max-height:none;
+        overflow:visible;
+        justify-content:flex-start;
+      }
+      .compact-list-editor .list-items-editor{
+        flex:0 0 auto;
+        height:auto;
+        min-height:0;
+        max-height:none;
+        overflow:visible;
+      }
+      .compact-list-editor .list-item-edit{
+        flex:0 0 auto;
+      }
+      .compact-list-editor .list-fast-add{
+        position:static;
+        margin-top:3px;
+      }
+      .compact-list-editor .list-editor-actions{
+        position:sticky;
+        bottom:0;
+      }
+    }
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
@@ -1863,8 +1897,7 @@ Current data will be preserved first.`)) return;
         const cancelItem=event=>{if(listItemDragState&&event.pointerId===listItemDragState.pointerId)cleanupDrag();};
         const startItem=(event,itemId,row,handle)=>{if(event.button!==undefined&&event.button!==0)return;event.preventDefault();handle.setPointerCapture?.(event.pointerId);listItemDragState={pointerId:event.pointerId,itemId,targetId:itemId,after:false,row,handle};row.classList.add('list-item-dragging');document.body.classList.add('reordering');document.addEventListener('pointermove',moveItem,{passive:false,capture:true});document.addEventListener('pointerup',finishItem,{capture:true});document.addEventListener('pointercancel',cancelItem,{capture:true});};
         const addItem=(text='')=>{const item={id:createId(),text:String(text).trim(),done:false};draft.items.push(item);renderItems();focusItem(item.id);return item;};
-        const renderCompactListItemRow=(item,index)=>{const row=document.createElement('div');row.className='list-item-edit compact-list-item-row';row.dataset.listItemId=item.id;const marker=document.createElement('span');marker.className='list-edit-marker';marker.textContent=markerText(index);const input=makeInput(item.text,`Item ${index+1}`,2000,value=>item.text=value);input.className='compact-list-item-input';input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addItem();}});const del=makeButton('×','list-delete-item',()=>{draft.items=draft.items.filter(value=>value.id!==item.id);renderItems();});del.setAttribute('aria-label',`Delete item ${index+1}`);const handle=document.createElement('button');handle.type='button';handle.className='list-reorder-handle';handle.textContent='≡';handle.title='Hold and drag to reorder';handle.setAttribute('aria-label',`Reorder item ${index+1}`);handle.addEventListener('pointerdown',event=>startItem(event,item.id,row,handle));row.append(marker,input,del,handle);return row;};
-        const renderItems=()=>{items.replaceChildren();const fragment=document.createDocumentFragment();draft.items.forEach((item,index)=>fragment.appendChild(renderCompactListItemRow(item,index)));items.appendChild(fragment);updateSummary();updateFastMarker();};
+        const renderItems=()=>{items.replaceChildren();draft.items.forEach((item,index)=>{const row=document.createElement('div');row.className='list-item-edit';row.dataset.listItemId=item.id;const marker=document.createElement('span');marker.className='list-edit-marker';marker.textContent=markerText(index);const input=makeInput(item.text,`Item ${index+1}`,2000,value=>item.text=value);input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addItem();}});const del=makeButton('×','list-delete-item',()=>{draft.items=draft.items.filter(value=>value.id!==item.id);renderItems();});del.setAttribute('aria-label',`Delete item ${index+1}`);const handle=document.createElement('button');handle.type='button';handle.className='list-reorder-handle';handle.textContent='≡';handle.title='Hold and drag to reorder';handle.setAttribute('aria-label',`Reorder item ${index+1}`);handle.addEventListener('pointerdown',event=>startItem(event,item.id,row,handle));row.append(marker,input,del,handle);items.appendChild(row);});updateSummary();updateFastMarker();};
         type.addEventListener('change',()=>{draft.type=type.value;if(draft.type!=='checklist')draft.items.forEach(item=>item.done=false);renderItems();});
         const fastAdd=document.createElement('div');fastAdd.className='list-fast-add';const fastMarker=document.createElement('span');fastMarker.className='list-edit-marker';const fastInput=makeInput('','New item',2000,()=>{});fastInput.setAttribute('enterkeyhint','next');fastInput.setAttribute('aria-label','New list item');const updateFastMarker=()=>{fastMarker.textContent=draft.type==='numbered'?`${draft.items.length+1}.`:draft.type==='bullet'?'•':'☐';};const commitFastAdd=()=>{const value=fastInput.value.trim();if(!value){fastInput.focus();return;}addItem(value);fastInput.value='';requestAnimationFrame(()=>fastInput.focus());};const fastButton=makeButton('Add','list-fast-add-button',commitFastAdd);fastInput.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();commitFastAdd();}});fastAdd.append(fastMarker,fastInput,fastButton);
         renderItems();
