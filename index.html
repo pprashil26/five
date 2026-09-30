@@ -829,11 +829,11 @@
     html.mobile-footer .footer { padding-top:3px; }
     html.mobile-footer .footer-actions { flex-wrap:nowrap; justify-content:space-between; gap:0; align-items:center; min-width:0; }
     html.mobile-footer .footer-actions > button:not(.backup-reminder) { flex:1 1 0; min-width:0; min-height:28px; padding:3px 2px; font-size:10px; white-space:nowrap; }
-    html.mobile-footer .reliability-row { flex:0 1 auto; width:auto; min-width:0; min-height:28px; margin-top:0; gap:2px; flex-wrap:nowrap; }
-    html.mobile-footer .save-health { display:inline-flex; align-items:center; min-width:0; min-height:16px; max-width:66px; overflow:hidden; text-overflow:ellipsis; padding:1px 3px; border-radius:6px; font-size:8.5px; white-space:nowrap; }
-    html.mobile-footer .save-health.saving::before { content:'↻'; margin-right:3px; }
-    html.mobile-footer .save-health.saved::before { content:'✓'; margin-right:3px; font-weight:900; }
-    html.mobile-footer .save-health.failed::before { content:'!'; margin-right:3px; font-weight:900; }
+    html.mobile-footer .reliability-row { flex:0 0 auto; width:auto; min-width:18px; min-height:28px; margin-top:0; gap:2px; flex-wrap:nowrap; }
+    html.mobile-footer .save-health { display:inline-flex; align-items:center; justify-content:center; width:18px; min-width:18px; min-height:18px; overflow:hidden; color:transparent; padding:0; border-radius:6px; font-size:0; white-space:nowrap; }
+    html.mobile-footer .save-health.saving::before { content:'↻'; margin-right:0; color:#765b00; font-size:11px; }
+    html.mobile-footer .save-health.saved::before { content:'✓'; margin-right:0; color:#246b3a; font-size:11px; font-weight:900; }
+    html.mobile-footer .save-health.failed::before { content:'!'; margin-right:0; color:var(--danger); font-size:11px; font-weight:900; }
     html.mobile-footer .backup-reminder { min-height:18px !important; padding:1px 5px !important; font-size:9px !important; }
     html.mobile-footer .philosophy { margin-top:3px; }
     html.mobile-footer .status { position:fixed; z-index:30; left:50%; bottom:calc(max(8px,env(safe-area-inset-bottom)) + 74px); width:auto; max-width:calc(100vw - 24px); min-height:0; transform:translateX(-50%); border-radius:7px; background:rgba(29,35,42,.9); color:#fff; padding:0 7px; font-size:0; pointer-events:none; }
@@ -1175,7 +1175,6 @@
         <button type="button" id="mobileMenuExport">Export Backup</button>
         <button type="button" id="mobileMenuImport">Import Backup</button>
         <button type="button" id="mobileMenuRecovery">Recovery</button>
-        <button type="button" id="mobileMenuLists" class="wide">Lists</button>
         <button type="button" id="mobileMenuShortcuts" class="wide">Keyboard Shortcuts</button>
       </div>
     </dialog>
@@ -2960,7 +2959,6 @@ Current data will be preserved first.`)) return;
       mobileMenuForward('mobileMenuExport',exportButton);
       mobileMenuForward('mobileMenuImport',importButton);
       mobileMenuForward('mobileMenuRecovery',recoveryButton);
-      mobileMenuForward('mobileMenuLists',mobileListsButton);
       mobileMenuForward('mobileMenuShortcuts',shortcutHelp);
       backupMenuButton.addEventListener('click',()=>{updateBackupReminder();backupSheet.showModal();});
       document.getElementById('closeBackupSheet').addEventListener('click',()=>backupSheet.close());
