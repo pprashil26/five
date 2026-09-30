@@ -376,7 +376,7 @@
     body.compact-card-mode .task-context-badge{font-size:8.5px;}
     body.compact-card-mode .task-heading-title{font-size:14px;}
     body.compact-card-mode .task-metadata-row{margin-top:4px;}
-    body.micro-card-mode .task{border-radius:7px}body.micro-card-mode .micro-task-view{display:block;width:100%;height:29px;min-height:29px;border:0;background:transparent;color:var(--text);padding:4px 7px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:650;line-height:20px}body.micro-card-mode .task.editing .micro-task-view{display:none}body.micro-card-mode .focus-section-label{min-height:20px;margin:0 2px -3px;font-size:9px}
+    body.micro-card-mode .task{border-radius:7px}body.micro-card-mode .micro-task-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px;width:100%;height:29px;min-height:29px;padding:0 4px 0 0}body.micro-card-mode .micro-task-view{display:block;width:100%;min-width:0;height:29px;min-height:29px;border:0;background:transparent;color:var(--text);padding:4px 3px 4px 7px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:650;line-height:20px}body.micro-card-mode .micro-task-row .progress-status{min-height:23px;height:23px;padding:1px 5px;font-size:8.5px;white-space:nowrap}body.micro-card-mode .task.editing .micro-task-row{display:none}body.micro-card-mode .focus-section-label{min-height:20px;margin:0 2px -3px;font-size:9px}
     .project-picker-chip { border-color:#cbd8f4; color:var(--accent); font-size:13px; font-weight:850; }
     .capture-context-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin:1px 0 6px; }
     .capture-context-choice { min-width:0; min-height:30px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:3px 6px; font-size:9.5px; font-weight:760; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -2288,7 +2288,7 @@ Current data will be preserved first.`)) return;
       }
 
       function isMicroCompactMode(){return taskDisplayMode==='micro';}
-      function createMicroTaskView(task){const button=document.createElement('button');button.type='button';button.className='micro-task-view';button.textContent=task.title.trim()||'Untitled task';button.title=task.title.trim()||'Untitled task';button.setAttribute('aria-label',`Open ${task.title.trim()||'Untitled task'}`);button.addEventListener('click',()=>beginEditing(task));return button;}
+      function createMicroTaskView(task){const row=document.createElement('div');row.className='micro-task-row';const button=document.createElement('button');button.type='button';button.className='micro-task-view';button.textContent=task.title.trim()||'Untitled task';button.title=task.title.trim()||'Untitled task';button.setAttribute('aria-label',`Open ${task.title.trim()||'Untitled task'}`);button.addEventListener('click',()=>beginEditing(task));row.appendChild(button);if(currentView==='tracked'||currentView==='active'){const progress=makeButton(progressLabel(task.progressStatus),`progress-status ${task.progressStatus}`,()=>cycleProgress(task.id));progress.setAttribute('aria-label',`Progress: ${progressLabel(task.progressStatus)}`);progress.title='Change progress status';row.appendChild(progress);}return row;}
       function render() {
         tasksHost.replaceChildren();
         const allVisibleTasks = currentView === 'all'
