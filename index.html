@@ -828,28 +828,27 @@
     html.mobile-footer #backupMenuButton { display:none !important; }
     html.mobile-footer #mobileFooterMenuButton { display:inline-flex !important; align-items:center; justify-content:center; }
     html.mobile-footer .footer { padding-top:2px; }
-    html.mobile-footer .footer-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:4px; min-height:36px; padding:0 4px; }
-    html.mobile-footer .footer-primary-nav,
-    html.mobile-footer .footer-utilities { display:flex; align-items:center; min-width:0; }
-    html.mobile-footer .footer-primary-nav { justify-content:space-between; gap:0; }
-    html.mobile-footer .footer-utilities { justify-content:flex-end; gap:1px; }
-    html.mobile-footer .footer-primary-nav > button { flex:1 1 auto; min-width:0; min-height:32px; padding:3px 5px; overflow:hidden; color:var(--muted); font-size:10.5px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+    html.mobile-footer .footer-actions { display:grid; grid-template-columns:minmax(0,1fr) 40px 36px 52px; align-items:center; gap:0; min-height:36px; padding:0 2px; }
+    html.mobile-footer .footer-primary-nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:center; min-width:0; }
+    html.mobile-footer .footer-primary-nav > button { width:100%; min-width:0; min-height:32px; padding:3px 2px; overflow:hidden; color:var(--muted); font-size:10.5px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
     html.mobile-footer .footer-primary-nav > button:active { color:var(--accent); }
-    html.mobile-footer .footer-utilities > button { flex:0 0 28px; width:28px; min-width:28px; min-height:32px; padding:2px; font-size:14px; }
-    html.mobile-footer .reliability-row { flex:0 0 24px; width:24px; min-width:24px; min-height:32px; margin:0; overflow:hidden; }
-    html.mobile-footer .save-health { display:inline-grid; place-items:center; width:24px; min-width:24px; min-height:32px; padding:0; overflow:hidden; border-radius:0; color:transparent; font-size:0; white-space:nowrap; }
-    html.mobile-footer .save-health::before { margin:0; color:var(--muted); font-size:13px; line-height:1; }
-    html.mobile-footer .save-health.saving::before { content:'↻'; color:#765b00; }
-    html.mobile-footer .save-health.saved::before { content:'✓'; color:#246b3a; font-weight:900; }
-    html.mobile-footer .save-health.failed::before { content:'!'; color:var(--danger); font-weight:900; }
+    html.mobile-footer #searchButton { width:40px; min-width:40px; min-height:32px; padding:1px; font-size:18px; font-weight:700; line-height:1; }
+    html.mobile-footer #mobileFooterMenuButton { width:36px; min-width:36px; min-height:32px; padding:1px; font-size:14px; line-height:1; }
+    html.mobile-footer .reliability-row { width:52px; min-width:52px; min-height:32px; margin:0; flex-wrap:nowrap; gap:0; overflow:hidden; }
+    html.mobile-footer .save-health { display:flex; align-items:center; justify-content:center; width:100%; min-width:0; min-height:32px; padding:1px 2px; overflow:hidden; border-radius:0; color:var(--muted); font-size:9.5px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+    html.mobile-footer .save-health.saving { color:#765b00; }
+    html.mobile-footer .save-health.saved { color:#246b3a; }
+    html.mobile-footer .save-health.failed { color:var(--danger); font-weight:750; }
+    html.mobile-footer .save-health::before { content:none !important; }
     html.mobile-footer .backup-reminder { display:none !important; }
     html.mobile-footer .philosophy { margin-top:2px; }
     @media(max-width:360px) {
-      html.mobile-footer .footer-actions { gap:1px; padding-inline:1px; }
-      html.mobile-footer .footer-primary-nav > button { padding-inline:3px; font-size:10px; }
-      html.mobile-footer .footer-utilities > button { flex-basis:26px; width:26px; min-width:26px; }
-      html.mobile-footer .reliability-row,
-      html.mobile-footer .save-health { flex-basis:22px; width:22px; min-width:22px; }
+      html.mobile-footer .footer-actions { grid-template-columns:minmax(0,1fr) 36px 32px 46px; padding-inline:0; }
+      html.mobile-footer .footer-primary-nav > button { padding-inline:1px; font-size:10px; }
+      html.mobile-footer #searchButton { width:36px; min-width:36px; }
+      html.mobile-footer #mobileFooterMenuButton { width:32px; min-width:32px; }
+      html.mobile-footer .reliability-row { width:46px; min-width:46px; }
+      html.mobile-footer .save-health { font-size:9px; }
     }
     .mobile-footer-menu-dialog { width:min(92vw,390px); border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .mobile-footer-menu-dialog::backdrop { background:rgba(29,35,42,.28); }
@@ -1165,11 +1164,9 @@
           <button type="button" id="mobileListsButton" aria-label="Open Lists" title="Lists">Lists</button>
           <button type="button" id="mobilePadButton" aria-label="Open Quick Pad" title="Quick Pad">Pad</button>
         </nav>
-        <div class="footer-utilities" aria-label="Mobile utilities">
-          <button type="button" id="searchButton" aria-label="Search tasks" title="Search tasks">⌕</button>
-          <button type="button" id="mobileFooterMenuButton" aria-label="Open footer menu" title="Menu">☰</button>
-          <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite" title="Checking data…">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
-        </div>
+        <button type="button" id="searchButton" aria-label="Search tasks" title="Search tasks">⌕</button>
+        <button type="button" id="mobileFooterMenuButton" aria-label="Open footer menu" title="Menu">☰</button>
+        <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
         <button type="button" id="helpButton" aria-label="Open help" title="Help">?</button>
         <button type="button" id="backupMenuButton">Backup</button>
         <button type="button" id="quickBackup">Quick Backup</button>
@@ -1593,16 +1590,13 @@
         envelope.checksum=await envelopeChecksum(envelope);
         return envelope;
       }
+      function mobileSaveHealthLabel(state,label){if(!mobileFooterMode)return label;if(state==='saving')return 'Saving';if(state==='saved')return 'Saved';if(state==='failed')return 'Error';return label.includes('Checking')?'Checking':label;}
       function setSaveHealth(state, label) {
         clearTimeout(saveHealthTimer);
         saveHealthElement.className = `save-health ${state}`;
-        saveHealthElement.textContent = label;
-        saveHealthElement.title = label;
-        if(desktopMenuHealth)desktopMenuHealth.textContent=label;
+        saveHealthElement.textContent = mobileSaveHealthLabel(state,label);if(desktopMenuHealth)desktopMenuHealth.textContent=label;
         if (state === 'saved') saveHealthTimer = setTimeout(() => {
-          const savedLabel = `Saved · ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
-          saveHealthElement.textContent = savedLabel;
-          saveHealthElement.title = savedLabel;
+          saveHealthElement.textContent = mobileFooterMode ? 'Saved' : `Saved · ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
         }, 500);
       }
       function persistEnvelope(options = {}) {
