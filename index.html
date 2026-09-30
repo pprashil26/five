@@ -376,7 +376,7 @@
     body.compact-card-mode .task-context-badge{font-size:8.5px;}
     body.compact-card-mode .task-heading-title{font-size:14px;}
     body.compact-card-mode .task-metadata-row{margin-top:4px;}
-    @media(max-width:700px),(pointer:coarse){body.micro-card-mode .task{border-radius:7px}body.micro-card-mode .micro-task-view{display:block;width:100%;height:29px;min-height:29px;border:0;background:transparent;color:var(--text);padding:4px 7px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:650;line-height:20px}body.micro-card-mode .task.editing .micro-task-view{display:none}body.micro-card-mode .focus-section-label{min-height:20px;margin:0 2px -3px;font-size:9px}}
+    body.micro-card-mode .task{border-radius:7px}body.micro-card-mode .micro-task-view{display:block;width:100%;height:29px;min-height:29px;border:0;background:transparent;color:var(--text);padding:4px 7px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:650;line-height:20px}body.micro-card-mode .task.editing .micro-task-view{display:none}body.micro-card-mode .focus-section-label{min-height:20px;margin:0 2px -3px;font-size:9px}
     .project-picker-chip { border-color:#cbd8f4; color:var(--accent); font-size:13px; font-weight:850; }
     .capture-context-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin:1px 0 6px; }
     .capture-context-choice { min-width:0; min-height:30px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:3px 6px; font-size:9.5px; font-weight:760; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -2287,7 +2287,7 @@ Current data will be preserved first.`)) return;
         return input;
       }
 
-      function isMicroCompactMode(){return mobileFooterMode&&taskDisplayMode==='micro';}
+      function isMicroCompactMode(){return taskDisplayMode==='micro';}
       function createMicroTaskView(task){const button=document.createElement('button');button.type='button';button.className='micro-task-view';button.textContent=task.title.trim()||'Untitled task';button.title=task.title.trim()||'Untitled task';button.setAttribute('aria-label',`Open ${task.title.trim()||'Untitled task'}`);button.addEventListener('click',()=>beginEditing(task));return button;}
       function render() {
         tasksHost.replaceChildren();
@@ -3065,7 +3065,7 @@ Current data will be preserved first.`)) return;
       document.getElementById('closeProjectFilter').addEventListener('click',()=>projectFilterDialog.close());
       projectFilterDialog.addEventListener('cancel',event=>{event.preventDefault();projectFilterDialog.close();});
       toggleActionsButton.addEventListener('click', () => {
-        taskDisplayMode=mobileFooterMode?(taskDisplayMode==='full'?'compact':taskDisplayMode==='compact'?'micro':'full'):(taskDisplayMode==='full'?'compact':'full');
+        taskDisplayMode=taskDisplayMode==='full'?'compact':taskDisplayMode==='compact'?'micro':'full';
         showTaskDetails=taskDisplayMode==='full';localStorage.setItem(DISPLAY_MODE_KEY,taskDisplayMode);localStorage.setItem('five.showTaskDetails',String(showTaskDetails));render();
       });
       recoveryButton.addEventListener('click',async()=>{
