@@ -133,6 +133,7 @@
       background: #f0f2f5;
       color: var(--accent);
     }
+    .mobile-display-modes { display:none; }
     .view-tab {
       min-height: 28px;
       border: 0;
@@ -1122,12 +1123,20 @@
       .actions-filter { min-height:22px; padding:1px 5px; font-size:9px; }
       #addTask.add-task { grid-column:2; grid-row:1 / span 2; align-self:start; display:grid; place-items:center; width:30px; height:30px; min-width:30px; min-height:30px; margin:0; padding:0; border-radius:50%; background:var(--accent); color:#fff; font-size:0; line-height:1; box-sizing:border-box; }
       #addTask.add-task::before { content:'✚'; display:grid; place-items:center; width:100%; height:100%; color:#fff; font-size:15px; font-weight:760; line-height:1; transform:translateY(-0.25px); }
+      .view-tab { font-size:0 !important; }
+      .mobile-display-modes { display:inline-grid; grid-template-columns:repeat(3,auto); align-items:center; justify-content:center; overflow:hidden; border:1px solid var(--line); border-radius:7px; background:#f3f4f6; }
+      .mobile-display-mode { min-height:22px; height:22px; border:0; border-right:1px solid var(--line); border-radius:0; background:transparent; color:var(--muted); padding:1px 7px; font-size:9px; font-weight:700; line-height:20px; }
+      .mobile-display-mode:last-child { border-right:0; }
+      .mobile-display-mode.active { background:var(--accent); color:#fff; }
+      .actions-filter { display:none; }
+      .actions-filter-row { justify-content:center; }
+
     }
     .hidden { display: none !important; }
 
     @media (max-width: 470px) {
       .topbar { gap: 4px; }
-      .view-tab { padding-inline: 4px; font-size: 10px; }
+      .view-tab { padding-inline: 4px; font-size: 0 !important; }
       #addTask.add-task { padding: 0; }
       #shortcutHelp { display: none; }
     }
@@ -1151,6 +1160,11 @@
         </nav>
         <div class="actions-filter-row">
           <button type="button" class="actions-filter" id="toggleActions">Actions visible</button>
+          <div class="mobile-display-modes" id="mobileDisplayModes" role="group" aria-label="Task display mode">
+            <button type="button" class="mobile-display-mode" data-display-mode="full" aria-pressed="false">Full</button>
+            <button type="button" class="mobile-display-mode" data-display-mode="compact" aria-pressed="false">Compact</button>
+            <button type="button" class="mobile-display-mode" data-display-mode="micro" aria-pressed="false">Micro</button>
+          </div>
         </div>
       </div>
       <button type="button" id="toolbarPadButton" class="desktop-menu-button" aria-label="Open Quick Pad" title="Quick Pad · Alt+Q">📝</button>
@@ -1313,6 +1327,7 @@
       const waitingTab = document.getElementById('waitingTab');
       const archiveTab = document.getElementById('archiveTab');
       const toggleActionsButton = document.getElementById('toggleActions');
+      const mobileDisplayModes = document.getElementById('mobileDisplayModes');
       const focusLimitSummary = document.getElementById('focusLimitSummary');
       const activeTimeSummary = document.getElementById('activeTimeSummary');
       const projectFilterShell=document.getElementById('projectFilterShell');
@@ -2278,6 +2293,7 @@ Current data will be preserved first.`)) return;
         toggleActionsButton.textContent=taskDisplayMode==='full'?'Actions visible':taskDisplayMode==='compact'?'Compact view':'Micro compact';
         toggleActionsButton.classList.toggle('active',taskDisplayMode!=='full');
         toggleActionsButton.setAttribute('aria-pressed',String(taskDisplayMode!=='full'));
+        mobileDisplayModes?.querySelectorAll('[data-display-mode]').forEach(button=>{const active=button.dataset.displayMode===taskDisplayMode;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
         exportButton.disabled = tasks.length === 0 && lists.length === 0 && projects.length === 0 && !Object.values(todayPlan).some(value=>value.trim()) && !quickPad.trim();
         const focusCount=focusedTasks().length;focusLimitSummary.textContent=`Today Focus ${todayFocusedTasks().length}/${MAX_TODAY_FOCUS_TASKS} · Focus ${focusCount}/${MAX_FOCUS_TASKS}`;focusLimitSummary.classList.toggle('visible',currentView==='active');
         activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
@@ -3087,6 +3103,7 @@ Current data will be preserved first.`)) return;
       addContextButton.addEventListener('click',addContext);newContextName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addContext();}});
       document.getElementById('closeProjectFilter').addEventListener('click',()=>projectFilterDialog.close());
       projectFilterDialog.addEventListener('cancel',event=>{event.preventDefault();projectFilterDialog.close();});
+      mobileDisplayModes?.querySelectorAll('[data-display-mode]').forEach(button=>button.addEventListener('click',()=>{const mode=button.dataset.displayMode;if(!['full','compact','micro'].includes(mode)||mode===taskDisplayMode)return;taskDisplayMode=mode;showTaskDetails=taskDisplayMode==='full';localStorage.setItem(DISPLAY_MODE_KEY,taskDisplayMode);localStorage.setItem('five.showTaskDetails',String(showTaskDetails));render();}));
       toggleActionsButton.addEventListener('click', () => {
         taskDisplayMode=taskDisplayMode==='full'?'compact':taskDisplayMode==='compact'?'micro':'full';
         showTaskDetails=taskDisplayMode==='full';localStorage.setItem(DISPLAY_MODE_KEY,taskDisplayMode);localStorage.setItem('five.showTaskDetails',String(showTaskDetails));render();
