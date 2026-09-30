@@ -827,17 +827,22 @@
     html.mobile-footer #backupMenuButton { display:none !important; }
     html.mobile-footer #mobileFooterMenuButton { display:inline-flex !important; align-items:center; justify-content:center; }
     html.mobile-footer .footer { padding-top:3px; }
-    html.mobile-footer .footer-actions { flex-wrap:nowrap; justify-content:space-between; gap:0; align-items:center; min-width:0; }
-    html.mobile-footer .footer-actions > button:not(.backup-reminder) { flex:1 1 0; min-width:0; min-height:28px; padding:3px 2px; font-size:10px; white-space:nowrap; }
-    html.mobile-footer .reliability-row { flex:0 0 auto; width:auto; min-width:18px; min-height:28px; margin-top:0; gap:2px; flex-wrap:nowrap; }
-    html.mobile-footer .save-health { display:inline-flex; align-items:center; justify-content:center; width:18px; min-width:18px; min-height:18px; overflow:hidden; color:transparent; padding:0; border-radius:6px; font-size:0; white-space:nowrap; }
-    html.mobile-footer .save-health.saving::before { content:'↻'; margin-right:0; color:#765b00; font-size:11px; }
-    html.mobile-footer .save-health.saved::before { content:'✓'; margin-right:0; color:#246b3a; font-size:11px; font-weight:900; }
-    html.mobile-footer .save-health.failed::before { content:'!'; margin-right:0; color:var(--danger); font-size:11px; font-weight:900; }
+    html.mobile-footer .footer-actions { display:grid; gap:0; }
+    html.mobile-footer .footer-primary-row,
+    html.mobile-footer .footer-secondary-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:center; width:100%; min-width:0; }
+    html.mobile-footer .footer-primary-row > button,
+    html.mobile-footer .footer-secondary-row > button { min-width:0; min-height:26px; padding:2px 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    html.mobile-footer .footer-secondary-row { border-top:1px solid rgba(226,228,231,.72); }
+    html.mobile-footer .footer-secondary-row #searchButton,
+    html.mobile-footer .footer-secondary-row #helpButton,
+    html.mobile-footer .footer-secondary-row #mobileFooterMenuButton { font-size:14px; }
+    html.mobile-footer .reliability-row { width:100%; min-width:0; min-height:26px; margin:0; flex-wrap:nowrap; gap:2px; overflow:hidden; }
+    html.mobile-footer .save-health { display:inline-flex; align-items:center; min-height:16px; padding:1px 5px; border-radius:6px; font-size:9px; white-space:nowrap; }
+    html.mobile-footer .save-health.saving::before { content:'↻'; margin-right:3px; }
+    html.mobile-footer .save-health.saved::before { content:'✓'; margin-right:3px; font-weight:900; }
+    html.mobile-footer .save-health.failed::before { content:'!'; margin-right:3px; font-weight:900; }
     html.mobile-footer .backup-reminder { min-height:18px !important; padding:1px 5px !important; font-size:9px !important; }
     html.mobile-footer .philosophy { margin-top:3px; }
-    html.mobile-footer .status { position:fixed; z-index:30; left:50%; bottom:calc(max(8px,env(safe-area-inset-bottom)) + 74px); width:auto; max-width:calc(100vw - 24px); min-height:0; transform:translateX(-50%); border-radius:7px; background:rgba(29,35,42,.9); color:#fff; padding:0 7px; font-size:0; pointer-events:none; }
-    html.mobile-footer .status:not(:empty) { padding:4px 7px; font-size:10px; }
     .mobile-footer-menu-dialog { width:min(92vw,390px); border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .mobile-footer-menu-dialog::backdrop { background:rgba(29,35,42,.28); }
     .mobile-footer-menu-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -1006,7 +1011,7 @@
     .list-item-marker{color:var(--muted);font-weight:800;text-align:center}.list-item-view input[type=checkbox]{width:18px;height:18px;margin:1px 0;accent-color:var(--accent)}.list-item-text{overflow-wrap:anywhere;white-space:pre-wrap}.list-item-view.done .list-item-text{color:var(--done);text-decoration:line-through}.list-item-edit-button{min-width:28px;min-height:26px;border:0;background:transparent;color:var(--muted);padding:0}
     .lists-empty{padding:24px 10px;color:var(--muted);text-align:center}
     #mobileListsButton{display:none}
-    @media(max-width:700px),(pointer:coarse){.lists-dialog{width:100%;max-width:600px;height:100dvh;max-height:100dvh;margin:0 auto;border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}.lists-header h2{font-size:17px}.lists-body{flex:1 1 auto;max-height:none}.list-editor-top{grid-template-columns:minmax(0,1fr) 105px}}
+    @media(max-width:700px),(pointer:coarse){html.mobile-footer #mobileListsButton{display:inline-flex!important;align-items:center;justify-content:center;color:var(--accent)}.lists-dialog{width:100%;max-width:600px;height:100dvh;max-height:100dvh;margin:0 auto;border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}.lists-header h2{font-size:17px}.lists-body{flex:1 1 auto;max-height:none}.list-editor-top{grid-template-columns:minmax(0,1fr) 105px}}
     .list-view{display:flex;flex-direction:column;min-height:0;gap:0}
     .list-detail-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;padding:2px 0 10px;border-bottom:1px solid var(--line)}
     .list-detail-heading{min-width:0}.list-detail-heading h3{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:18px;line-height:1.25;letter-spacing:-.2px}
@@ -1146,13 +1151,18 @@
 
     <footer class="footer">
       <div class="footer-actions">
-        <button type="button" id="mobileProjectsButton" aria-label="Open Projects" title="Projects">Projects</button>
-        <button type="button" id="mobilePlanButton" aria-label="Open Today Plan" title="Today Plan">Plan</button>
-        <button type="button" id="mobileListsButton" aria-label="Open Lists" title="Lists">Lists</button>
-        <button type="button" id="mobilePadButton" aria-label="Open Quick Pad" title="Quick Pad">Pad</button>
-        <button type="button" id="searchButton" aria-label="Search tasks" title="Search tasks">⌕</button>
-        <button type="button" id="helpButton" aria-label="Open help" title="Help">?</button>
-        <button type="button" id="mobileFooterMenuButton" aria-label="Open footer menu" title="Menu">☰</button>
+        <div class="footer-primary-row" aria-label="Primary mobile navigation">
+          <button type="button" id="mobileProjectsButton" aria-label="Open Projects" title="Projects">Projects</button>
+          <button type="button" id="mobilePlanButton" aria-label="Open Today Plan" title="Today Plan">Plan</button>
+          <button type="button" id="mobileListsButton" aria-label="Open Lists" title="Lists">Lists</button>
+          <button type="button" id="mobilePadButton" aria-label="Open Quick Pad" title="Quick Pad">Pad</button>
+        </div>
+        <div class="footer-secondary-row" aria-label="Mobile utilities">
+          <button type="button" id="searchButton" aria-label="Search tasks" title="Search tasks">⌕</button>
+          <button type="button" id="helpButton" aria-label="Open help" title="Help">?</button>
+          <button type="button" id="mobileFooterMenuButton" aria-label="Open footer menu" title="Menu">☰</button>
+          <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
+        </div>
         <button type="button" id="backupMenuButton">Backup</button>
         <button type="button" id="quickBackup">Quick Backup</button>
         <button type="button" id="exportData">Export backup</button>
@@ -1160,7 +1170,6 @@
         <button type="button" id="recoveryButton">Recovery</button>
         <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
-        <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking data…</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
       </div>
       <div class="philosophy">
         <span class="philosophy-acronym"><span class="initial">F</span>ewer Tasks • <span class="initial">I</span>ntense Focus • <span class="initial">V</span>isible Progress • <span class="initial">E</span>very Day</span>
