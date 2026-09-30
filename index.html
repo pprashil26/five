@@ -376,6 +376,7 @@
     body.compact-card-mode .task-context-badge{font-size:8.5px;}
     body.compact-card-mode .task-heading-title{font-size:14px;}
     body.compact-card-mode .task-metadata-row{margin-top:4px;}
+    @media(max-width:700px),(pointer:coarse){body.micro-card-mode .task{border-radius:7px}body.micro-card-mode .micro-task-view{display:block;width:100%;height:29px;min-height:29px;border:0;background:transparent;color:var(--text);padding:4px 7px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:650;line-height:20px}body.micro-card-mode .task.editing .micro-task-view{display:none}body.micro-card-mode .focus-section-label{min-height:20px;margin:0 2px -3px;font-size:9px}}
     .project-picker-chip { border-color:#cbd8f4; color:var(--accent); font-size:13px; font-weight:850; }
     .capture-context-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin:1px 0 6px; }
     .capture-context-choice { min-width:0; min-height:30px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); padding:3px 6px; font-size:9.5px; font-weight:760; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -829,25 +830,15 @@
     html.mobile-footer #mobileFooterMenuButton { display:inline-flex !important; align-items:center; justify-content:center; }
     html.mobile-footer .footer { padding-top:2px; }
     html.mobile-footer .footer-actions { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:center; gap:0; width:100%; min-width:0; min-height:36px; padding:0; }
-    html.mobile-footer .footer-actions > button,
-    html.mobile-footer .reliability-row { width:100%; min-width:0; min-height:32px; margin:0; padding:2px 1px; }
+    html.mobile-footer .footer-actions > button, html.mobile-footer .reliability-row { width:100%; min-width:0; min-height:32px; margin:0; padding:2px 1px; }
     html.mobile-footer .footer-actions > button { display:inline-flex; align-items:center; justify-content:center; overflow:hidden; color:var(--muted); font-size:10.5px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
     html.mobile-footer #searchButton { font-size:18px; font-weight:700; line-height:1; }
     html.mobile-footer #mobileFooterMenuButton { font-size:14px; line-height:1; }
     html.mobile-footer .reliability-row { display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; gap:0; overflow:hidden; }
     html.mobile-footer .save-health { display:flex; align-items:center; justify-content:center; width:100%; min-width:0; min-height:32px; padding:1px; overflow:hidden; border-radius:0; color:var(--muted); font-size:9.5px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
-    html.mobile-footer .save-health.saving { color:#765b00; }
-    html.mobile-footer .save-health.saved { color:#246b3a; }
-    html.mobile-footer .save-health.failed { color:var(--danger); font-weight:750; }
-    html.mobile-footer .save-health::before { content:none !important; }
-    html.mobile-footer .backup-reminder { display:none !important; }
+    html.mobile-footer .save-health.saving { color:#765b00; } html.mobile-footer .save-health.saved { color:#246b3a; } html.mobile-footer .save-health.failed { color:var(--danger); font-weight:750; }
+    html.mobile-footer .save-health::before { content:none !important; } html.mobile-footer .backup-reminder { display:none !important; }
     html.mobile-footer .philosophy { margin-top:2px; }
-    @media(max-width:360px) {
-      html.mobile-footer .footer-actions > button { padding-inline:0; font-size:9.5px; }
-      html.mobile-footer #searchButton { font-size:18px; }
-      html.mobile-footer #mobileFooterMenuButton { font-size:14px; }
-      html.mobile-footer .save-health { padding-inline:0; font-size:9px; }
-    }
     .mobile-footer-menu-dialog { width:min(92vw,390px); border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--surface); color:var(--text); }
     .mobile-footer-menu-dialog::backdrop { background:rgba(29,35,42,.28); }
     .mobile-footer-menu-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -1164,12 +1155,7 @@
         <button type="button" id="mobileFooterMenuButton" aria-label="Open footer menu" title="Menu">☰</button>
         <div class="reliability-row"><span class="save-health" id="saveHealth" aria-live="polite">Checking</span><button type="button" class="backup-reminder" id="backupReminder"></button></div>
         <button type="button" id="helpButton" aria-label="Open help" title="Help">?</button>
-        <button type="button" id="backupMenuButton">Backup</button>
-        <button type="button" id="quickBackup">Quick Backup</button>
-        <button type="button" id="exportData">Export backup</button>
-        <button type="button" id="importData">Import backup</button>
-        <button type="button" id="recoveryButton">Recovery</button>
-        <button type="button" id="shortcutHelp">Keyboard shortcuts</button>
+        <button type="button" id="backupMenuButton">Backup</button><button type="button" id="quickBackup">Quick Backup</button><button type="button" id="exportData">Export backup</button><button type="button" id="importData">Import backup</button><button type="button" id="recoveryButton">Recovery</button><button type="button" id="shortcutHelp">Keyboard shortcuts</button>
         <input class="hidden" type="file" id="importFile" accept="application/json,.json">
       </div>
       <div class="philosophy">
@@ -1381,7 +1367,10 @@
       const writerId = self.crypto?.randomUUID?.() || `tab-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const tabChannel = 'BroadcastChannel' in window ? new BroadcastChannel(TAB_CHANNEL) : null;
       let remoteUpdatePending = false;
-      let showTaskDetails = localStorage.getItem('five.showTaskDetails') !== 'false';
+      const DISPLAY_MODE_KEY='five.taskDisplayMode.v1';
+      let taskDisplayMode=localStorage.getItem(DISPLAY_MODE_KEY);
+      if(!['full','compact','micro'].includes(taskDisplayMode))taskDisplayMode=localStorage.getItem('five.showTaskDetails')==='false'?'compact':'full';
+      let showTaskDetails=taskDisplayMode==='full';
       let expandedCompactTaskActions = new Set();
       try {
         const storedExpanded=JSON.parse(sessionStorage.getItem('five.expandedCompactTaskActions')||'[]');
@@ -2235,7 +2224,9 @@ Current data will be preserved first.`)) return;
         requestAnimationFrame(()=>{updateContextScrollControls();revealSelectedContextChip();});
       }
       function updateHeader() {
-        document.body.classList.toggle('compact-card-mode',!showTaskDetails);
+        showTaskDetails=taskDisplayMode==='full';
+        document.body.classList.toggle('compact-card-mode',taskDisplayMode==='compact');
+        document.body.classList.toggle('micro-card-mode',isMicroCompactMode());
         const allCount = allTasks().length;
         if(selectedProjectFilter&&!allProjectCounts().some(([name])=>name===selectedProjectFilter))selectedProjectFilter="";
         const trackedCount = trackedTasks().length;
@@ -2261,9 +2252,9 @@ Current data will be preserved first.`)) return;
         addTaskButton.hidden = Boolean(editingId);
         addTaskButton.disabled = false;
         addTaskButton.textContent = '+ Task';
-        toggleActionsButton.textContent = showTaskDetails ? 'Actions visible' : 'Compact view';
-        toggleActionsButton.classList.toggle('active', !showTaskDetails);
-        toggleActionsButton.setAttribute('aria-pressed', String(!showTaskDetails));
+        toggleActionsButton.textContent=taskDisplayMode==='full'?'Actions visible':taskDisplayMode==='compact'?'Compact view':'Micro compact';
+        toggleActionsButton.classList.toggle('active',taskDisplayMode!=='full');
+        toggleActionsButton.setAttribute('aria-pressed',String(taskDisplayMode!=='full'));
         exportButton.disabled = tasks.length === 0 && lists.length === 0 && projects.length === 0 && !Object.values(todayPlan).some(value=>value.trim()) && !quickPad.trim();
         const focusCount=focusedTasks().length;focusLimitSummary.textContent=`Today Focus ${todayFocusedTasks().length}/${MAX_TODAY_FOCUS_TASKS} · Focus ${focusCount}/${MAX_FOCUS_TASKS}`;focusLimitSummary.classList.toggle('visible',currentView==='active');
         activeTimeSummary.textContent=plannedMinutes?`${activeCount} active task${activeCount===1?'':'s'} · ${durationLabel(plannedMinutes)} planned`:'';
@@ -2296,6 +2287,8 @@ Current data will be preserved first.`)) return;
         return input;
       }
 
+      function isMicroCompactMode(){return mobileFooterMode&&taskDisplayMode==='micro';}
+      function createMicroTaskView(task){const button=document.createElement('button');button.type='button';button.className='micro-task-view';button.textContent=task.title.trim()||'Untitled task';button.title=task.title.trim()||'Untitled task';button.setAttribute('aria-label',`Open ${task.title.trim()||'Untitled task'}`);button.addEventListener('click',()=>beginEditing(task));return button;}
       function render() {
         tasksHost.replaceChildren();
         const allVisibleTasks = currentView === 'all'
@@ -2341,7 +2334,9 @@ Current data will be preserved first.`)) return;
           if (currentView === 'active' && task.focus) card.classList.add('top-focus');
           if (currentView === 'active' && task.todayFocus) card.classList.add('today-focus');
           card.dataset.taskId = task.id;
-          if (currentView === 'all' || currentView === 'tracked' || currentView === 'active') {
+          if(isMicroCompactMode()){
+            if(editingId===task.id)card.append(createEditor(task));else card.append(createMicroTaskView(task));
+          } else if (currentView === 'all' || currentView === 'tracked' || currentView === 'active') {
             card.append(createView(task, index), createEditor(task));
           } else if (currentView === 'waiting') {
             card.append(createWaitingView(task));
@@ -3070,9 +3065,8 @@ Current data will be preserved first.`)) return;
       document.getElementById('closeProjectFilter').addEventListener('click',()=>projectFilterDialog.close());
       projectFilterDialog.addEventListener('cancel',event=>{event.preventDefault();projectFilterDialog.close();});
       toggleActionsButton.addEventListener('click', () => {
-        showTaskDetails = !showTaskDetails;
-        localStorage.setItem('five.showTaskDetails', String(showTaskDetails));
-        render();
+        taskDisplayMode=mobileFooterMode?(taskDisplayMode==='full'?'compact':taskDisplayMode==='compact'?'micro':'full'):(taskDisplayMode==='full'?'compact':'full');
+        showTaskDetails=taskDisplayMode==='full';localStorage.setItem(DISPLAY_MODE_KEY,taskDisplayMode);localStorage.setItem('five.showTaskDetails',String(showTaskDetails));render();
       });
       recoveryButton.addEventListener('click',async()=>{
         try { await createRecoverySnapshot('manual recovery view',true); await renderRecovery(); recoveryDialog.showModal(); }
