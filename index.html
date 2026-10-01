@@ -2288,7 +2288,7 @@ Current data will be preserved first.`)) return;
         archiveTab.setAttribute('aria-current', currentView === 'archive' ? 'page' : 'false');
         addTaskButton.hidden = Boolean(editingId);
         addTaskButton.disabled = false;
-        addTaskButton.textContent = '+ Task';
+        addTaskButton.textContent = matchMedia('(max-width:700px)').matches ? '+' : '+ Task';
         toggleActionsButton.textContent=taskDisplayMode==='full'?'Actions visible':taskDisplayMode==='compact'?'Compact view':'Micro compact';
         toggleActionsButton.classList.toggle('active',taskDisplayMode!=='full');
         toggleActionsButton.setAttribute('aria-pressed',String(taskDisplayMode!=='full'));
